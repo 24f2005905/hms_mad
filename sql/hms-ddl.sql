@@ -1,5 +1,6 @@
 -- Hospital Management System DDLs --
 
+/*
 CREATE TABLE Users (
     User_ID Varchar(15) PRIMARY KEY,
     First_name Varchar(50) NOT NULL,
@@ -56,3 +57,10 @@ CREATE TABLE Slots (
     AND substr(Time_Slots, 4, 2) IN ('00', '15', '30', '45')
     )
 );
+
+
+ALTER TABLE Appointments
+ADD CONSTRAINT unique_appointment UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time);
+
+*/
+ALTER TABLE Slots DROP CONSTRAINT IF EXISTS Time_Slots_check;
