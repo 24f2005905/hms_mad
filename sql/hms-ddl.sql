@@ -8,6 +8,7 @@ CREATE TABLE Users (
     User_Type Varchar(10) NOT NULL ,
     Phone_Number Varchar(15) NOT NULL,
     User_Profile TEXT NULL,
+    Password Varchar(255) NOT NULL
     CHECK(User_Type IN ('ADMIN', 'DOCTOR', 'PATIENT'))
 );
 
@@ -63,4 +64,3 @@ ALTER TABLE Appointments
 ADD CONSTRAINT unique_appointment UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time);
 
 */
-ALTER TABLE Slots DROP CONSTRAINT IF EXISTS Time_Slots_check;
