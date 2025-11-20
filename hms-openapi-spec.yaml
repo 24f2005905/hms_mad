@@ -35,7 +35,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+		description: User Create Response
+		type: object
+		properties:
+		    status: 
+			$ref: '#/components/schemas/API-Status'
+		    userId: 
+			type: string
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -698,14 +704,13 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 components:
-  # <-- THIS is the securitySchemes section you said was missing.
   securitySchemes:
     JWT:
       type: apiKey
       in: header
       name: Authorization
       description: >-
-        JWT token. Include in the Authorization header as: "Bearer <JWT>"
+        JWT token. Include in the Authorization header as: "Authorization: <JWT>"
 
   schemas:
 
