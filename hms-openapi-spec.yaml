@@ -5,15 +5,18 @@ info:
   description: |
     OpenAPI specification for the HMS endpoints described in the uploaded draft.
     Authentication uses an apiKey-style JWT passed in the Authorization header as "Bearer <token>".
-  # reference to user's uploaded file (local path)
   x-source-file: "/mnt/data/rough-api-2.txt"
 servers:
   - url: https://api.example.com
     description: Production server
   - url: http://localhost:8000
     description: Local development
-paths:
 
+# Global security requirement: JWT apiKey in Authorization header
+security:
+  - JWT: []
+
+paths:
   /hms/user/create:
     post:
       summary: Create a new user
@@ -197,3 +200,857 @@ paths:
           content:
             application/json:
               schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/appointment/update:
+    post:
+      summary: Update appointment
+      tags: [Appointments]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentUpdate'
+      responses:
+        "200":
+          description: Appointment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/appointments/delete:
+    delete:
+      summary: Cancel / delete appointment
+      tags: [Appointments]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentDelete'
+      responses:
+        "200":
+          description: Appointment deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccess'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/treatments/upload:
+    post:
+      summary: Upload treatment (diagnosis/prescription)
+      tags: [Treatments]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreatmentCreate'
+      responses:
+        "200":
+          description: Treatment uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreatmentResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/treatments/lookup:
+    post:
+      summary: Lookup treatments (history)
+      tags: [Treatments]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Appointment_ID:
+                  type: string
+                Patient_ID:
+                  type: string
+                Doctor_ID:
+                  type: string
+      responses:
+        "200":
+          description: Treatment history returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TreatmentResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/treatments/update:
+    post:
+      summary: Update treatment
+      tags: [Treatments]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreatmentUpdate'
+      responses:
+        "200":
+          description: Treatment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreatmentResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/treatments/delete:
+    delete:
+      summary: Delete treatment record
+      tags: [Treatments]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreatmentDelete'
+      responses:
+        "200":
+          description: Treatment deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccess'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/departments/create:
+    post:
+      summary: Create department
+      tags: [Departments]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentCreate'
+      responses:
+        "200":
+          description: Department created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartmentResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/departments/lookup:
+    get:
+      summary: Lookup departments
+      tags: [Departments]
+      security:
+        - JWT: []
+      parameters:
+        - name: Dept_ID
+          in: query
+          schema:
+            type: string
+        - name: Dept_Name
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Departments list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DepartmentResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/departments/delete:
+    delete:
+      summary: Delete department
+      tags: [Departments]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Dept_ID:
+                  type: string
+      responses:
+        "200":
+          description: Department deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccess'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/department/add:
+    post:
+      summary: Add doctor to department
+      tags: [DoctorDept]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoctorDeptAdd'
+      responses:
+        "200":
+          description: Doctor added to department
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccess'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/department/lookup:
+    get:
+      summary: Lookup doctor-department relations
+      tags: [DoctorDept]
+      security:
+        - JWT: []
+      parameters:
+        - name: Doctor_ID
+          in: query
+          schema:
+            type: string
+        - name: Dept_ID
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Relations returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DoctorDeptResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/department/delete:
+    delete:
+      summary: Remove doctor from department or delete department (based on payload)
+      tags: [DoctorDept]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/DoctorDeptDelete'
+                - type: object
+                  properties:
+                    Dept_ID:
+                      type: string
+      responses:
+        "200":
+          description: Deletion successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccess'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/slots/create:
+    post:
+      summary: Create doctor's weekly slots
+      tags: [Slots]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlotsCreate'
+      responses:
+        "200":
+          description: Slots created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotsResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/slots/lookup:
+    post:
+      summary: Lookup doctor's slots (POST as per draft)
+      tags: [Slots]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Doctor_ID:
+                  type: string
+      responses:
+        "200":
+          description: Slots returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SlotsResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/slots/update:
+    post:
+      summary: Update doctor's slots
+      tags: [Slots]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlotsUpdate'
+      responses:
+        "200":
+          description: Slots updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotsResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /hms/slots/availability:
+    get:
+      summary: Find doctors by availability
+      tags: [Slots]
+      security:
+        - JWT: []
+      parameters:
+        - name: Days_Available
+          in: query
+          schema:
+            type: string
+        - name: Time_Slots
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Doctors matching availability
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DoctorAvailabilityResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+components:
+  # <-- THIS is the securitySchemes section you said was missing.
+  securitySchemes:
+    JWT:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: >-
+        JWT token. Include in the Authorization header as: "Bearer <JWT>"
+
+  schemas:
+
+    # Users
+    UserCreate:
+      type: object
+      required:
+        - User_ID
+        - First_name
+        - Last_name
+        - User_Type
+        - Phone_Number
+        - Password
+      properties:
+        User_ID:
+          type: string
+        First_name:
+          type: string
+        Last_name:
+          type: string
+        User_Type:
+          type: string
+          enum: [ADMIN, PATIENT, DOCTOR]
+        Phone_Number:
+          type: string
+        User_Profile:
+          type: string
+        Password:
+          type: string
+    UserUpdate:
+      type: object
+      required: [User_ID]
+      properties:
+        User_ID:
+          type: string
+        First_name:
+          type: string
+        Last_name:
+          type: string
+        Phone_Number:
+          type: string
+        User_Profile:
+          type: string
+    UserDelete:
+      type: object
+      required: [User_ID]
+      properties:
+        User_ID:
+          type: string
+        First_name:
+          type: string
+        Last_name:
+          type: string
+        User_Type:
+          type: string
+          enum: [ADMIN, PATIENT, DOCTOR]
+        Phone_Number:
+          type: string
+        User_Profile:
+          type: string
+        Password:
+          type: string
+    UserResponse:
+      type: object
+      properties:
+        User_ID:
+          type: string
+        First_name:
+          type: string
+        Last_name:
+          type: string
+        User_Type:
+          type: string
+        Phone_Number:
+          type: string
+        User_Profile:
+          type: string
+
+    # Appointments
+    AppointmentCreate:
+      type: object
+      required:
+        - Appointment_ID
+        - Patient_ID
+        - Doctor_ID
+        - Appointment_Date
+        - Appointment_Time
+      properties:
+        Appointment_ID:
+          type: string
+        Patient_ID:
+          type: string
+        Doctor_ID:
+          type: string
+        Appointment_Date:
+          type: string
+          description: "Date in DD/MM/YY or ISO format"
+        Appointment_Time:
+          type: string
+          description: "Time in HH:MM"
+        Appointment_Status:
+          type: string
+          enum: [SCHEDULED, COMPLETED, CANCELLED]
+    AppointmentUpdate:
+      type: object
+      required:
+        - Appointment_ID
+      properties:
+        Appointment_ID:
+          type: string
+        Patient_ID:
+          type: string
+        Doctor_ID:
+          type: string
+        Appointment_Date:
+          type: string
+        Appointment_Time:
+          type: string
+        Appointment_Status:
+          type: string
+          enum: [SCHEDULED, COMPLETED, CANCELLED]
+    AppointmentDelete:
+      type: object
+      required:
+        - Appointment_ID
+      properties:
+        Appointment_ID:
+          type: string
+        Patient_ID:
+          type: string
+    AppointmentResponse:
+      type: object
+      properties:
+        Appointment_ID: { type: string }
+        Patient_ID: { type: string }
+        Doctor_ID: { type: string }
+        Appointment_Date: { type: string }
+        Appointment_Time: { type: string }
+        Appointment_Status:
+          type: string
+          enum: [SCHEDULED, COMPLETED, CANCELLED]
+
+    # Treatments
+    TreatmentCreate:
+      type: object
+      required:
+        - Appointment_ID
+      properties:
+        Appointment_ID:
+          type: string
+        Diagnosis:
+          type: string
+        Prescription:
+          type: string
+        Notes:
+          type: string
+    TreatmentUpdate:
+      type: object
+      required:
+        - Appointment_ID
+      properties:
+        Appointment_ID:
+          type: string
+        Patient_ID:
+          type: string
+        Diagnosis:
+          type: string
+        Prescription:
+          type: string
+        Notes:
+          type: string
+    TreatmentDelete:
+      type: object
+      required:
+        - Appointment_ID
+      properties:
+        Appointment_ID:
+          type: string
+        Patient_ID:
+          type: string
+    TreatmentResponse:
+      type: object
+      properties:
+        Appointment_ID: { type: string }
+        Diagnosis: { type: string }
+        Prescription: { type: string }
+        Notes: { type: string }
+
+    # Departments & Doctor_Dept
+    DepartmentCreate:
+      type: object
+      required: [Dept_ID, Dept_Name]
+      properties:
+        Dept_ID:
+          type: string
+        Dept_Name:
+          type: string
+        Details:
+          type: string
+    DepartmentResponse:
+      type: object
+      properties:
+        Dept_ID: { type: string }
+        Dept_Name: { type: string }
+        Details: { type: string }
+
+    DoctorDeptAdd:
+      type: object
+      required: [Doctor_ID, Dept_ID]
+      properties:
+        Doctor_ID:
+          type: string
+        Dept_ID:
+          type: string
+    DoctorDeptDelete:
+      type: object
+      required: [Doctor_ID, Dept_ID]
+      properties:
+        Doctor_ID:
+          type: string
+        Dept_ID:
+          type: string
+    DoctorDeptResponse:
+      type: object
+      properties:
+        Doctor_ID: { type: string }
+        Dept_ID: { type: string }
+
+    # Slots
+    SlotsCreate:
+      type: object
+      required: [Doctor_ID, Days_Available, Time_Slots]
+      properties:
+        Doctor_ID:
+          type: string
+        Days_Available:
+          type: string
+          description: "E.g. Mon-Fri, or comma-separated days"
+        Time_Slots:
+          type: string
+          description: "E.g. 09:00-11:00,13:00-15:00"
+    SlotsUpdate:
+      type: object
+      required: [Doctor_ID]
+      properties:
+        Doctor_ID:
+          type: string
+        Days_Available:
+          type: string
+        Time_Slots:
+          type: string
+    SlotsResponse:
+      type: object
+      properties:
+        Doctor_ID: { type: string }
+        Days_Available: { type: string }
+        Time_Slots: { type: string }
+
+    DoctorAvailabilityResponse:
+      type: object
+      properties:
+        Doctor_ID: { type: string }
+        Days_Available: { type: string }
+        Time_Slots: { type: string }
+
+    # Common
+    GenericSuccess:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        message:
+          type: string
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request - validation / missing parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            missing_field:
+              value:
+                code: 400
+                message: "Missing required field: User_ID"
+    Unauthorized:
+      description: Unauthorized - missing or invalid JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            not_authenticated:
+              value:
+                code: 401
+                message: "Unauthorized - missing or invalid token"
+    Forbidden:
+      description: Forbidden - role not permitted
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            not_permitted:
+              value:
+                code: 403
+                message: "Forbidden - role does not have permission for this action"
+    ServerError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            internal_error:
+              value:
+                code: 500
+                message: "Internal server error"
+
+tags:
+  - name: Users
+    description: Endpoints to manage users (ADMIN, DOCTOR, PATIENT)
+  - name: Appointments
+    description: Appointment scheduling and management
+  - name: Treatments
+    description: Treatment records, prescriptions and history
+  - name: Departments
+    description: Department management
+  - name: DoctorDept
+    description: Doctor <-> Department associations
+  - name: Slots
+    description: Doctor slot and availability management
+
+externalDocs:
+  description: Original draft used to generate this OpenAPI spec (local path)
+  url: "/mnt/data/rough-api-2.txt"
