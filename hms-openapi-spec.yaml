@@ -35,13 +35,13 @@ paths:
           content:
             application/json:
               schema:
-		description: User Create Response
-		type: object
-		properties:
-		    status: 
-			$ref: '#/components/schemas/API-Status'
-		    userId: 
-			type: string
+                description: User Create Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    userId: 
+                      type: string
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -80,9 +80,15 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserResponse'
+                description : User Lookup Response
+                type: object 
+                properties:
+                  status: 
+                    $ref: '#/components/schemas/API-Status'
+                  user_details:
+                    type : array
+                    # $ref: '#/components/schemas/UserResponse'
+
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -110,7 +116,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                description: Updated User Details
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    userObj: 
+                      $ref: '#/components/schemas/UserResponse'
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -138,7 +150,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccess'
+                description: User Deletion Response 
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    userid :
+                      type: string 
+             
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -166,7 +185,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse'
+                description: Appointment Create Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    appointment_details: #Return all appointment details or [just appoinment id ?]
+                      $ref: '#/components/schemas/AppointmentResponse'
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -206,9 +231,13 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AppointmentResponse'
+                description: Appointment Lookup Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    appointment_details : 
+                      type : array 
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -236,7 +265,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse'
+                description : Updated Appointment Details
+                type : object 
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    appointmentObj:
+                      $ref: '#/components/schemas/AppointmentResponse'
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -264,7 +299,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccess'
+                description: Appointment Deletion Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    appointmentid:
+                      type: string
+                
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -292,7 +334,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreatmentResponse'
+                description: Treatment Upload Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    treatment_details:
+                      $ref: '#/components/schemas/TreatmentResponse'
+                
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -327,9 +376,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TreatmentResponse'
+                descrtiption: Treatment Lookup Response
+                type: object 
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    treatment_details:
+                      type : array
+                  
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -357,7 +411,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreatmentResponse'
+                description : Updated Treatment Details
+                type : object 
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    treatmentObj:
+                    $ref: '#/components/schemas/TreatmentResponse'
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -385,7 +445,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccess'
+                description: Treatment Deletion Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    treatmenntid:
+                      type: string
+                
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -413,7 +480,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepartmentResponse'
+                description : Department Creation Response
+                type : object 
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    departmentid:
+                      type: string
+                
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -444,9 +518,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DepartmentResponse'
+                description: Department Lookup Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    department_details : 
+                      type : array
+
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -477,7 +556,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccess'
+                description: Department Deletion Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    departmentid:
+                      type: string
+            
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -505,7 +591,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccess'
+                description : Add doctor to Department Response
+                type : object 
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    doctordeptobj:
+                    $ref: '#/components/schemas/DoctorDeptResponse'
+              
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -515,7 +608,7 @@ paths:
         "500":
           $ref: '#/components/responses/ServerError'
 
-  /hms/department/lookup:
+  /hms/department/lookup: ###########################################
     get:
       summary: Lookup doctor-department relations
       tags: [DoctorDept]
@@ -536,9 +629,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DoctorDeptResponse'
+                description: Doctor-Department Lookup Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    doctordept_details:
+                      type: array
+               
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -548,7 +646,7 @@ paths:
         "500":
           $ref: '#/components/responses/ServerError'
 
-  /hms/department/delete:
+  /hms/department/delete: ###########################################
     delete:
       summary: Remove doctor from department or delete department (based on payload)
       tags: [DoctorDept]
@@ -571,7 +669,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccess'
+                description : Doctor-Department Deletion Response
+                type : object 
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'   
+                    deleted-details:
+                      type: array
+               
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -599,7 +704,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SlotsResponse'
+                description: Slots Creation Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    doctorid:
+                      type: string
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -630,9 +741,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SlotsResponse'
+                description: Slots Lookup Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'     
+                    slots_details:
+                      type : object 
+              
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -660,7 +776,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SlotsResponse'
+                description : Updated Slots Details
+                type : object 
+                properties:  
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    slotsObj:
+                      $ref: '#/components/schemas/SlotsResponse'
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -691,9 +813,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DoctorAvailabilityResponse'
+                description: Doctor Availability Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'   
+                    available_doctors:
+                      type : array
+               
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -713,7 +840,13 @@ components:
         JWT token. Include in the Authorization header as: "Authorization: <JWT>"
 
   schemas:
-
+    API-Status:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
     # Users
     UserCreate:
       type: object
