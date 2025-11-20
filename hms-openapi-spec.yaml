@@ -17,6 +17,40 @@ security:
   - JWT: []
 
 paths:
+  /hms/id/generate/token:
+    post:
+      summary: Generate a JWT for a user
+      tags: [Users]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginCred'
+      responses:
+        "200":
+          description: JWT created successfully
+          content:
+            application/json:
+              schema:
+                description: JWT Generation Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    token: 
+                      type: string
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
   /hms/user/create:
     post:
       summary: Create a new user
@@ -573,7 +607,7 @@ paths:
         "500":
           $ref: '#/components/responses/ServerError'
 
-  /hms/department/add:
+  /hms/departments/assign:
     post:
       summary: Add doctor to department
       tags: [DoctorDept]
@@ -608,7 +642,7 @@ paths:
         "500":
           $ref: '#/components/responses/ServerError'
 
-  /hms/department/lookup: ###########################################
+  /hms/departments/doctor-lookup: 
     get:
       summary: Lookup doctor-department relations
       tags: [DoctorDept]
@@ -646,7 +680,7 @@ paths:
         "500":
           $ref: '#/components/responses/ServerError'
 
-  /hms/department/delete: ###########################################
+  /hms/departments/unassign: 
     delete:
       summary: Remove doctor from department or delete department (based on payload)
       tags: [DoctorDept]
@@ -836,17 +870,25 @@ components:
       type: apiKey
       in: header
       name: Authorization
-      description: >-
-        JWT token. Include in the Authorization header as: "Authorization: <JWT>"
+      description: JWT token. Include in the Authorization header as: "Authorization: <JWT>"
 
   schemas:
-    API-Status:
+    LoginCred:
       type: object
+      required:
+        - User_ID 
+        - Password
       properties:
-        code:
-          type: integer
-        message:
+        User_ID:
           type: string
+        Password:
+          type: string
+
+    API-Status:
+      type: string
+      enum: [success, error]
+        
+
     # Users
     UserCreate:
       type: object
@@ -1109,25 +1151,14 @@ components:
         Days_Available: { type: string }
         Time_Slots: { type: string }
 
-    # Common
-    GenericSuccess:
-      type: object
-      properties:
-        ok:
-          type: boolean
-        message:
-          type: string
-
+   
     Error:
       type: object
-      required: [code, message]
       properties:
-        code:
-          type: integer
+        status : 
+            $ref: '#/components/schemas/API-Status'
         message:
           type: string
-        details:
-          type: object
 
   responses:
     BadRequest:
@@ -1136,44 +1167,28 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-          examples:
-            missing_field:
-              value:
-                code: 400
-                message: "Missing required field: User_ID"
+         
     Unauthorized:
       description: Unauthorized - missing or invalid JWT
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-          examples:
-            not_authenticated:
-              value:
-                code: 401
-                message: "Unauthorized - missing or invalid token"
+         
     Forbidden:
       description: Forbidden - role not permitted
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-          examples:
-            not_permitted:
-              value:
-                code: 403
-                message: "Forbidden - role does not have permission for this action"
+          
     ServerError:
       description: Server error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-          examples:
-            internal_error:
-              value:
-                code: 500
-                message: "Internal server error"
+         
 
 tags:
   - name: Users

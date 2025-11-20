@@ -147,7 +147,7 @@
 
 -- Table Doctor_Dept -- 
 
-1. Path : /hms/department/add
+1. Path : /hms/departments/assign
     Method : POST 
     Parameters : 
     Object = {
@@ -156,7 +156,7 @@
     Description : Adds Doctor to a department 
     Role : ADMIN
 
-2. Path : /hms/department/lookup
+2. Path : /hms/departments/doctor-lookup
     Method : GET
     Parameters : 
     Object = {
@@ -165,7 +165,7 @@
     Description : Displays all doctors belonging to a department or all the departments a particular doctor belongs to
     Roles : ADMIN, PATIENT
 
-3. Path : /hms/department/delete
+3. Path : /hms/departments/unassign
     Method : DELETE 
     Parameters :
     Object = {
@@ -173,16 +173,6 @@
     }
     Description : Deletes a doctor from department 
     Role : ADMIN
-
-4. Path : /hms/department/delete
-    Method : DELETE 
-    Parameters : 
-    Object = {
-        "Dept_ID" : <dept_id>
-    }
-    Description : Delete department from database 
-    Role : ADMIN
-
 
 
 -- Table Slots -- 
