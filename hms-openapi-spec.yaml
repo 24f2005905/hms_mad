@@ -121,7 +121,8 @@ paths:
                     $ref: '#/components/schemas/API-Status'
                   user_details:
                     type : array
-                    # $ref: '#/components/schemas/UserResponse'
+                    items : 
+                      $ref: '#/components/schemas/UserResponse'
 
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -172,12 +173,13 @@ paths:
       tags: [Users]
       security:
         - JWT: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserDelete'
+      parameters:
+        - in: query
+          name: User_ID
+          description: Delete by User_ID
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: User deleted successfully
@@ -271,7 +273,9 @@ paths:
                     status: 
                       $ref: '#/components/schemas/API-Status'
                     appointment_details : 
-                      type : array 
+                      type: array 
+                      items: 
+                        $ref: '#/components/schemas/AppointmentCreate'
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -321,12 +325,13 @@ paths:
       tags: [Appointments]
       security:
         - JWT: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AppointmentDelete'
+      parameters:
+        - in: query
+          name: Appointment_ID
+          description: Delete by Appointment_ID
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: Appointment deleted
@@ -410,13 +415,15 @@ paths:
           content:
             application/json:
               schema:
-                descrtiption: Treatment Lookup Response
+                description: Treatment Lookup Response
                 type: object 
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
                     treatment_details:
-                      type : array
+                      type: array
+                      items: 
+                        $ref: '#/components/schemas/TreatmentCreate'
                   
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -451,7 +458,7 @@ paths:
                     status: 
                       $ref: '#/components/schemas/API-Status'
                     treatmentObj:
-                    $ref: '#/components/schemas/TreatmentResponse'
+                      $ref: '#/components/schemas/TreatmentResponse'
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -467,12 +474,14 @@ paths:
       tags: [Treatments]
       security:
         - JWT: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TreatmentDelete'
+      parameters:
+        - in: query
+          name: Appointment_ID
+          description: Delete by Appointment_ID
+          required: false
+          schema:
+            type: string
+            
       responses:
         "200":
           description: Treatment deleted
@@ -559,6 +568,8 @@ paths:
                       $ref: '#/components/schemas/API-Status'
                     department_details : 
                       type : array
+                      items:
+                        $ref: '#/components/schemas/DepartmentCreate'
 
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -575,15 +586,14 @@ paths:
       tags: [Departments]
       security:
         - JWT: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                Dept_ID:
-                  type: string
+      parameters:
+        - in: query
+          name: Dept_ID
+          description: Delete by Dept_ID
+          required: false
+          schema:
+            type: string
+             
       responses:
         "200":
           description: Department deleted
@@ -631,7 +641,7 @@ paths:
                     status: 
                       $ref: '#/components/schemas/API-Status'
                     doctordeptobj:
-                    $ref: '#/components/schemas/DoctorDeptResponse'
+                      $ref: '#/components/schemas/DoctorDeptResponse'
               
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -670,6 +680,8 @@ paths:
                       $ref: '#/components/schemas/API-Status'
                     doctordept_details:
                       type: array
+                      items: 
+                        $ref: '#/components/schemas/DoctorDeptAdd'
                
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -686,17 +698,20 @@ paths:
       tags: [DoctorDept]
       security:
         - JWT: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: '#/components/schemas/DoctorDeptDelete'
-                - type: object
-                  properties:
-                    Dept_ID:
-                      type: string
+      parameters:
+        - in: query
+          name: Dept_ID
+          description: Delete by Dept_ID
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: Doctor_ID
+          description: Delete by Doctor_ID
+          required: false
+          schema:
+            type: string
+            
       responses:
         "200":
           description: Deletion successful
@@ -708,8 +723,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'   
-                    deleted-details:
-                      type: array
+                  
                
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -853,7 +867,9 @@ paths:
                     status: 
                       $ref: '#/components/schemas/API-Status'   
                     available_doctors:
-                      type : array
+                      type: array
+                      items: 
+                        $ref: '#/components/schemas/SlotsCreate'
                
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -870,7 +886,7 @@ components:
       type: apiKey
       in: header
       name: Authorization
-      description: JWT token. Include in the Authorization header as: "Authorization: <JWT>"
+      description: JWT token. Include in the Authorization header as  "Authorization <JWT>"
 
   schemas:
     LoginCred:
@@ -929,25 +945,7 @@ components:
           type: string
         User_Profile:
           type: string
-    UserDelete:
-      type: object
-      required: [User_ID]
-      properties:
-        User_ID:
-          type: string
-        First_name:
-          type: string
-        Last_name:
-          type: string
-        User_Type:
-          type: string
-          enum: [ADMIN, PATIENT, DOCTOR]
-        Phone_Number:
-          type: string
-        User_Profile:
-          type: string
-        Password:
-          type: string
+    
     UserResponse:
       type: object
       properties:
@@ -1007,15 +1005,7 @@ components:
         Appointment_Status:
           type: string
           enum: [SCHEDULED, COMPLETED, CANCELLED]
-    AppointmentDelete:
-      type: object
-      required:
-        - Appointment_ID
-      properties:
-        Appointment_ID:
-          type: string
-        Patient_ID:
-          type: string
+    
     AppointmentResponse:
       type: object
       properties:
@@ -1057,15 +1047,7 @@ components:
           type: string
         Notes:
           type: string
-    TreatmentDelete:
-      type: object
-      required:
-        - Appointment_ID
-      properties:
-        Appointment_ID:
-          type: string
-        Patient_ID:
-          type: string
+    
     TreatmentResponse:
       type: object
       properties:
@@ -1085,13 +1067,7 @@ components:
           type: string
         Details:
           type: string
-    DepartmentResponse:
-      type: object
-      properties:
-        Dept_ID: { type: string }
-        Dept_Name: { type: string }
-        Details: { type: string }
-
+   
     DoctorDeptAdd:
       type: object
       required: [Doctor_ID, Dept_ID]
@@ -1100,14 +1076,7 @@ components:
           type: string
         Dept_ID:
           type: string
-    DoctorDeptDelete:
-      type: object
-      required: [Doctor_ID, Dept_ID]
-      properties:
-        Doctor_ID:
-          type: string
-        Dept_ID:
-          type: string
+   
     DoctorDeptResponse:
       type: object
       properties:
@@ -1144,13 +1113,7 @@ components:
         Days_Available: { type: string }
         Time_Slots: { type: string }
 
-    DoctorAvailabilityResponse:
-      type: object
-      properties:
-        Doctor_ID: { type: string }
-        Days_Available: { type: string }
-        Time_Slots: { type: string }
-
+  
    
     Error:
       type: object
