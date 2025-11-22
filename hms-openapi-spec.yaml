@@ -100,7 +100,7 @@ paths:
           in: query
           schema:
             type: string
-        - name: First_name
+        - name: First_Name
           in: query
           schema:
             type: string

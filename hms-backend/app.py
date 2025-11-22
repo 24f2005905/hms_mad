@@ -1,6 +1,7 @@
 import json
 import os 
 import jwt
+import uuid
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text 
@@ -13,8 +14,14 @@ app = Flask(__name__)
 db = SQLAlchemy()  
 jwt_private_str = None
 jwt_public_str = None
-Valid_User_Types = ["DOCTOR", "PATIENT", "ADMIN"]
-
+Valid_User_Types = [
+    "DOCTOR", "PATIENT", "ADMIN"
+]
+Valid_User_Column = [
+    "User_ID", "First_Name", "Last_Name", 
+    "User_Type", "Phone_Number","User_Profile",
+    "Password"
+]
 @app.route("/", methods = ["GET"])
 def hello_world():
     return "hello world!"
@@ -66,15 +73,14 @@ def id_token_generate():
     User_ID = req_json["User_ID"]
     Password = req_json["Password"]
 
-    query = text("SELECT First_Name,User_Type, Password FROM Users WHERE User_ID = :user_id")
+    query = text("SELECT User_Type, Password FROM Users WHERE User_ID = :user_id")
     password = None
     with app.app_context():
         result = db.session.execute(query,{"user_id": User_ID})
         details = result.fetchone()
         if details:
-            User = details[0]
-            Role = details[1]
-            password = details[2] #Fetch password corresponding to User_ID
+            Role = details[0]
+            password = details[1] #Fetch password corresponding to User_ID
     
     #Password verification
     if not password:
@@ -84,15 +90,15 @@ def id_token_generate():
             return {"status":"error", "message":"Login Failed"}, 401
     
     start_time = datetime.utcnow().timestamp()
-    exp = (datetime.utcnow() + timedelta(minutes = 30)).timestamp()
+    exp = (datetime.utcnow() + timedelta(hours = 8)).timestamp()
    
     auth_token = {
-        'ID': User_ID, 
-        'User': User, 
-        'Role': Role, 
+        'id': str(uuid.uuid4()),
+        'user': User_ID, 
+        'role': Role, 
         'iat': 
         int(start_time), 
-        'Exp': int(exp) 
+        'exp': int(exp) 
     }
     auth_token_str = jwt.encode(auth_token,jwt_private_str, algorithm = "RS256")
     return {
@@ -163,6 +169,116 @@ def User_Create(auth_args):
          db.session.commit()
         
     ret["User_ID"] = User_ID
+    return ret, 200
+
+@app.route("/hms/user/lookup", methods=["GET"])
+@auth_wrapper
+def User_Lookup(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+    
+    #Get parameters
+    param_json = request.args.to_dict()
+    match_clauses = []
+    for key in ['User_ID','Phone_Number','First_Name','Last_Name']:
+        if key in param_json:
+            match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
+    query = "SELECT * FROM Users "
+    if len(match_clauses):
+        query += " WHERE "
+        query += " AND ".join(match_clauses)
+    print(f"QUERY: {query}")
+    with app.app_context():
+        result = db.session.execute(text(query))
+        rows = result.fetchall() 
+    
+    user_details = []
+    for row_ent in rows:
+        row_dict = (dict(row_ent._mapping))
+        row_dict.pop('Password')
+        if auth_token['role'] == 'ADMIN' or \
+            auth_token['role'] == 'DOCTOR' and row_dict['User_ID'][0] == 'P' or \
+            auth_token['user'] == row_dict['User_ID']:
+            user_details.append(row_dict)
+
+    ret['user_details'] = user_details 
+    return ret, 200
+
+@app.route("/hms/user/update", methods=["POST"])
+@auth_wrapper
+def User_Update(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+
+    # Get the request body
+    req_json = request.get_json()
+
+    #Checking for User_ID 
+    if 'User_ID' not in req_json:
+        ret["status"] = "error" 
+        ret["message"] = "User_ID not found"
+        return ret, 400
+    
+    # Enforce Role Here
+    if auth_token['role'] != 'ADMIN' and \
+            auth_token['User_ID'] != req_json['User_ID']:
+            ret["status"] = "error" 
+            ret["message"] = "Update unauthorized"
+            return ret, 403
+    
+    # Check for User ID
+    query_check = f"SELECT User_ID from Users WHERE User_ID = '{req_json['User_ID']}'"
+    with app.app_context():
+        result = db.session.execute(text(query_check))
+
+    if result.rowcount != 1:
+        ret["status"] = "error" 
+        ret["message"] = "User Not Found"
+        return ret, 400
+
+    query = "UPDATE Users SET "
+    updates = []
+
+    for column_name in req_json:
+        if column_name not in Valid_User_Column:
+            ret["status"] = "error" 
+            ret["message"] = "Invalid Attribute"
+            return ret, 400
+        
+        if column_name == 'User_ID':
+            continue 
+        updates.append(f"{column_name} = '{req_json[column_name]}'")
+    
+    if not updates:
+        ret["status"] = "error" 
+        ret["message"] = "No field to update"
+        return ret, 400
+
+    query += ",".join(updates)
+    query += f" WHERE User_ID = '{req_json['User_ID']}';"
+
+    with app.app_context():
+        result = db.session.execute(text(query))
+        db.session.commit()
+    
+    if result.rowcount != 1:
+        ret["status"] = "error" 
+        ret["message"] = "Failed to update"
+        return ret, 400
+    
+    ret["User_ID"] = req_json["User_ID"]
+    ret["query"] = query
+   
     return ret, 200
 
 if __name__ == '__main__' :
