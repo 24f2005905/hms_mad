@@ -1,0 +1,8 @@
+{
+    "port": 9000,
+    "ddl_path": "../sql/hms-ddl.sql",
+    "flask_config": {
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///hms.db",
+        "SQLALCHEMY_TRACK_MODIFICATIONS": false
+    }
+}

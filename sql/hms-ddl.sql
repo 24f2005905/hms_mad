@@ -1,6 +1,5 @@
 -- Hospital Management System DDLs --
 
-/*
 CREATE TABLE Users (
     User_ID Varchar(15) PRIMARY KEY,
     First_Name Varchar(50) NOT NULL,
@@ -56,13 +55,14 @@ CREATE TABLE Slots (
     Time_Slots TEXT NOT NULL,
     FOREIGN KEY (Doctor_ID) REFERENCES Users(User_ID),
     CHECK (
-        Time_Slots ~ '[0-2][0-9]:[0-5][0-9]'
+        Time_Slots GLOB '[0-2][0-9]:[0-5][0-9]'
     AND substr(Time_Slots, 4, 2) IN ('00', '15', '30', '45')
     )
 );
 
-
+/*
 ALTER TABLE Appointments
-ADD CONSTRAINT unique_appointment UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time);
+ADD CONSTRAINT unique_appointment UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time);*/
 
-*/
+INSERT INTO Users VALUES
+    ("ADMIN","Admin","Superuser","ADMIN","9999999999",NULL,"admin");
