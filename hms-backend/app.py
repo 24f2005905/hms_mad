@@ -44,7 +44,6 @@ def init_db(db_uri, ddl_f_name):
             raw_conn.commit()
         finally:
             raw_conn.close() 
-    
     return 0 
 
 def auth_wrapper(f):
@@ -283,6 +282,56 @@ def User_Update(auth_args):
    
     return ret, 200
 
+@app.route("/hms/user/delete", methods=["DELETE"])
+@auth_wrapper
+def User_Delete(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+
+    #Get parameters
+    param_json = request.args.to_dict()
+    if 'User_ID' not in param_json:
+        ret["status"] = "error"
+        ret["message"] = "User ID Not Provided"
+        return ret, 400
+    
+    User_ID = param_json["User_ID"]
+   
+   #Enforce Role
+    if auth_token['role'] != 'ADMIN':
+        ret["status"] = "error" 
+        ret["message"] = "Delete Unauthorized"
+        return ret, 403 
+    
+    if User_ID == 'ADMIN': 
+        ret["status"] = "error" 
+        ret["message"] = "Cannot Delete Super Admin"
+        return ret, 400 
+    
+    #Verifying User_ID existence
+    query_1 = f"SELECT User_ID FROM Users WHERE User_ID = '{User_ID}';"
+    with app.app_context():
+        result = db.session.execute(text(query_1))
+        rows = result.fetchall() 
+   
+    if len(rows) != 1:
+        ret["status"] = "error" 
+        ret["message"] = "User Not Found"
+        return ret, 400
+    
+    #Query for deletion
+    query =  f"DELETE FROM Users WHERE User_ID = '{User_ID}';"
+    with app.app_context():
+        result = db.session.execute(text(query))
+        db.session.commit()
+    ret["User_ID"] = User_ID 
+    return ret, 200
+    
 
 if __name__ == '__main__' :
     print(__name__)
