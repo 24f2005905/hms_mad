@@ -34,10 +34,10 @@ CREATE TABLE Treatments (
 );
 
 CREATE TABLE Departments (
-    Dept_ID VARCHAR(15) PRIMARY KEY ,
-    Speciality Varchar(50) NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Dept_ID VARCHAR(15) UNIQUE NOT NULL,
+    Speciality Varchar(50) UNIQUE NOT NULL,
     Details TEXT NULL
-
 );
 
 CREATE TABLE Doctor_Dept (

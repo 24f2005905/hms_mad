@@ -1038,8 +1038,6 @@ components:
       type: object
       required: [Speciality]
       properties:
-        Dept_ID:
-          type: string
         Speciality:
           type: string
         Details:

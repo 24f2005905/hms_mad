@@ -4,7 +4,7 @@ import jwt
 import uuid
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text 
+from sqlalchemy import text,exc
 from datetime import datetime, timedelta, date
 from functools import wraps
 
@@ -22,9 +22,6 @@ Valid_User_Column = [
     "User_Type", "Phone_Number","User_Profile",
     "Password"
 ]
-@app.route("/", methods = ["GET"])
-def hello_world():
-    return "hello world!"
 
 
 def init_db(db_uri, ddl_f_name):
@@ -330,6 +327,153 @@ def User_Delete(auth_args):
         result = db.session.execute(text(query))
         db.session.commit()
     ret["User_ID"] = User_ID 
+    return ret, 200
+    
+@app.route("/hms/departments/create", methods=["POST"])
+@auth_wrapper
+def Dept_Create(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+
+    #Enforce Role
+    if auth_token['role'] != 'ADMIN':
+        ret["status"] = "error" 
+        ret["message"] = "Unauthorized Access"
+        return ret, 403 
+    
+    # Get the request body
+    req_json = request.get_json()
+
+    #Check for Mandatory Fields
+    if "Speciality" not in req_json:
+        ret["status"] = "error"
+        ret["message"] = "Invalid request: Missing Mandatory Fields"
+        return ret, 400 
+    
+  
+    #Generate Dept_ID : Dept-001 
+    partial_match = 'Dept-'
+    serial_no = 1 
+    query = text("SELECT Dept_ID FROM Departments WHERE Dept_ID LIKE :partial_match ORDER BY id DESC")
+    with app.app_context():
+        result = db.session.execute(query,{"partial_match": partial_match+'%' })
+        matches = result.fetchone()
+    if matches: 
+        serial_no = int(matches[0].split('-')[-1]) + 1
+    Dept_ID = f"{partial_match}{serial_no:03d}"
+
+    # Updating Database 
+    query_1 = text("INSERT INTO Departments  " \
+    "(Dept_ID, Speciality, Details) VALUES "\
+    "(:Dept_ID, :Speciality, :Details)")
+
+    query_1_dict = {"Dept_ID": Dept_ID, "Speciality": req_json["Speciality"], "Details": req_json.get("Details","")}
+    
+    with app.app_context():
+        try:
+            result = db.session.execute(query_1,query_1_dict)
+            db.session.commit()
+        except exc.IntegrityError:
+            ret["status"] = "error"
+            ret["message"] = f"Department {req_json['Speciality']} already exists."
+            return ret, 400
+        
+    ret["Dept_ID"] = Dept_ID
+    return ret, 200
+
+@app.route("/hms/departments/lookup", methods=["GET"])
+@auth_wrapper
+def Dept_Lookup(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+
+    #Enfore Roles
+    if auth_token['role'] != 'ADMIN':
+        ret["status"] = "error" 
+        ret["message"] = "Lookup Unauthorized"
+        return ret, 403 
+    
+    #Get parameters
+    param_json = request.args.to_dict()  
+
+    #Query Database
+    match_clauses = []
+    for key in ["Dept_ID","Speciality"]:
+        if key in param_json:
+            match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
+    
+    query = "SELECT * FROM Departments"
+    if len(match_clauses):
+        query += " WHERE "
+        query += " AND ".join(match_clauses)
+        query += ";"
+    
+    with app.app_context():
+        result = db.session.execute(text(query))
+        rows = result.fetchall() 
+    
+    department_details = []
+    for entry in rows:
+        row_dict =(dict(entry._mapping))
+        row_dict.pop('id')
+        department_details.append(row_dict)
+    
+    ret["department_details"] = department_details
+
+    return ret, 200 
+
+@app.route("/hms/departments/delete", methods=["DELETE"])
+@auth_wrapper
+def Dept_Delete(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+
+    #Get parameters
+    param_json = request.args.to_dict()
+    if 'Dept_ID' not in param_json:
+        ret["status"] = "error"
+        ret["message"] = "User ID Not Provided"
+        return ret, 400
+    
+    Dept_ID = param_json["Dept_ID"]
+
+    #Enforcing Roles
+    if auth_token['role'] != 'ADMIN':
+        ret["status"] = "error" 
+        ret["message"] = "Delete Unauthorized"
+        return ret, 403 
+
+    #Ensuring Department Exists
+    query_1 = f"SELECT Dept_ID FROM Departments WHERE Dept_ID = '{Dept_ID}';"
+    with app.app_context():
+        result = db.session.execute(text(query_1))
+        rows = result.fetchall()
+    
+    if len(rows) != 1:
+        ret["status"] = "error" 
+        ret["message"] = "Department Not Found"
+        return ret, 400
+
+    query_2 = f"DELETE FROM Departments WHERE Dept_ID = '{Dept_ID}';"
+    with app.app_context():
+        result = db.session.execute(text(query_2))
+        db.session.commit()
+    ret["Dept_ID"] = Dept_ID 
     return ret, 200
     
 
