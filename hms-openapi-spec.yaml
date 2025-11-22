@@ -9,7 +9,7 @@ info:
 servers:
   - url: https://api.example.com
     description: Production server
-  - url: http://localhost:8000
+  - url: http://localhost:9000
     description: Local development
 
 # Global security requirement: JWT apiKey in Authorization header
@@ -924,7 +924,7 @@ components:
         - Phone_Number
         - Password
       properties:
-        First_name:
+        First_Name:
           type: string
         Last_Name:
           type: string

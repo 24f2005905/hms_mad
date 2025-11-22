@@ -1,13 +1,19 @@
-from flask import Flask 
 import json
-from flask_sqlalchemy import SQLAlchemy
 import os 
-
+import jwt
+from flask import Flask, request
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text 
+from datetime import datetime, timedelta, date
+from functools import wraps
+
 
 
 app = Flask(__name__)
 db = SQLAlchemy()  
+jwt_private_str = None
+jwt_public_str = None
+Valid_User_Types = ["DOCTOR", "PATIENT", "ADMIN"]
 
 @app.route("/", methods = ["GET"])
 def hello_world():
@@ -15,9 +21,6 @@ def hello_world():
 
 
 def init_db(db_uri, ddl_f_name):
-    global db 
-    global app 
-    
     db_f_name = db_uri.removeprefix("sqlite:///")
     if os.path.exists(db_f_name): #Check if db already exists 
         return 0
@@ -37,13 +40,140 @@ def init_db(db_uri, ddl_f_name):
     
     return 0 
 
-@app.route("/hms/id/generate/token")
+def auth_wrapper(f):
+    """ Auth Wrapper Decorator"""
+    @wraps(f)
+    def token_wrapper(*args, **kwargs):
+        # Check Auth header
+        apiKey = request.headers.get("Authorization")
+        auth_args = {}
+        auth_args['auth_token'] = None
+        try:
+            auth_args['auth_token'] = jwt.decode(apiKey, jwt_public_str, algorithms = ["RS256"])
+        except Exception as e:
+            auth_args["auth_err"] = f"Invalid apiKey: {str(e)}"
+        kwargs['auth_args'] = auth_args
+        return f(*args, **kwargs)
+    return token_wrapper
+
+@app.route("/hms/id/generate/token", methods=["POST"])
+def id_token_generate():
+    req_json = request.get_json()
+
+    if "User_ID" not in req_json or "Password" not in req_json:
+        return {"status":"error", "message":"Invalid request"}, 400
+    
+    User_ID = req_json["User_ID"]
+    Password = req_json["Password"]
+
+    query = text("SELECT First_Name,User_Type, Password FROM Users WHERE User_ID = :user_id")
+    password = None
+    with app.app_context():
+        result = db.session.execute(query,{"user_id": User_ID})
+        details = result.fetchone()
+        if details:
+            User = details[0]
+            Role = details[1]
+            password = details[2] #Fetch password corresponding to User_ID
+    
+    #Password verification
+    if not password:
+        return {"status":"error", "message":"Login Failed"}, 401
+    else:
+        if Password != password:
+            return {"status":"error", "message":"Login Failed"}, 401
+    
+    start_time = datetime.utcnow().timestamp()
+    exp = (datetime.utcnow() + timedelta(minutes = 30)).timestamp()
+   
+    auth_token = {
+        'ID': User_ID, 
+        'User': User, 
+        'Role': Role, 
+        'iat': 
+        int(start_time), 
+        'Exp': int(exp) 
+    }
+    auth_token_str = jwt.encode(auth_token,jwt_private_str, algorithm = "RS256")
+    return {
+        "status":"succeess", 
+        "token": auth_token_str
+    }, 200
+
+@app.route("/hms/user/create", methods=["POST"])
+@auth_wrapper
+def User_Create(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    
+    # Get the request body
+    req_json = request.get_json()
+
+    # Check for Mandatory Fields
+    if "First_Name" not in req_json or \
+        "User_Type" not in req_json or \
+        "Phone_Number" not in req_json or \
+        "Password" not in req_json :
+        ret["status"] = "error"
+        ret["message"] = "Invalid request: Missing Mandatory Fields"
+        return ret, 400
+    
+    # Check for valid User_Type
+    if req_json["User_Type"] not in Valid_User_Types:
+        ret["status"] = "error"
+        ret["message"] = f"Invalid User Type: {req_json['User_Type']}"
+        return ret, 400
+    
+    User_Type = req_json["User_Type"]
+    
+    # Generate an ID: [P/A/D]-YYYY-MM-DD-[SNO]
+    # Query for all User IDs for partial match
+    query_1 = text("SELECT User_ID FROM Users WHERE User_ID LIKE :partial_match ORDER BY id DESC")
+    partial_match = f'{User_Type[0]}-{date.today().strftime("%Y-%m-%d")}-'
+    serial_no = 1
+    with app.app_context():
+        result = db.session.execute(query_1,{"partial_match": partial_match+'%' })
+        matches = result.fetchone()
+    if matches: 
+        serial_no = int(matches[0].split('-')[-1]) + 1
+    User_ID = f"{partial_match}{serial_no:03d}"
+
+    # Now insert the user
+    query_2 = text ('INSERT INTO Users '\
+        '(User_ID, First_Name, Last_Name, ' \
+        'User_Type, Phone_Number, User_Profile, Password) ' \
+        'VALUES (:User_ID, ' \
+        ':First_Name, :Last_Name, :User_Type,' \
+        ':Phone_Number, :User_Profile, :Password)')
+    query_2_dict = {
+        "User_ID": User_ID,
+        "First_Name": req_json["First_Name"],
+        "Last_Name": req_json.get("Last_Name",""),
+        "User_Type": User_Type,
+        "Phone_Number": req_json["Phone_Number"],
+        "User_Profile": req_json.get("User_Profile",""),
+        "Password": req_json["Password"]
+    }
+    with app.app_context():
+         result = db.session.execute(query_2,query_2_dict)
+         db.session.commit()
+        
+    ret["User_ID"] = User_ID
+    return ret, 200
 
 if __name__ == '__main__' :
     print(__name__)
     # Read the config from config.json
     config_dict = json.loads(open("config.json",'r').read())
     
+    # Load JWT Private and Public Keys
+    jwt_private_str = open(config_dict["jwt_private"]).read()
+    jwt_public_str = open(config_dict["jwt_public"]).read()
+
     # Update the APP Config settings from config_dict
     app.config.update(config_dict["flask_config"])
 
@@ -54,3 +184,4 @@ if __name__ == '__main__' :
     init_db(app.config["SQLALCHEMY_DATABASE_URI"], config_dict["ddl_path"]);
 
     app.run(debug = True , port = config_dict['port'])
+    

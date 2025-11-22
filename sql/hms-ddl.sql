@@ -1,7 +1,8 @@
 -- Hospital Management System DDLs --
 
 CREATE TABLE Users (
-    User_ID Varchar(15) PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    User_ID Varchar(15) UNIQUE NOT NULL,
     First_Name Varchar(50) NOT NULL,
     Last_Name Varchar(50)  NULL,
     User_Type Varchar(10) NOT NULL ,
@@ -65,4 +66,4 @@ ALTER TABLE Appointments
 ADD CONSTRAINT unique_appointment UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time);*/
 
 INSERT INTO Users VALUES
-    ("ADMIN","Admin","Superuser","ADMIN","9999999999",NULL,"admin");
+    (1,"ADMIN","Admin","Superuser","ADMIN","9999999999",NULL,"admin");
