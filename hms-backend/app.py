@@ -201,6 +201,7 @@ def User_Lookup(auth_args):
     for row_ent in rows:
         row_dict = (dict(row_ent._mapping))
         row_dict.pop('Password')
+        row_dict.pop('id')
         if auth_token['role'] == 'ADMIN' or \
             auth_token['role'] == 'DOCTOR' and row_dict['User_ID'][0] == 'P' or \
             auth_token['user'] == row_dict['User_ID']:
@@ -231,17 +232,18 @@ def User_Update(auth_args):
     
     # Enforce Role Here
     if auth_token['role'] != 'ADMIN' and \
-            auth_token['User_ID'] != req_json['User_ID']:
+            auth_token['user'] != req_json['User_ID']:
             ret["status"] = "error" 
             ret["message"] = "Update unauthorized"
             return ret, 403
     
     # Check for User ID
-    query_check = f"SELECT User_ID from Users WHERE User_ID = '{req_json['User_ID']}'"
+    query_check = f"SELECT User_ID from Users WHERE User_ID = '{req_json['User_ID']}';"
     with app.app_context():
         result = db.session.execute(text(query_check))
-
-    if result.rowcount != 1:
+        rows = result.fetchall()
+    
+    if len(rows) != 1:
         ret["status"] = "error" 
         ret["message"] = "User Not Found"
         return ret, 400
@@ -280,6 +282,7 @@ def User_Update(auth_args):
     ret["query"] = query
    
     return ret, 200
+
 
 if __name__ == '__main__' :
     print(__name__)
