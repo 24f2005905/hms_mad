@@ -15,12 +15,12 @@ CREATE TABLE Users (
 );
 
 CREATE TABLE Appointments (
-    Appointment_ID varchar(15) PRIMARY KEY ,
+    Appointment_ID varchar(64) PRIMARY KEY ,
     Patient_ID varchar(15) NOT NULL,
     Doctor_ID varchar(15) NOT NULL,
     Appointment_Date DATE NOT NULL,
     Appointment_Time TIME NOT NULL,
-    Appointment_Status Varchar(20) NOT NULL,
+    Appointment_Status Varchar(20) NOT NULL DEFAULT 'SCHEDULED',
     FOREIGN KEY (Patient_ID) REFERENCES Users(User_ID),
     FOREIGN KEY (Doctor_ID) REFERENCES Users(User_ID),
     CHECK (Patient_ID <> Doctor_ID),
@@ -64,7 +64,7 @@ CREATE VIEW Doctor_Lookup AS
 SELECT u.User_ID,
        u.First_Name,
        u.Last_Name,
-       GROUP_CONCAT(d.Speciality) AS Specilities
+       GROUP_CONCAT(d.Speciality) AS Specialities
 FROM Users u 
 JOIN Doctor_Dept dd ON u.User_ID = dd.Doctor_ID
 JOIN Departments d ON dd.Dept_ID = d.Dept_ID

@@ -855,7 +855,140 @@ def Doctor_Lookup(auth_args):
         doctor_details.append(doctor_dict)
     ret['doctor_details'] = doctor_details
     return ret, 200
+
+@app.route("/hms/appointment/create", methods=["POST"])
+@auth_wrapper
+def Appointment_Create(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
     
+    # Get the request body
+    req_json = request.get_json() 
+    
+    # Check for Mandatory Fields
+    if "Patient_ID" not in req_json or \
+        "Doctor_ID" not in req_json or \
+        "Appointment_Date" not in req_json or \
+        "Appointment_Time" not in req_json :
+        ret["status"] = "error"
+        ret["message"] = "Invalid request: Missing Mandatory Fields"
+        return ret, 400
+    
+    auth_token = auth_args['auth_token']
+    Doctor_ID = req_json["Doctor_ID"]
+    Patient_ID = req_json["Patient_ID"]
+    Appointment_Date = req_json["Appointment_Date"]
+    Appointment_Time = req_json["Appointment_Time"]
+
+    
+    #Check Role - ADMIN:Everyone, PATIENT: Himself, DOCTOR: None 
+    if auth_token['role'] == 'DOCTOR' or  \
+            (auth_token['role'] == 'PATIENT' and auth_token['user'] != Patient_ID):
+        ret["status"] = "error"
+        ret["message"] = "Unauthorized Action"
+        return ret, 403
+
+    #Check Doctor Status and Patient Status
+    doctor_search = text("SELECT User_Status from Users " \
+            f"WHERE User_ID = '{Doctor_ID}' AND User_Status = 'ACTIVE';")
+    patient_search = text("SELECT User_Status from Users " \
+            f"WHERE User_ID = '{Patient_ID}' AND User_Status = 'ACTIVE';")
+    
+    with app.app_context():
+        doc_result = db.session.execute(doctor_search)
+        pat_result = db.session.execute(patient_search)
+        doctor = doc_result.fetchone() 
+        patient = pat_result.fetchone()
+    
+    if ((not doctor) or (not patient)):
+        ret["status"] = "error"
+        ret["message"] = "Either Doctor or Patient does not exist"
+        return ret, 400
+    
+    #Check for appointment time  format 
+    try: 
+        _ = datetime.strptime(Appointment_Time, "%H:%M")
+        hour,min = Appointment_Time.split(':')
+        hour = int(hour)
+        min = int(min)
+
+        if (not (9 <= hour < 12) and not(14 <= hour < 17)) or \
+            (not (min % 15 == 0)):
+            ret["status"] = "error"
+            ret["message"] = "Invalid Time Slot"
+            return ret, 400
+        
+    except ValueError:
+         ret["status"] = "error"
+         ret["message"] = "Invalid Appointment_Time"
+         return ret, 400
+    
+
+    #Check Appt Date is in valid format
+    try:
+        _ = datetime.strptime(Appointment_Date,'%Y-%m-%d').date()
+    except:
+        ret["status"] = "error"
+        ret["message"] = "Invalid Date Format"
+        return ret, 400
+    
+    #Lookup Slot to see if Appt_Date is in date range
+    slot_lookup = text("SELECT Days_Available FROM Slots "\
+        f"WHERE Doctor_ID = '{Doctor_ID}' AND "\
+        f"('{Appointment_Date}' BETWEEN Start_Date AND End_Date) ")
+    with app.app_context():
+        slot_search = db.session.execute(slot_lookup)
+        details = slot_search.fetchone()
+    
+    if not details:
+        ret["status"] = "error"
+        ret["message"] = "Slots Unavailable"
+        return ret, 400
+
+    Days_Available = [d.lower() for d in  json.loads(details[0])]
+    # Figure out day of week from appt date and check in days available
+    day_of_week = datetime.strptime(Appointment_Date, "%Y-%m-%d").strftime("%a").lower()
+    if day_of_week not in Days_Available:
+        ret["status"] = "error"
+        ret["message"] = f"Doctor not available on {day_of_week.upper()}"
+        return ret, 400
+
+    #Check for existing appoinments in appointment table
+    appt_search_q = text("SELECT Appointment_ID FROM Appointments " \
+        f"WHERE Appointment_Date = '{Appointment_Date}' AND " \
+        f"Appointment_Time = '{Appointment_Time}' AND Doctor_ID = '{Doctor_ID}' " \
+        "AND Appointment_Status = 'SCHEDULED'")
+    
+    with app.app_context():
+        appt_search = db.session.execute(appt_search_q)
+        details = appt_search.fetchone()
+    
+    if details:
+        ret["status"] = "error"
+        ret["message"] = "Appointment Slot Taken"
+        return ret, 400
+    
+    #Generate Appointment_ID 
+    Appointment_ID = str(uuid.uuid4())
+    appt_create_q = text("INSERT INTO Appointments VALUES " \
+        f"('{Appointment_ID}', '{Patient_ID}', " \
+        f"'{Doctor_ID}', '{Appointment_Date}', '{Appointment_Time}', 'SCHEDULED')")
+    
+    with app.app_context():
+        appt_create = db.session.execute(appt_create_q)
+        db.session.commit()
+    
+    if appt_create.rowcount != 1:
+        ret["status"] = "error"
+        ret["message"] = "Unable to create appointment."
+        return ret, 500
+    
+    ret["Appointment_ID"] = Appointment_ID 
+    return ret, 200
 
 
 if __name__ == '__main__' :
@@ -874,7 +1007,7 @@ if __name__ == '__main__' :
     # Bind the db to the app
     db.init_app(app)
 
-    init_db(app.config["SQLALCHEMY_DATABASE_URI"], config_dict["ddl_path"]);
+    init_db(app.config["SQLALCHEMY_DATABASE_URI"], config_dict["ddl_path"])
 
     app.run(debug = True , port = config_dict['port'])
     

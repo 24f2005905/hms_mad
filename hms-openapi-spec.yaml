@@ -251,10 +251,6 @@ paths:
           in: query
           schema:
             type: string
-        - name: Appointment_ID
-          in: query
-          schema:
-            type: string
         - name: Appointment_Date
           in: query
           schema:
