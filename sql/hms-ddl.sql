@@ -45,11 +45,11 @@ CREATE TABLE Departments (
 CREATE TABLE Doctor_Dept (
     Doctor_ID varchar(15) NOT NULL,
     Dept_ID varchar(15) NOT NULL,
-    Dept_Postion Varchar(50) NOT NULL,
+    Dept_Position Varchar(50) NOT NULL,
     PRIMARY KEY (Doctor_ID, Dept_ID),
     FOREIGN KEY (Doctor_ID) REFERENCES Users(User_ID),
     FOREIGN KEY (Dept_ID) REFERENCES Departments(Dept_ID)
-    CHECK (Dept_Postion IN ('HOD','CONSULTANT','RESIDENT'))
+    CHECK (Dept_Position IN ('HOD','CONSULTANT','RESIDENT'))
 );
 
 CREATE TABLE Slots (

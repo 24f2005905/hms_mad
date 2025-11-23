@@ -643,8 +643,11 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    doctordeptobj:
-                      $ref: '#/components/schemas/DoctorDeptResponse'
+                    Doctor_ID:
+                      type: string
+                    Dept_ID:
+                      type: string
+                      
               
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -893,7 +896,7 @@ components:
         Phone_Number:
           type: string
         User_Profile:
-          type: string
+          type: object
         Password:
           type: string
         
@@ -910,7 +913,7 @@ components:
         Phone_Number:
           type: string
         User_Profile:
-          type: string
+          type: object
         Password: 
           type: string
     
@@ -928,7 +931,7 @@ components:
         Phone_Number:
           type: string
         User_Profile:
-          type: string
+          type: object
 
     # Appointments
     AppointmentCreate:
@@ -1004,7 +1007,7 @@ components:
    
     DoctorDeptAdd:
       type: object
-      required: [Doctor_ID, Dept_ID]
+      required: [Doctor_ID, Dept_ID,Dept_Position]
       properties:
         Doctor_ID:
           type: string
@@ -1013,13 +1016,7 @@ components:
         Dept_Position: 
           type: string 
           enum: ['HOD','CONSULTANT','RESIDENT']
-   
-    DoctorDeptResponse:
-      type: object
-      properties:
-        Doctor_ID: { type: string }
-        Dept_ID: { type: string }
-
+  
     # Slots
     SlotsObj:
       type: object
@@ -1062,9 +1059,6 @@ components:
         Doctor_ID: { type: string }
         Days_Available: { type: string }
 
-
-  
-   
     Error:
       type: object
       properties:

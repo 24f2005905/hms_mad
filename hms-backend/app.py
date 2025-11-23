@@ -160,7 +160,7 @@ def User_Create(auth_args):
         "Last_Name": req_json.get("Last_Name",""),
         "User_Type": User_Type,
         "Phone_Number": req_json["Phone_Number"],
-        "User_Profile": req_json.get("User_Profile",""),
+        "User_Profile": json.dumps(req_json.get("User_Profile",{})),
         "Password": req_json["Password"]
     }
     with app.app_context():
@@ -205,6 +205,7 @@ def User_Lookup(auth_args):
             auth_token['role'] == 'DOCTOR' and row_dict['User_ID'][0] == 'P' and \
                  row_dict['User_Status'] == 'ACTIVE' or \
             auth_token['user'] == row_dict['User_ID']:
+            row_dict['User_Profile'] = json.loads(row_dict['User_Profile'])
             user_details.append(row_dict)
 
     ret['user_details'] = user_details 
@@ -259,7 +260,12 @@ def User_Update(auth_args):
         
         if column_name == 'User_ID':
             continue 
-        updates.append(f"{column_name} = '{req_json[column_name]}'")
+
+        column_data = req_json[column_name] \
+            if column_name != "User_Profile" else \
+            json.loads(req_json[column_name])
+        updates.append(f"{column_name} = '{column_data}'")
+        
     
     if not updates:
         ret["status"] = "error" 
@@ -647,6 +653,111 @@ def Slots_Lookup(auth_args):
 
     return ret, 200
 
+@app.route("/hms/departments/assign", methods=["POST"])
+@auth_wrapper
+def Assign_Doctor(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+
+    # Get the request body
+    req_json = request.get_json()
+
+    #Enforce Roles 
+    if auth_token['role'] != 'ADMIN':
+        ret["status"] = "error"
+        ret["message"] = "Unauthorized Action"
+        return ret, 403 
+
+    #Check Mandatory Fields
+    if "Doctor_ID" not in req_json or \
+        "Dept_ID" not in req_json or \
+        "Dept_Position" not in req_json :
+        ret["status"] = "error"
+        ret["message"] = "Invalid request: Missing Mandatory Fields"
+        return ret, 400
+    
+    Doctor_ID = req_json["Doctor_ID"]
+    Dept_ID = req_json["Dept_ID"]
+    Dept_Position = req_json["Dept_Position"]
+
+    #Check existence of user and whether the user is a doctor and active
+    user_search= "SELECT User_ID FROM Users " \
+        f"WHERE User_ID = '{req_json['Doctor_ID']}' AND " \
+        "User_Status = 'ACTIVE' and User_Type = 'DOCTOR'"
+    with app.app_context():
+        result = db.session.execute(text(user_search))
+        rows = result.fetchone()
+    
+    if not rows :
+        ret["status"] = "error"
+        ret["message"] = "Invalid Doctor ID"
+        return ret, 400
+    
+    #Check existence of department
+    dept_search= "SELECT Dept_ID FROM Departments " \
+        f"WHERE Dept_ID = '{Dept_ID}';"
+    with app.app_context():
+        result = db.session.execute(text(dept_search))
+        rows = result.fetchone()
+    
+    if not rows :
+        ret["status"] = "error"
+        ret["message"] = f"Department does not exist"
+        return ret, 400
+
+    #Only one HOD in department
+    if Dept_Position == 'HOD':
+        hod_search = text("SELECT Dept_Position FROM Doctor_Dept "\
+                        f"WHERE Dept_ID = '{Dept_ID}' AND Dept_Position = 'HOD';")
+        with app.app_context():
+            result = db.session.execute(hod_search)
+            rows = result.fetchall()
+        
+        if len(rows) > 0:
+             ret["status"] = "error"
+             ret["message"] = "HOD for department already exists"
+             return ret, 400
+        
+    #Check if doctor already assigned
+    doctor_search = text("SELECT Doctor_ID, Dept_ID, Dept_Position from Doctor_Dept "\
+                         f"WHERE Doctor_ID = '{Doctor_ID}' AND Dept_ID = '{Dept_ID}'")
+    with app.app_context():
+        result = db.session.execute(doctor_search)
+        rows = result.fetchone()
+    
+    if rows:
+        Current_Position = rows[2]
+        if Current_Position == Dept_Position:
+            ret["status"] = "error"
+            ret["message"] = "Doctor already assigned to department"
+            return ret, 400
+        # Delete the Doctor-Dept entry and insert new one
+        doctor_del = text("DELETE FROM Doctor_Dept WHERE " \
+                        f"Doctor_ID = '{Doctor_ID}' and Dept_ID = '{Dept_ID}';")
+        with app.app_context():
+            result = db.session.execute(doctor_del)
+            db.session.commit()
+        if result.rowcount == 0:
+            ret["status"] = "error"
+            ret["message"] = "DB Update error on delete"
+            return ret, 500
+        
+    doctor_assign = text("INSERT INTO Doctor_Dept(Doctor_ID,Dept_ID, Dept_Position) VALUES "\
+                         f"('{Doctor_ID}', '{Dept_ID}', '{Dept_Position}');" )
+    with app.app_context():
+            result = db.session.execute(doctor_assign)
+            db.session.commit()
+    
+    ret["Doctor_ID"] = Doctor_ID
+    ret["Dept_ID"] = Dept_ID 
+    return ret, 200
+    
+    
 
 if __name__ == '__main__' :
     print(__name__)
