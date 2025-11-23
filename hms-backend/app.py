@@ -1013,7 +1013,8 @@ def Appointment_Lookup(auth_args):
         param_json.pop('Appointment_Status')
 
     User_ID = auth_token['user']
-    User_Type = auth_token['role']
+    User_Role = auth_token['role']
+
     match_clauses = []
 
     for key in ['Patient_ID','Doctor_ID','Appointment_Date','Appointment_Status']:
@@ -1032,10 +1033,10 @@ def Appointment_Lookup(auth_args):
             
             match_clauses.append(f"{key} = '{param_json[key]}'")
     
-    if auth_token['role'] == 'PATIENT':
-        match_clauses.append(f"Patient_ID = '{auth_token['user']}'")
-    elif auth_token['role'] == 'DOCTOR':
-        match_clauses.append(f"Doctor_ID = '{auth_token['user']}'")
+    if User_Role == 'PATIENT':
+        match_clauses.append(f"Patient_ID = '{User_ID}'")
+    elif User_Role == 'DOCTOR':
+        match_clauses.append(f"Doctor_ID = '{User_ID}'")
     else:
         if "Patient_ID" not in param_json and \
             "Doctor_ID" not in param_json and \
@@ -1062,7 +1063,79 @@ def Appointment_Lookup(auth_args):
     ret["appointment_details"] = appt_details
     return ret, 200
 
+@app.route("/hms/appointment/update", methods=["PUT"])
+@auth_wrapper
+def Appointment_Update(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+    
+    User_ID = auth_token['user']
+    User_Role = auth_token['role']
+    
+    # Get the request body
+    param_json = request.args.to_dict()
+    if "Appointment_ID" not in param_json or \
+        "Appointment_Status" not in param_json or \
+        param_json["Appointment_Status"] not in ['COMPLETED','CANCELLED']:
+        ret["status"] = "error"
+        ret["message"] = "Invalid Parameters"
+        return ret, 400
+    
+    Appointment_ID = param_json["Appointment_ID"]
+    Appointment_Status = param_json["Appointment_Status"]
 
+
+    #Check Appointment Exists 
+    appt_query = "SELECT Patient_ID, Doctor_ID FROM Appointments WHERE " \
+        f"Appointment_ID = '{Appointment_ID}' AND " \
+        "Appointment_Status = 'SCHEDULED' " 
+    
+    if Appointment_Status == 'COMPLETED':
+        appt_query += " AND Appointment_Date <= CURRENT_DATE"
+    
+    with app.app_context():
+        result = db.session.execute(text(appt_query))
+        row = result.fetchone()
+    
+    if not row:
+        ret["status"] = "error"
+        ret["message"] = "Appointment Not Found"
+        return ret, 400
+    
+
+    #Enforce Role
+    if (User_Role == 'PATIENT' and \
+            (User_ID != row[0] or Appointment_Status != "CANCELLED")) or \
+        (User_Role == 'DOCTOR' and \
+            (User_ID != row[1] or Appointment_Status != "COMPLETED")) or \
+        (User_Role == 'ADMIN' and \
+            Appointment_Status != 'CANCELLED'):
+        ret["status"] = "error"
+        ret["message"] = "Appointment Update Unauthorized"
+        return ret, 403
+    
+    #Update the database 
+    update_query = "UPDATE Appointments SET " \
+        f"Appointment_Status = '{Appointment_Status}' WHERE " \
+        f"Appointment_ID = '{Appointment_ID}'"
+    
+    with app.app_context():
+        result = db.session.execute(text(update_query))
+        db.session.commit()
+    
+    if result.rowcount != 1:
+        ret["status"] = "error"
+        ret["message"] = "Appointment Update Failed"
+        return ret, 500
+
+    ret["Appointment_ID"] = Appointment_ID
+
+    return ret, 200
 
 if __name__ == '__main__' :
     print(__name__)

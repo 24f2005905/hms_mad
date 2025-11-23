@@ -285,17 +285,21 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   /hms/appointment/update:
-    post:
+    put:
       summary: Update appointment
       tags: [Appointments]
       security:
         - JWT: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AppointmentUpdate'
+      parameters:
+        - name: Appointment_ID
+          in: query
+          schema:
+            type: string
+        - name: Appointment_Status
+          in: query
+          schema:
+            type: string
+            enum: [COMPLETED, CANCELLED]
       responses:
         "200":
           description: Appointment updated
@@ -915,19 +919,7 @@ components:
         Appointment_Status:
           type: string
           enum: [SCHEDULED, COMPLETED, CANCELLED]
-    AppointmentUpdate:
-      type: object
-      required:
-        - Appointment_ID
-      properties:
-        Appointment_ID:
-          type: string
-        Appointment_Status:
-          type: string
-          enum: [SCHEDULED, COMPLETED, CANCELLED]
     
-  
-
     # Treatments
     TreatmentCreate:
       type: object
