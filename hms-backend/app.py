@@ -707,7 +707,7 @@ def Assign_Doctor(auth_args):
     
     if not rows :
         ret["status"] = "error"
-        ret["message"] = f"Department does not exist"
+        ret["message"] = "Department does not exist"
         return ret, 400
 
     #Only one HOD in department
@@ -757,7 +757,106 @@ def Assign_Doctor(auth_args):
     ret["Dept_ID"] = Dept_ID 
     return ret, 200
     
+@app.route("/hms/departments/unassign", methods=["DELETE"])
+@auth_wrapper
+def Unassign_Doctor(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+
+    #Get parameters
+    param_json = request.args.to_dict()
+    Doctor_ID = param_json["Doctor_ID"]
+    Dept_ID = param_json["Dept_ID"]
+
+    #Enforce Roles 
+    if auth_token['role'] != 'ADMIN':
+        ret["status"] = "error"
+        ret["message"] = "Unauthorized Action"
+        return ret, 403 
     
+    #Check existence of user and whether the user is a doctor 
+    user_search= "SELECT User_ID FROM Users " \
+        f"WHERE User_ID = '{param_json['Doctor_ID']}' AND " \
+        "User_Type = 'DOCTOR'"
+    with app.app_context():
+        result = db.session.execute(text(user_search))
+        rows = result.fetchone()
+    
+    if not rows :
+        ret["status"] = "error"
+        ret["message"] = "Invalid Doctor ID"
+        return ret, 400
+
+    #Check if doctor already assigned
+    doctor_search = text("SELECT Doctor_ID, Dept_ID, Dept_Position from Doctor_Dept "\
+                         f"WHERE Doctor_ID = '{Doctor_ID}' AND Dept_ID = '{Dept_ID}'")
+    with app.app_context():
+        result = db.session.execute(doctor_search)
+        rows = result.fetchone()
+    
+    if not rows:
+        ret["status"] = "error"
+        ret["message"] = "Doctor does not belong to this department."
+        return ret, 400
+    
+    #Unassign Doctor Query
+    doctor_del = text("DELETE FROM Doctor_Dept WHERE " \
+                        f"Doctor_ID = '{Doctor_ID}' and Dept_ID = '{Dept_ID}';")
+    with app.app_context():
+            result = db.session.execute(doctor_del)
+            db.session.commit()
+    if result.rowcount == 0:
+            ret["status"] = "error"
+            ret["message"] = "DB Update error on delete"
+            return ret, 500
+    
+    ret["Doctor_ID"] = Doctor_ID 
+    return ret, 200 
+
+@app.route("/hms/departments/doctor-lookup", methods=["GET"])
+@auth_wrapper
+def Doctor_Lookup(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    
+    #Get parameters
+    param_json = request.args.to_dict()
+    
+
+    #Generate lookup query
+    match_clauses = []
+    for key in ['Specialities','First_Name','Last_Name']:
+        if key in param_json:
+            match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
+    
+    query = "SELECT * FROM Doctor_Lookup "
+
+    if len(match_clauses):
+        query += " WHERE "
+        query += " AND ".join(match_clauses)
+
+    print(query)
+    with app.app_context():
+        doctor_lookup = db.session.execute(text(query))
+        doctors = doctor_lookup.fetchall() 
+    
+    doctor_details = []
+    for doctor in doctors:
+        doctor_dict = (dict(doctor._mapping))
+        doctor_details.append(doctor_dict)
+    ret['doctor_details'] = doctor_details
+    return ret, 200
+    
+
 
 if __name__ == '__main__' :
     print(__name__)

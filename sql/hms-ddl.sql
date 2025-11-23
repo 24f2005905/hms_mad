@@ -60,7 +60,18 @@ CREATE TABLE Slots (
     FOREIGN KEY (Doctor_ID) REFERENCES Users(User_ID)
 );
 
-/*
+CREATE VIEW Doctor_Lookup AS 
+SELECT u.User_ID,
+       u.First_Name,
+       u.Last_Name,
+       GROUP_CONCAT(d.Speciality) AS Specilities
+FROM Users u 
+JOIN Doctor_Dept dd ON u.User_ID = dd.Doctor_ID
+JOIN Departments d ON dd.Dept_ID = d.Dept_ID
+WHERE u.User_Type = 'DOCTOR' AND u.User_Status = 'ACTIVE'
+GROUP BY u.User_ID, u.First_Name, u.Last_Name;
+
+/* 
 ALTER TABLE Appointments
 ADD CONSTRAINT unique_appointment UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time);*/
 
