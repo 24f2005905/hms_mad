@@ -22,7 +22,9 @@ Valid_User_Column = [
     "User_Type", "Phone_Number","User_Profile",
     "Password"
 ]
-
+Valid_Days_Of_Week = [
+    "mon", "tue", "wed", "thu", "fri", "sat", "sun"
+]
 
 def init_db(db_uri, ddl_f_name):
     db_f_name = db_uri.removeprefix("sqlite:///")
@@ -69,7 +71,7 @@ def id_token_generate():
     User_ID = req_json["User_ID"]
     Password = req_json["Password"]
 
-    query = text("SELECT User_Type, Password FROM Users WHERE User_ID = :user_id")
+    query = text("SELECT User_Type, Password, User_Status FROM Users WHERE User_ID = :user_id and User_Status = 'ACTIVE'")
     password = None
     with app.app_context():
         result = db.session.execute(query,{"user_id": User_ID})
@@ -77,6 +79,7 @@ def id_token_generate():
         if details:
             Role = details[0]
             password = details[1] #Fetch password corresponding to User_ID
+
     
     #Password verification
     if not password:
@@ -188,7 +191,7 @@ def User_Lookup(auth_args):
     if len(match_clauses):
         query += " WHERE "
         query += " AND ".join(match_clauses)
-    print(f"QUERY: {query}")
+  
     with app.app_context():
         result = db.session.execute(text(query))
         rows = result.fetchall() 
@@ -199,7 +202,8 @@ def User_Lookup(auth_args):
         row_dict.pop('Password')
         row_dict.pop('id')
         if auth_token['role'] == 'ADMIN' or \
-            auth_token['role'] == 'DOCTOR' and row_dict['User_ID'][0] == 'P' or \
+            auth_token['role'] == 'DOCTOR' and row_dict['User_ID'][0] == 'P' and \
+                 row_dict['User_Status'] == 'ACTIVE' or \
             auth_token['user'] == row_dict['User_ID']:
             user_details.append(row_dict)
 
@@ -267,9 +271,10 @@ def User_Update(auth_args):
 
     with app.app_context():
         result = db.session.execute(text(query))
+        row = result.fetchall()
         db.session.commit()
     
-    if result.rowcount != 1:
+    if row.rowcount != 1:
         ret["status"] = "error" 
         ret["message"] = "Failed to update"
         return ret, 400
@@ -322,7 +327,7 @@ def User_Delete(auth_args):
         return ret, 400
     
     #Query for deletion
-    query =  f"DELETE FROM Users WHERE User_ID = '{User_ID}';"
+    query =  f"UPDATE Users SET User_Status = 'INACTIVE' WHERE User_ID = '{User_ID}';"
     with app.app_context():
         result = db.session.execute(text(query))
         db.session.commit()
@@ -475,7 +480,173 @@ def Dept_Delete(auth_args):
         db.session.commit()
     ret["Dept_ID"] = Dept_ID 
     return ret, 200
+
+@app.route("/hms/slots/create", methods=["POST"])
+@auth_wrapper
+def Slots_Create(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+    # Get the request body
+    req_json = request.get_json()  
+
+    #Checking for mandatory fields
+    if "Doctor_ID" not in req_json or \
+        "Days_Available" not in req_json or \
+        "Start_Date" not in req_json or \
+        "End_Date" not in req_json:
+        ret["status"] = "error"
+        ret["message"] = "Invalid request: Missing Mandatory Fields"
+        return ret, 400 
     
+    #Enforcing Role 
+    if auth_token['role'] == 'PATIENT' or \
+        (auth_token['role'] == 'DOCTOR' and auth_token['user'] != req_json["Doctor_ID"]):
+        ret["status"] = "error"
+        ret["message"] = "Unauthorized"
+        return ret, 400
+    
+    #Check Valid User 
+    query_1 = "SELECT User_ID FROM Users " \
+        f"WHERE User_ID = '{req_json['Doctor_ID']}' AND " \
+        "User_Status = 'ACTIVE'"
+    with app.app_context():
+        result = db.session.execute(text(query_1))
+        rows = result.fetchone()
+    
+    if len(rows) != 1 :
+        ret["status"] = "error"
+        ret["message"] = "Invalid User"
+        return ret, 400
+    
+    #Check valid date format
+    try:
+        Start_Date = datetime.strptime(req_json["Start_Date"],'%Y-%m-%d').date()
+        End_Date = datetime.strptime(req_json["End_Date"],'%Y-%m-%d').date()
+        if End_Date < Start_Date:
+             ret["status"] = "error"
+             ret["message"] = "Invalid Date Range"
+             return ret, 400
+    except:
+        ret["status"] = "error"
+        ret["message"] = "Invalid Date Format"
+        return ret, 400
+    
+    #Define valid day of week 
+    for day in req_json["Days_Available"]:
+        if day.lower() not in Valid_Days_Of_Week:
+            ret["status"] = "error"
+            ret["message"] = "Invalid Day Of Week"
+            return ret, 400
+
+   #Check existence of Doctor_ID
+    query_2 = text("SELECT Doctor_ID,Start_Date,End_Date FROM Slots WHERE Doctor_ID = :Doctor_ID")
+    with app.app_context():
+        result = db.session.execute(query_2,{"Doctor_ID": req_json["Doctor_ID"]})
+        rows = result.fetchone()
+   
+   #If Doctor_ID exists, update row instead
+    if rows:
+        print(rows)
+        Old_Start_Date = rows[1]
+        Old_End_Date = rows[2]
+        
+        open_app_query = "SELECT Appointment_ID FROM Appointments  " \
+            "WHERE Appointment_Status = 'SCHEDULED' AND " \
+            f"Doctor_ID = '{req_json['Doctor_ID']}' AND " \
+            f"(Appointment_Date BETWEEN '{Old_Start_Date}' AND '{Old_End_Date}');"
+        
+        print(open_app_query)
+        
+        with app.app_context():
+            open_appointments = db.session.execute(text(open_app_query))
+            rows = open_appointments.fetchall()
+
+        if len(rows):
+            ret["status"] = "error" 
+            ret["message"] = "Clear Existing Appointments before updating slots"
+            return ret, 400 
+
+        # There are no existing appointments. Delete the old Slot
+        del_old_slot_q = text(f"DELETE from Slots WHERE Doctor_ID = '{req_json['Doctor_ID']}'")
+        with app.app_context():
+            del_old_slots = db.session.execute(del_old_slot_q)
+            #row = del_old_slots.fetchall()
+            db.session.commit()
+        
+        if del_old_slots.rowcount != 1:
+            ret["status"] = "error" 
+            ret["message"] = "Error Deleting Old Slot"
+            return ret, 500 
+            
+       
+
+    #Creating new slot      
+    query_3 = text("INSERT INTO Slots  " \
+    "(Doctor_ID, Days_Available, Start_Date, End_Date) VALUES "\
+    "(:Doctor_ID, :Days_Available, :Start_Date, :End_Date)")
+
+    query_3_dict = {
+        "Doctor_ID": req_json["Doctor_ID"], "Days_Available": json.dumps(req_json["Days_Available"]), 
+        "Start_Date": req_json["Start_Date"], "End_Date": req_json["End_Date"]
+        }
+    
+    with app.app_context():
+        result = db.session.execute(query_3,query_3_dict)
+        db.session.commit()
+
+    ret["Doctor_ID"] = req_json['Doctor_ID']
+    return ret, 200
+
+@app.route("/hms/slots/lookup", methods=["GET"])
+@auth_wrapper
+def Slots_Lookup(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+   
+    #Get parameters
+    param_json = request.args.to_dict()
+    Doctor_ID = param_json["Doctor_ID"]
+
+    #Check Current Date
+    Current_Date = datetime.now().strftime("%Y-%m-%d") 
+
+    #Check Doctor_Status 
+    doctor_status_q = text("SELECT User_Status FROM Users " \
+                          f"WHERE User_ID = '{Doctor_ID}' AND User_Status = 'ACTIVE'")
+    with app.app_context():
+        result = db.session.execute(doctor_status_q)
+        doctor_status = result.fetchone()
+    
+    if not doctor_status:
+        ret["status"] = "error"
+        ret["message"] = "Doctor Inactive"
+        return ret, 400
+     
+
+    doc_lookup_q = text(f"SELECT Doctor_ID, Days_Available FROM Slots WHERE Doctor_ID = '{Doctor_ID}' AND '{Current_Date}' BETWEEN Start_Date AND End_Date")
+    with app.app_context():
+        result = db.session.execute(doc_lookup_q)
+        doctors = result.fetchone() 
+    
+    if not doctors:
+        ret["status"] = "error"
+        ret["message"] = "Doctor Currently Unavailable"
+        return ret, 400
+    
+    ret["Doctor_ID"] = doctors[0]
+    ret["Availabliity"] = json.loads(doctors[1])
+
+    return ret, 200
+
 
 if __name__ == '__main__' :
     print(__name__)

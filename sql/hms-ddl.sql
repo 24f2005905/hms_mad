@@ -8,8 +8,10 @@ CREATE TABLE Users (
     User_Type Varchar(10) NOT NULL ,
     Phone_Number Varchar(15) NOT NULL,
     User_Profile TEXT NULL,
-    Password Varchar(255) NOT NULL 
+    Password Varchar(255) NOT NULL,
+    User_Status Varchar(10) DEFAULT 'ACTIVE' NOT NULL,
     CHECK(User_Type IN ('ADMIN', 'DOCTOR', 'PATIENT'))
+    CHECK(User_Status IN ('ACTIVE', 'INACTIVE'))
 );
 
 CREATE TABLE Appointments (
@@ -23,7 +25,7 @@ CREATE TABLE Appointments (
     FOREIGN KEY (Doctor_ID) REFERENCES Users(User_ID),
     CHECK (Patient_ID <> Doctor_ID),
     CHECK (Appointment_Status IN ('SCHEDULED', 'COMPLETED', 'CANCELLED'))
-);
+);  
 
 CREATE TABLE Treatments (
     Appointment_ID varchar(15) PRIMARY KEY,
@@ -53,12 +55,9 @@ CREATE TABLE Doctor_Dept (
 CREATE TABLE Slots (
     Doctor_ID varchar(15) PRIMARY KEY ,
     Days_Available TEXT NOT NULL,
-    Time_Slots TEXT NOT NULL,
-    FOREIGN KEY (Doctor_ID) REFERENCES Users(User_ID),
-    CHECK (
-        Time_Slots GLOB '[0-2][0-9]:[0-5][0-9]'
-    AND substr(Time_Slots, 4, 2) IN ('00', '15', '30', '45')
-    )
+    Start_Date DATE NOT NULL,
+    End_Date DATE NOT NULL,
+    FOREIGN KEY (Doctor_ID) REFERENCES Users(User_ID)
 );
 
 /*
@@ -66,4 +65,4 @@ ALTER TABLE Appointments
 ADD CONSTRAINT unique_appointment UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time);*/
 
 INSERT INTO Users VALUES
-    (1,"ADMIN","Admin","Superuser","ADMIN","9999999999",NULL,"admin");
+    (1,"ADMIN","Admin","Superuser","ADMIN","9999999999",NULL,"admin","ACTIVE")

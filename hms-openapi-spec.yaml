@@ -7,8 +7,6 @@ info:
     Authentication uses an apiKey-style JWT passed in the Authorization header as "Bearer <token>".
   x-source-file: "/mnt/data/rough-api-2.txt"
 servers:
-  - url: https://api.example.com
-    description: Production server
   - url: http://localhost:9000
     description: Local development
 
@@ -780,20 +778,16 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   /hms/slots/lookup:
-    post:
+    get:
       summary: Lookup doctor's slots (POST as per draft)
       tags: [Slots]
       security:
         - JWT: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                Doctor_ID:
-                  type: string
+      parameters:
+        - name: Doctor_ID
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Slots returned
@@ -806,42 +800,7 @@ paths:
                     status: 
                       $ref: '#/components/schemas/API-Status'     
                     slots_details:
-                      $ref: '#/components/schemas/SlotsObj' 
-              
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "500":
-          $ref: '#/components/responses/ServerError'
-
-  /hms/slots/update:
-    post:
-      summary: Update doctor's slots
-      tags: [Slots]
-      security:
-        - JWT: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SlotsUpdate'
-      responses:
-        "200":
-          description: Slots updated
-          content:
-            application/json:
-              schema:
-                description : Updated Slots Details
-                type : object 
-                properties:  
-                    status: 
-                      $ref: '#/components/schemas/API-Status'
-                    slotsObj:
-                      $ref: '#/components/schemas/SlotsResponse'
+                      $ref: '#/components/schemas/SlotsResponse'               
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -1064,16 +1023,23 @@ components:
     # Slots
     SlotsObj:
       type: object
-      required: [Doctor_ID, Days_Available, Time_Slots]
+      required: [Doctor_ID, Days_Available,Start_Date, End_Date]
       properties:
         Doctor_ID:
           type: string
         Days_Available:
-          type: string
+          type: array
           description: "E.g. Mon-Fri, or comma-separated days"
-        Time_Slots:
+          items:
+            type: string
+        Start_Date:
           type: string
-          description: "E.g. 09:00-11:00,13:00-15:00"
+          description: "Start date for the slots"
+          format: YYYY-MM-DD
+        End_Date:
+          type: string
+          description: "End date for the slots"
+          format: YYYY-MM-DD
     FreeSlotsObj:
       type: object
       required: [Doctor_ID,Appointment_Date, Free_Slots]
@@ -1090,22 +1056,12 @@ components:
           items:
             type: string
             
-    SlotsUpdate:
-      type: object
-      required: [Doctor_ID]
-      properties:
-        Doctor_ID:
-          type: string
-        Days_Available:
-          type: string
-        Time_Slots:
-          type: string
     SlotsResponse:
       type: object
       properties:
         Doctor_ID: { type: string }
         Days_Available: { type: string }
-        Time_Slots: { type: string }
+
 
   
    
