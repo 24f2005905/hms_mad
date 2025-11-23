@@ -26,6 +26,10 @@ Valid_Days_Of_Week = [
     "mon", "tue", "wed", "thu", "fri", "sat", "sun"
 ]
 
+Valid_Appt_Status = [
+    "SCHEDULED", "COMPLETED", "CANCELLED"
+]
+
 def init_db(db_uri, ddl_f_name):
     db_f_name = db_uri.removeprefix("sqlite:///")
     if os.path.exists(db_f_name): #Check if db already exists 
@@ -989,6 +993,75 @@ def Appointment_Create(auth_args):
     
     ret["Appointment_ID"] = Appointment_ID 
     return ret, 200
+
+@app.route("/hms/appointments/lookup", methods=["GET"])
+@auth_wrapper
+def Appointment_Lookup(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+    
+    #Get parameters
+    param_json = request.args.to_dict()
+    if 'Appointment_Status' not in param_json:
+        param_json['Appointment_Status'] = 'SCHEDULED'
+    elif param_json['Appointment_Status'] == 'ALL':
+        param_json.pop('Appointment_Status')
+
+    User_ID = auth_token['user']
+    User_Type = auth_token['role']
+    match_clauses = []
+
+    for key in ['Patient_ID','Doctor_ID','Appointment_Date','Appointment_Status']:
+        if key in param_json:
+            # Enforce date format
+            try:
+                if key == 'Appointment_Date':
+                    _ = datetime.strptime(param_json[key],'%Y-%m-%d').date()
+                if key == 'Appointment_Status' and \
+                    param_json[key] not in Valid_Appt_Status:
+                    raise Exception("Invalid Appointment Status")
+            except:
+                ret["status"] = "error"
+                ret["message"] = "Invalid Search parameter"
+                return ret, 400
+            
+            match_clauses.append(f"{key} = '{param_json[key]}'")
+    
+    if auth_token['role'] == 'PATIENT':
+        match_clauses.append(f"Patient_ID = '{auth_token['user']}'")
+    elif auth_token['role'] == 'DOCTOR':
+        match_clauses.append(f"Doctor_ID = '{auth_token['user']}'")
+    else:
+        if "Patient_ID" not in param_json and \
+            "Doctor_ID" not in param_json and \
+            "Appointment_Date" not in param_json:
+            ret["status"] = "error"
+            ret["message"] = "ADMIN must use one of the filters"
+            return ret, 400
+        
+    query = "SELECT * FROM Appointments "
+    if len(match_clauses):
+        query += " WHERE "
+        query += " AND ".join(match_clauses)
+  
+    with app.app_context():
+        result = db.session.execute(text(query))
+        rows = result.fetchall() 
+    
+    appt_details = []
+    for appt_ent in rows:
+        row_dict = (dict(appt_ent._mapping))
+        row_dict.pop('Appointment_ID')
+        appt_details.append(row_dict)
+    
+    ret["appointment_details"] = appt_details
+    return ret, 200
+
 
 
 if __name__ == '__main__' :

@@ -259,7 +259,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [SCHEDULED, COMPLETED, CANCELLED]
+            enum: [SCHEDULED, COMPLETED, CANCELLED, ALL]
       responses:
         "200":
           description: Appointment(s) returned
@@ -309,42 +309,6 @@ paths:
                       $ref: '#/components/schemas/API-Status'
                     Appointment_ID:
                       type: string
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "500":
-          $ref: '#/components/responses/ServerError'
-
-  /hms/appointments/delete:
-    delete:
-      summary: Cancel / delete appointment
-      tags: [Appointments]
-      security:
-        - JWT: []
-      parameters:
-        - in: query
-          name: Appointment_ID
-          description: Delete by Appointment_ID
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Appointment deleted
-          content:
-            application/json:
-              schema:
-                description: Appointment Deletion Response
-                type: object
-                properties:
-                    status: 
-                      $ref: '#/components/schemas/API-Status'
-                    Appointment_ID:
-                      type: string
-                
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -948,6 +912,9 @@ components:
         Appointment_Time:
           type: string
           description: "Time in HH:MM"
+        Appointment_Status:
+          type: string
+          enum: [SCHEDULED, COMPLETED, CANCELLED]
     AppointmentUpdate:
       type: object
       required:
