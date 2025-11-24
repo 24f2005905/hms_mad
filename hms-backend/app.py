@@ -1365,9 +1365,89 @@ def Treatment_Lookup(auth_args):
     ret["treatment_details"] = treatment_details
     return ret, 200
     
+@app.route("/hms/slots/availability", methods=["GET"])
+@auth_wrapper
+def Available_Slots(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    
+    #Get parameters
+    param_json = request.args.to_dict()
+
+     # Check for Mandatory Fields
+    if "Doctor_ID" not in param_json or \
+        "Appointment_Date" not in param_json:
+        ret["status"] = "error"
+        ret["message"] = "Invalid request: Missing Mandatory Fields"
+        return ret, 400
+    
+    Doctor_ID = param_json["Doctor_ID"]
+    Appointment_Date = param_json["Appointment_Date"]
+
+    #Creating Slots 9:00 - 12:00, 14:00-17:00
+    Free_Slots = ["9:00", "9:15", "9:30", "9:45",
+        "10:00", "10:15", "10:30", "10:45",
+        "11:00", "11:15", "11:30", "11:45", 
+        "14:00", "14:15", "14:30", "14:45", 
+        "15:00", "15:15", "15:30", "15:45",
+        "16:00", "16:15", "16:30", "16:45"]
 
 
+    #Check Appt Date is in valid format
+    try:
+        _ = datetime.strptime(Appointment_Date,'%Y-%m-%d').date()
+    except:
+        ret["status"] = "error"
+        ret["message"] = "Invalid Date Format"
+        return ret, 400
+    
+    #Lookup Slot to see if Appt_Date is in date range
+    slot_lookup = text("SELECT Days_Available FROM Slots "\
+        f"WHERE Doctor_ID = '{Doctor_ID}' AND "\
+        f"('{Appointment_Date}' BETWEEN Start_Date AND End_Date) ")
+    with app.app_context():
+        slot_search = db.session.execute(slot_lookup)
+        details = slot_search.fetchone()
+    
+    if not details:
+        ret["status"] = "error"
+        ret["message"] = "Slots Unavailable"
+        return ret, 400
+   
+    Days_Available = json.loads(details[0])
+    # Figure out day of week from appt date and check in days available
+    day_of_week = datetime.strptime(Appointment_Date, "%Y-%m-%d").strftime("%a").lower()
+    if day_of_week not in [d.lower() for d in Days_Available]:
+        ret["status"] = "error"
+        ret["message"] = f"Doctor not available on {day_of_week.upper()}"
+        return ret, 400
+    
+    #Find Appointments already booked on Date
+    appt_search_q = text("SELECT Appointment_Time FROM Appointments "\
+        f"WHERE Appointment_Date = '{Appointment_Date}' AND " \
+        f"Doctor_ID = '{Doctor_ID}' AND Appointment_Status = 'SCHEDULED'")
+    print(appt_search_q)
+    with app.app_context():
+        appt_search = db.session.execute(appt_search_q)
+        booked_slots = appt_search.fetchall()
+    
+    if not booked_slots:
+        ret['Free_Slots'] = Free_Slots
+        return ret, 200
+    
+    for i in range(0,len(booked_slots)):
+        slot = booked_slots[i][0]
+        if slot in Free_Slots:
+            Free_Slots.remove(slot)
+    
+    ret['Free_Slots'] = Free_Slots
+    return ret, 200
 
+    
 if __name__ == '__main__' :
     print(__name__)
     # Read the config from config.json

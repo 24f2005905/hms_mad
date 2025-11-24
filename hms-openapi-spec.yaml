@@ -762,10 +762,11 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'   
-                    available_doctors:
-                      $ref: '#/components/schemas/FreeSlotsObj'
-                      
-               
+                    available_slots:
+                      type: array
+                      items: 
+                        type: string
+
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -950,21 +951,7 @@ components:
           type: string
           description: "End date for the slots"
           format: YYYY-MM-DD
-    FreeSlotsObj:
-      type: object
-      required: [Doctor_ID,Appointment_Date, Free_Slots]
-      properties:
-        Doctor_ID:
-          type: string
-        Appointment_Date:
-          type: string
-          description: "Date of appointment"
-        Free_Slots:
-          type: array
-          description: "E.g. [09:00,9:15]"
-          example: ["10:00", "11:15"]
-          items:
-            type: string
+
             
     SlotsResponse:
       type: object
