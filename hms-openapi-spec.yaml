@@ -435,43 +435,6 @@ paths:
         "500":
           $ref: '#/components/responses/ServerError'
 
-  /hms/treatments/delete:
-    delete:
-      summary: Delete treatment record
-      tags: [Treatments]
-      security:
-        - JWT: []
-      parameters:
-        - in: query
-          name: Appointment_ID
-          description: Delete by Appointment_ID
-          required: false
-          schema:
-            type: string
-            
-      responses:
-        "200":
-          description: Treatment deleted
-          content:
-            application/json:
-              schema:
-                description: Treatment Deletion Response
-                type: object
-                properties:
-                    status: 
-                      $ref: '#/components/schemas/API-Status'
-                    Appointment_ID:
-                      type: string
-                
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "500":
-          $ref: '#/components/responses/ServerError'
-
   /hms/departments/create:
     post:
       summary: Create department
@@ -925,6 +888,7 @@ components:
       type: object
       required:
         - Appointment_ID
+        - Notes
       properties:
         Appointment_ID:
           type: string
@@ -940,8 +904,6 @@ components:
         - Appointment_ID
       properties:
         Appointment_ID:
-          type: string
-        Patient_ID:
           type: string
         Diagnosis:
           type: string

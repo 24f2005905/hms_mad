@@ -287,7 +287,7 @@ def User_Update(auth_args):
     if row.rowcount != 1:
         ret["status"] = "error" 
         ret["message"] = "Failed to update"
-        return ret, 400
+        return ret, 500
     
     ret["User_ID"] = req_json["User_ID"]
     ret["query"] = query
@@ -1079,6 +1079,8 @@ def Appointment_Update(auth_args):
     
     # Get the request body
     param_json = request.args.to_dict()
+
+    #Check mandatory fields
     if "Appointment_ID" not in param_json or \
         "Appointment_Status" not in param_json or \
         param_json["Appointment_Status"] not in ['COMPLETED','CANCELLED']:
@@ -1135,6 +1137,182 @@ def Appointment_Update(auth_args):
 
     ret["Appointment_ID"] = Appointment_ID
 
+    return ret, 200
+
+@app.route("/hms/treatments/upload", methods=["POST"])
+@auth_wrapper
+def Treatment_Upload(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+    
+    # Get the request body
+    req_json = request.get_json()
+
+    # Check for Mandatory Fields
+    if "Appointment_ID" not in req_json or \
+        "Notes" not in req_json:
+        ret["status"] = "error"
+        ret["message"] = "Invalid request: Missing Mandatory Fields"
+        return ret, 400
+    
+    #Enforce role 
+    if auth_token['role'] != 'DOCTOR':
+        ret["status"] = "error"
+        ret["message"] = "Unauthorized Action"
+        return ret, 403
+    
+    Appointment_ID = req_json["Appointment_ID"]
+    
+
+    #Check if Doctor_ID matches Doctor_ID in appointments AND If appointment exists
+    appt_search_q = text ("SELECT Doctor_ID FROM Appointments " \
+            f"WHERE Appointment_ID = '{Appointment_ID}' AND Appointment_Status = 'SCHEDULED'" \
+            "AND Appointment_Date <= CURRENT_DATE;")
+    
+    with app.app_context():
+         appt_search = db.session.execute(appt_search_q)
+         appt = appt_search.fetchone()
+    
+    if not appt:
+        ret["status"] = "error"
+        ret["message"] = "Appointment does not Exist"
+        return ret, 400
+    
+    if appt[0] != auth_token['user']:
+        ret["status"] = "error"
+        ret["message"] = "Unauthorized Action"
+        return ret, 403   
+    
+    #Check if treatment already exists
+    treatment_search_q = text ("SELECT Appointment_ID FROM Treatments " \
+            f"WHERE Appointment_ID = '{Appointment_ID}';")
+    
+    with app.app_context():
+         treat_search = db.session.execute(treatment_search_q)
+         treat = treat_search.fetchone()
+    
+    if treat:
+        ret["status"] = "error"
+        ret["message"] = "Treatment already Exists"
+        return ret, 400
+    
+
+    #Create Treatment query
+    upload_query = text ('INSERT INTO Treatments '\
+        '(Appointment_ID, Diagnosis, ' \
+        'Prescription, Notes) ' \
+        'VALUES (:Appointment_ID, ' \
+        ':Diagnosis, :Prescription, ' \
+        ':Notes);')
+    upload_query_dict = {
+        "Appointment_ID": Appointment_ID,
+        "Diagnosis": req_json.get("Diagnosis",""),
+        "Prescription": req_json.get("Prescription",""),
+        "Notes": req_json.get("Notes")
+    }
+
+    with app.app_context():
+         db.session.execute(upload_query,upload_query_dict)
+         db.session.commit()
+        
+    ret["Appointment_ID"] = Appointment_ID
+    return ret, 200
+
+@app.route("/hms/treatments/update", methods=["POST"])
+@auth_wrapper
+def Treatment_Update(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+
+    # Get the request body
+    req_json = request.get_json()
+   
+    #Checking for Mandatory Fields
+    if 'Appointment_ID' not in req_json:
+        ret["status"] = "error" 
+        ret["message"] = "Appointment_ID not found"
+        return ret, 400
+    
+    if 'Diagnosis' not in req_json and \
+        'Prescription' not in req_json and \
+            'Notes' not in req_json:
+        ret["status"] = "error" 
+        ret["message"] = "No field to update"
+        return ret, 400
+    
+    Appointment_ID = req_json["Appointment_ID"]
+    
+    #Enforce Role
+    if auth_token['role'] != 'DOCTOR':
+        ret["status"] = "error"
+        ret["message"] = "Unauthorized Action"
+        return ret, 403
+    
+    #Check if Doctor_ID matches Doctor_ID in appointments AND If appointment exists
+    appt_search_q = text ("SELECT Doctor_ID FROM Appointments " \
+            f"WHERE Appointment_ID = '{Appointment_ID}' AND Appointment_Status = 'SCHEDULED'" \
+            "AND Appointment_Date <= CURRENT_DATE;")
+    
+    with app.app_context():
+         appt_search = db.session.execute(appt_search_q)
+         appt = appt_search.fetchone()
+    
+    if not appt:
+        ret["status"] = "error"
+        ret["message"] = "Appointment does not Exist"
+        return ret, 400
+    
+    if appt[0] != auth_token['user']:
+        ret["status"] = "error"
+        ret["message"] = "Unauthorized Action"
+        return ret, 403  
+    
+    #Check if treatment already exists
+    treatment_search_q = text ("SELECT Appointment_ID FROM Treatments " \
+            f"WHERE Appointment_ID = '{Appointment_ID}';")
+    
+    with app.app_context():
+         treat_search = db.session.execute(treatment_search_q)
+         treat = treat_search.fetchone()
+    
+    if not treat:
+        ret["status"] = "error"
+        ret["message"] = "Treatment does not exist"
+        return ret, 400 
+    
+    # Creating update query
+
+    update_fields = []
+    for field in req_json:
+        if field == 'Appointment_ID':
+            continue
+        update_data = req_json[field]
+        update_fields.append(f"{field} = '{update_data}'")
+    
+    update_q = "UPDATE Treatments SET "
+    update_q += ','.join(update_fields)
+    update_q += f" WHERE Appointment_ID = '{Appointment_ID}';"
+    
+    with app.app_context():
+        update = db.session.execute(text(update_q))
+        db.session.commit()
+    
+    if update.rowcount != 1:
+        ret["status"] = "error" 
+        ret["message"] = "Failed to update"
+        return ret, 500
+    
+    ret["Appointment_ID"] = Appointment_ID
     return ret, 200
 
 if __name__ == '__main__' :
