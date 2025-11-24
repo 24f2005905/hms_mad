@@ -2,6 +2,7 @@ import json
 import os 
 import jwt
 import uuid
+import bcrypt
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text,exc
@@ -29,6 +30,19 @@ Valid_Days_Of_Week = [
 Valid_Appt_Status = [
     "SCHEDULED", "COMPLETED", "CANCELLED"
 ]
+
+def hash_password(password: str) -> str:
+    cost = 14
+    salted = bcrypt.gensalt(rounds=cost)
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salted)
+    return hashed.decode("utf-8")
+
+def verify_password(password: str, pwd_hash: str) -> bool:
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), pwd_hash.encode("utf-8"))
+    except ValueError:
+        # Invalid hash format, treat as mismatch
+        return False
 
 def init_db(db_uri, ddl_f_name):
     db_f_name = db_uri.removeprefix("sqlite:///")
@@ -76,20 +90,20 @@ def id_token_generate():
     Password = req_json["Password"]
 
     query = text("SELECT User_Type, Password, User_Status FROM Users WHERE User_ID = :user_id and User_Status = 'ACTIVE'")
-    password = None
     with app.app_context():
         result = db.session.execute(query,{"user_id": User_ID})
         details = result.fetchone()
         if details:
             Role = details[0]
-            password = details[1] #Fetch password corresponding to User_ID
+            pwd_hash = details[1] #Fetch password corresponding to User_ID
 
     
     #Password verification
-    if not password:
+    if not pwd_hash:
         return {"status":"error", "message":"Login Failed"}, 401
     else:
-        if Password != password:
+        print(pwd_hash)
+        if not verify_password(Password, pwd_hash):
             return {"status":"error", "message":"Login Failed"}, 401
     
     start_time = datetime.utcnow().timestamp()
@@ -165,7 +179,7 @@ def User_Create(auth_args):
         "User_Type": User_Type,
         "Phone_Number": req_json["Phone_Number"],
         "User_Profile": json.dumps(req_json.get("User_Profile",{})),
-        "Password": req_json["Password"]
+        "Password": hash_password(req_json["Password"])
     }
     with app.app_context():
          result = db.session.execute(query_2,query_2_dict)
