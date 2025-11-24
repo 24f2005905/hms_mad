@@ -357,24 +357,20 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   /hms/treatments/lookup:
-    post:
+    get:
       summary: Lookup treatments (history)
       tags: [Treatments]
       security:
         - JWT: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                Appointment_ID:
-                  type: string
-                Patient_ID:
-                  type: string
-                Doctor_ID:
-                  type: string
+      parameters:
+        - name: Patient_ID
+          in: query
+          schema:
+            type: string
+        - name: Doctor_ID
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Treatment history returned

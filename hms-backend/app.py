@@ -835,7 +835,6 @@ def Doctor_Lookup(auth_args):
     #Get parameters
     param_json = request.args.to_dict()
     
-
     #Generate lookup query
     match_clauses = []
     for key in ['Specialities','First_Name','Last_Name']:
@@ -848,7 +847,6 @@ def Doctor_Lookup(auth_args):
         query += " WHERE "
         query += " AND ".join(match_clauses)
 
-    print(query)
     with app.app_context():
         doctor_lookup = db.session.execute(text(query))
         doctors = doctor_lookup.fetchall() 
@@ -1054,14 +1052,14 @@ def Appointment_Lookup(auth_args):
         result = db.session.execute(text(query))
         rows = result.fetchall() 
     
-    appt_details = []
-    for appt_ent in rows:
-        row_dict = (dict(appt_ent._mapping))
+    appointment_details = []
+    for appt in rows:
+        row_dict = (dict(appt._mapping))
         row_dict.pop('Appointment_ID')
-        appt_details.append(row_dict)
+        appointment_details.append(row_dict)
     
-    ret["appointment_details"] = appt_details
-    return ret, 200
+    ret["appointment_details"] = appointment_details
+    return ret, 200 
 
 @app.route("/hms/appointment/update", methods=["PUT"])
 @auth_wrapper
@@ -1314,6 +1312,61 @@ def Treatment_Update(auth_args):
     
     ret["Appointment_ID"] = Appointment_ID
     return ret, 200
+
+@app.route("/hms/treatments/lookup", methods=["GET"])
+@auth_wrapper
+def Treatment_Lookup(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+    User_Role = auth_token['role']
+    User_ID = auth_token['user']
+    #Get parameters
+    param_json = request.args.to_dict()
+
+    match_clauses = []
+    for key in ['Appointment_ID','Doctor_ID','Patient_ID']:
+        if key in param_json:
+            match_clauses.append(f"{key} = '{param_json[key]}'")
+
+    if User_Role == 'PATIENT':
+        match_clauses.append(f"Patient_ID = '{User_ID}'")
+    elif User_Role == 'DOCTOR' and "Patient_ID" not in param_json:
+        ret["status"] = "error"
+        ret["message"] = "Doctor should provide Patient ID"
+        return ret, 400
+    
+    if "Patient_ID" not in param_json and \
+        "Doctor_ID" not in param_json and \
+        "Appointment_Date" not in param_json:
+        ret["status"] = "error"
+        ret["message"] = "Must use one of the filters"
+        return ret, 400
+  
+    query = "SELECT * FROM Treatment_Lookup "
+    if len(match_clauses):
+        query += " WHERE "
+        query += " AND ".join(match_clauses)
+  
+    with app.app_context():
+        result = db.session.execute(text(query))
+        rows = result.fetchall() 
+    
+    treatment_details = []
+    for treatment in rows:
+        row_dict = (dict(treatment._mapping))
+        row_dict.pop('Appointment_ID')
+        treatment_details.append(row_dict)
+    
+    ret["treatment_details"] = treatment_details
+    return ret, 200
+    
+
+
 
 if __name__ == '__main__' :
     print(__name__)

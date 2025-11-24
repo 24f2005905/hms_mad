@@ -71,6 +71,43 @@ JOIN Departments d ON dd.Dept_ID = d.Dept_ID
 WHERE u.User_Type = 'DOCTOR' AND u.User_Status = 'ACTIVE'
 GROUP BY u.User_ID, u.First_Name, u.Last_Name;
 
+
+
+CREATE VIEW Treatment_Lookup AS
+SELECT
+  a.Appointment_ID,
+  a.Appointment_Date,
+  a.Doctor_ID,
+  d.First_Name    AS doctor_First_Name,
+  d.Last_Name     AS doctor_Last_Name,
+  a.Patient_ID,
+  p.First_Name    AS patient_First_Name,
+  p.Last_Name     AS patient_Last_Name,
+  GROUP_CONCAT(dept.Speciality, ', ') AS Specialities,
+  t.Diagnosis,
+  t.Prescription,
+  t.Notes
+FROM Appointments AS a
+JOIN Users AS d ON a.Doctor_ID  = d.User_ID
+JOIN Users AS p ON a.Patient_ID  = p.User_ID
+LEFT JOIN Doctor_Dept AS dd ON d.User_ID = dd.Doctor_ID
+LEFT JOIN Departments  AS dept ON dd.Dept_ID  = dept.Dept_ID
+RIGHT JOIN Treatments AS t ON a.Appointment_ID = t.Appointment_ID
+GROUP BY
+  a.Appointment_ID,
+  a.Appointment_Date,
+  a.Appointment_Time,
+  a.Appointment_Status,
+  a.Doctor_ID,
+  d.First_Name,
+  d.Last_Name,
+  a.Patient_ID,
+  p.First_Name,
+  p.Last_Name;
+
+
+      
+
 /* 
 ALTER TABLE Appointments
 ADD CONSTRAINT unique_appointment UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time);*/
