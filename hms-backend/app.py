@@ -123,6 +123,50 @@ def id_token_generate():
         "token": auth_token_str
     }, 200
 
+@app.route("/hms/user/check-password", methods=["POST"])
+@auth_wrapper
+def Check_Password(auth_args):
+    ret = {"status": "success"}
+    # Check Auth
+    if not auth_args['auth_token']:
+        ret["status"] = "error"
+        ret["message"] = auth_args["auth_err"]
+        return ret, 401
+    auth_token = auth_args['auth_token']
+
+    # Get the request body
+    req_json = request.get_json()
+
+    if "User_ID" not in req_json or "Password" not in req_json:
+        return {"status":"error", "message":"Invalid request"}, 400
+    
+    User_ID = req_json["User_ID"]
+    Password = req_json["Password"]
+
+    if auth_token['user'] != User_ID:
+        return {"status":"error", "message":"Unauthorized request"}, 403
+
+    query = text("SELECT User_Type, Password, User_Status FROM Users WHERE User_ID = :user_id and User_Status = 'ACTIVE'")
+    with app.app_context():
+        result = db.session.execute(query,{"user_id": User_ID})
+        details = result.fetchone()
+        if details:
+            Role = details[0]
+            pwd_hash = details[1] #Fetch password corresponding to User_ID
+
+    
+    #Password verification
+    if not pwd_hash:
+        return {"status":"error", "message":"Login Failed"}, 401
+    else:
+        if not verify_password(Password, pwd_hash):
+            return {"status":"error", "message":"Login Failed"}, 401
+    
+    return {
+        "status":"succeess",
+        "User_ID": User_ID
+    }, 200
+
 @app.route("/hms/user/create", methods=["POST"])
 @auth_wrapper
 def User_Create(auth_args):
@@ -279,8 +323,10 @@ def User_Update(auth_args):
         if column_name == 'User_ID':
             continue 
 
-        column_data = req_json[column_name] \
-            if column_name != "User_Profile" else \
+        column_data = (req_json[column_name] \
+                if column_name != "Password" else \
+                    hash_password(req_json[column_name])) if \
+            column_name != "User_Profile" else \
             json.loads(req_json[column_name])
         updates.append(f"{column_name} = '{column_data}'")
         
@@ -295,10 +341,9 @@ def User_Update(auth_args):
 
     with app.app_context():
         result = db.session.execute(text(query))
-        row = result.fetchall()
         db.session.commit()
     
-    if row.rowcount != 1:
+    if result.rowcount != 1:
         ret["status"] = "error" 
         ret["message"] = "Failed to update"
         return ret, 500
@@ -599,7 +644,6 @@ def Slots_Create(auth_args):
         del_old_slot_q = text(f"DELETE from Slots WHERE Doctor_ID = '{req_json['Doctor_ID']}'")
         with app.app_context():
             del_old_slots = db.session.execute(del_old_slot_q)
-            #row = del_old_slots.fetchall()
             db.session.commit()
         
         if del_old_slots.rowcount != 1:

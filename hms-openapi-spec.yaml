@@ -166,6 +166,49 @@ paths:
         "500":
           $ref: '#/components/responses/ServerError'
 
+  /hms/user/check-password:
+    post:
+      summary: Check password validity
+      tags: [Users]
+      security:
+        - JWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - User_ID
+                - Password
+              properties:
+                User_ID:
+                  type: string
+                Password:
+                  type: string
+      responses:
+        "200":
+          description: User password check success
+          content:
+            application/json:
+              schema:
+                description: Password Check Response
+                type: object
+                properties:
+                    status: 
+                      $ref: '#/components/schemas/API-Status'
+                    User_ID:
+                      type: string
+  
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
   /hms/user/delete:
     delete:
       summary: Delete a user (and related data)

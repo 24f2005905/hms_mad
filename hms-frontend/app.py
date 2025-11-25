@@ -5,7 +5,7 @@ import requests
 import uuid
 import jwt
 import json
-from flask import session
+from flask import session, flash
 from functools import wraps
 
 app = Flask(__name__)
@@ -86,13 +86,99 @@ def dashboard(sid):
     if not sid:
         return redirect("/login")
     
-    return render_template('dashboard.html',first_name= sid['First_Name'], last_name= sid['Last_Name'])
+    return render_template('dashboard.html',First_Name= sid['First_Name'], Last_Name= sid['Last_Name'])
+
+@app.route("/edit-profile", methods=['GET', 'POST'])
+@session_wrapper
+def edit_profile(sid):
+    if not sid:
+        return redirect("/login")
+    
+    # Call backend to fetch user details
+    lookup_dict = {
+        "User_ID": sid['auth_token']['user']
+    }
+    headers = {
+            "Authorization": sid['token']
+        }
+    user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
+    if user_lookup.status_code != 200:
+        return "Invalid Lookup", 401 
+    user_details = (user_lookup.json().get('user_details'))[0]
+
+    if request.method == 'GET':
+        return render_template('edit_profile.html', user=user_details)
+    
+    #Handling Update
+    user_update_dict = {
+        "User_ID": user_details["User_ID"]
+    }
+    
+    First_Name = request.form.get('first_name')
+    Last_Name = request.form.get('last_name')
+    Phone_Number = request.form.get('phone_number')
+    Current_Password = request.form.get('cur_password')
+    New_Password = request.form.get('new_password')
+
+    if First_Name.lower() != user_details['First_Name']:
+        user_update_dict["First_Name"] = First_Name
+    
+    if Last_Name.lower() != user_details['Last_Name']:
+        user_update_dict["Last_Name"] = Last_Name 
+
+    if Phone_Number != user_details['Phone_Number']:
+        user_update_dict["Phone_Number"] = Phone_Number 
+    
+    headers = {
+        'Authorization': sid['token'] 
+    }
+    
+    if New_Password:
+        #Verifying Current_Password with backend
+        req_json = {
+            "User_ID": user_details["User_ID"],
+            "Password": Current_Password
+        }
+        http_resp = requests.post(app_url + '/hms/user/check-password', json = req_json, headers = headers, timeout = 60)
+        if http_resp.status_code != 200:
+            flash("Invalid Password","error")
+            return render_template("edit_profile.html", user=user_details)
+
+        user_update_dict["Password"] = New_Password
+
+    if len(user_update_dict.keys()) > 1:
+        # Update the user record
+        http_resp = requests.post(app_url + '/hms/user/update', json = user_update_dict, headers = headers, timeout = 60)
+        if http_resp.status_code != 200:
+            resp_json = http_resp.json()
+            flash(f"Error Updating Profile: {resp_json['message']}","error")
+            return render_template("edit_profile.html", user=user_details)
+        else:
+            flash("Profile updated successfully","success")
+    return redirect("/edit-profile")
+
+@app.route("/history")
+@session_wrapper
+def history(sid):
+    if not sid:
+        return redirect("/login")
+    else:
+        return redirect("/dashboard") 
+
+@app.route("/logout")
+@session_wrapper
+def logout(sid):
+    sid = session.get("sid", None)
+    if sid:
+        session_dict.pop(sid)
+        session.clear()
+    return redirect("/login")
 
 @app.route('/', methods=['GET'])
 @session_wrapper
 def home(sid):
      
-     if sid:
+     if not sid:
         return redirect("/login")
      else:
          return redirect("/dashboard") 
