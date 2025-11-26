@@ -22,7 +22,18 @@ def session_wrapper(f):
     def sid_wrapper(*args, **kwargs):
         # Check for valid session
         sid = session.get('sid')
-        kwargs['sid'] = session_dict.get(sid, None)
+        my_session_dict = session_dict.get(sid, None)
+        # TODO: Check for token expiry
+        # Current time must be between 'iat' and 'exp'
+        if my_session_dict:
+            auth_token_str = my_session_dict["token"]
+            try:
+                _ = jwt.decode(auth_token_str, jwt_public_str, algorithms = ["RS256"])
+            except Exception as e:
+                my_session_dict = None 
+                session_dict.pop(sid,None)
+                session.clear()
+        kwargs['sid'] = my_session_dict
         return f(*args, **kwargs)
     return sid_wrapper
 
@@ -39,6 +50,7 @@ def login(sid):
             "Password": password
         }
 
+        # Generate auth token from backend
         http_resp = requests.post(app_url + '/hms/id/generate/token', json=login_dict, timeout=60)
         if http_resp.status_code != 200:
             flash("Login Failed","error")
@@ -77,7 +89,10 @@ def login(sid):
             "First_Name": First_Name,
             "Last_Name": Last_Name
         }
+        # Maintain SID -> Token Map
         session_dict[session_id] = my_session_dict
+
+        # Tell Flask my Session ID
         session['sid'] = session_id 
 
         # Redirect to dashboard
@@ -107,12 +122,16 @@ def edit_profile(sid):
     lookup_dict = {
         "User_ID": sid['auth_token']['user']
     }
+
     headers = {
             "Authorization": sid['token']
-        }
+    }
+
     user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
     if user_lookup.status_code != 200:
-        return "Invalid Lookup", 401 
+        flash("User Lookup Failed","error")
+        return redirect("/edit-profile")
+    
     user_details = (user_lookup.json().get('user_details'))[0]
 
     if request.method == 'GET':
@@ -173,6 +192,9 @@ def edit_profile(sid):
             return render_template("edit_profile.html", user=user_details)
         else:
             flash("Profile updated successfully","success")
+    else:
+        flash("No Updates Given", "warning")
+        return render_template("edit_profile.html", user=user_details)
     return redirect("/dashboard")
 
 @app.route("/history")

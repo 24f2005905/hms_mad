@@ -33,9 +33,9 @@ CREATE TABLE Appointments (
 
 CREATE TABLE Treatments (
     Appointment_ID varchar(15) PRIMARY KEY,
-    Diagnosis TEXT NOT NULL,
+    Diagnosis TEXT  NULL,
     Prescription TEXT NULL,
-    Notes TEXT NULL,
+    Notes TEXT NOT NULL,
     FOREIGN KEY (Appointment_ID) REFERENCES Appointments(Appointment_ID)
 );
 
