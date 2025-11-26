@@ -3,15 +3,18 @@
 CREATE TABLE Users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     User_ID Varchar(15) UNIQUE NOT NULL,
+    Email_ID Varchar(100),
+    Sex Char(1) NOT NULL,
     First_Name Varchar(50) NOT NULL,
     Last_Name Varchar(50)  NULL,
     User_Type Varchar(10) NOT NULL ,
     Phone_Number Varchar(15) NOT NULL,
-    User_Profile TEXT NULL,
+    User_Profile TEXT DEFAULT '{}',
     Password Varchar(255) NOT NULL,
     User_Status Varchar(10) DEFAULT 'ACTIVE' NOT NULL,
     CHECK(User_Type IN ('ADMIN', 'DOCTOR', 'PATIENT'))
     CHECK(User_Status IN ('ACTIVE', 'INACTIVE'))
+    CHECK(Sex IN ('M', 'F'))
 );
 
 CREATE TABLE Appointments (
@@ -25,6 +28,7 @@ CREATE TABLE Appointments (
     FOREIGN KEY (Doctor_ID) REFERENCES Users(User_ID),
     CHECK (Patient_ID <> Doctor_ID),
     CHECK (Appointment_Status IN ('SCHEDULED', 'COMPLETED', 'CANCELLED'))
+    UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time)
 );  
 
 CREATE TABLE Treatments (
@@ -108,9 +112,7 @@ GROUP BY
 
       
 
-/* 
-ALTER TABLE Appointments
-ADD CONSTRAINT unique_appointment UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time);*/
+
 
 INSERT INTO Users VALUES
-    (1,"ADMIN","Admin","Superuser","ADMIN","9999999999",NULL,"admin","ACTIVE")
+(1,"ADMIN","admin@123.com","F","Admin","Superuser","ADMIN","9999999999",'{}','$2b$14$hV74sc/onROU.XzHk.2TiOfVTOVQkhkRhEoI5S343yjGNGN.kUuTO','ACTIVE');

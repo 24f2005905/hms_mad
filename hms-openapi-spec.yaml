@@ -94,6 +94,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: Email_ID
+          in: query
+          schema:
+            type: string
         - name: Phone_Number
           in: query
           schema:
@@ -848,6 +852,7 @@ components:
     UserCreate:
       type: object
       required:
+        - Sex
         - First_Name
         - User_Type
         - Phone_Number
@@ -855,6 +860,11 @@ components:
       properties:
         First_Name:
           type: string
+        Email_ID:
+          type: string
+        Sex:
+          type: string
+          enum: [M, F, O]
         Last_Name:
           type: string
         User_Type:
@@ -873,6 +883,11 @@ components:
       properties:
         User_ID:
           type: string
+        Email_ID:
+          type: string
+        Sex:
+          type: string
+          enum: [M, F, O]
         First_Name:
           type: string
         Last_Name:
@@ -888,6 +903,10 @@ components:
       type: object
       properties:
         User_ID:
+          type: string
+        Email_ID:
+          type: string
+        Sex:
           type: string
         First_Name:
           type: string

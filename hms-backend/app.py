@@ -19,7 +19,7 @@ Valid_User_Types = [
     "DOCTOR", "PATIENT", "ADMIN"
 ]
 Valid_User_Column = [
-    "User_ID", "First_Name", "Last_Name", 
+    "User_ID", "Email_ID","Sex","First_Name", "Last_Name", 
     "User_Type", "Phone_Number","User_Profile",
     "Password"
 ]
@@ -96,8 +96,7 @@ def id_token_generate():
         if details:
             Role = details[0]
             pwd_hash = details[1] #Fetch password corresponding to User_ID
-
-    
+            
     #Password verification
     if not pwd_hash:
         return {"status":"error", "message":"Login Failed"}, 401
@@ -183,6 +182,7 @@ def User_Create(auth_args):
     # Check for Mandatory Fields
     if "First_Name" not in req_json or \
         "User_Type" not in req_json or \
+        "Sex" not in req_json or \
         "Phone_Number" not in req_json or \
         "Password" not in req_json :
         ret["status"] = "error"
@@ -211,13 +211,15 @@ def User_Create(auth_args):
 
     # Now insert the user
     query_2 = text ('INSERT INTO Users '\
-        '(User_ID, First_Name, Last_Name, ' \
+        '(User_ID,Email_ID, Sex, First_Name, Last_Name, ' \
         'User_Type, Phone_Number, User_Profile, Password) ' \
-        'VALUES (:User_ID, ' \
+        'VALUES (:User_ID,:Email_ID, :Sex ' \
         ':First_Name, :Last_Name, :User_Type,' \
         ':Phone_Number, :User_Profile, :Password)')
     query_2_dict = {
         "User_ID": User_ID,
+        "Email_ID": req_json.get("Email_ID", ""),
+        "Sex": req_json["Sex"],
         "First_Name": req_json["First_Name"],
         "Last_Name": req_json.get("Last_Name",""),
         "User_Type": User_Type,
@@ -246,7 +248,7 @@ def User_Lookup(auth_args):
     #Get parameters
     param_json = request.args.to_dict()
     match_clauses = []
-    for key in ['User_ID','Phone_Number','First_Name','Last_Name']:
+    for key in ['User_ID','Email_ID','Phone_Number','First_Name','Last_Name']:
         if key in param_json:
             match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
     query = "SELECT * FROM Users "

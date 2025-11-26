@@ -11,6 +11,10 @@ from functools import wraps
 app = Flask(__name__)
 app_url = None
 session_dict = {}
+valid_gender_str = {
+	'M': 'Male',
+	'F': 'Female'
+}
 
 def session_wrapper(f):
     """ Session Wrapper Decorator"""
@@ -37,12 +41,15 @@ def login(sid):
 
         http_resp = requests.post(app_url + '/hms/id/generate/token', json=login_dict, timeout=60)
         if http_resp.status_code != 200:
-            return "Invalid credentials", 401
+            flash("Login Failed","error")
+            return redirect("/login")
         
         # Extract Auth Token and Save in session
         auth_token_str = http_resp.json().get('token', None)
         if not auth_token_str:
-            return "Invalid credentials", 401
+            flash("Login Failed","error")
+            return redirect("/login")
+            
         auth_token = jwt.decode(auth_token_str, jwt_public_str, algorithms = ["RS256"])
        
         headers = {
@@ -55,7 +62,9 @@ def login(sid):
         }
         user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
         if user_lookup.status_code != 200:
-            return "Invalid Lookup", 401 
+            flash("Login Failed","error")
+            return redirect("/login")
+        
         user_details = (user_lookup.json().get('user_details'))[0] 
         First_Name = user_details['First_Name']
         Last_Name = user_details['Last_Name']
@@ -107,6 +116,7 @@ def edit_profile(sid):
     user_details = (user_lookup.json().get('user_details'))[0]
 
     if request.method == 'GET':
+        user_details['Sex'] = valid_gender_str[user_details['Sex']]
         return render_template('edit_profile.html', user=user_details)
     
     #Handling Update
@@ -114,9 +124,11 @@ def edit_profile(sid):
         "User_ID": user_details["User_ID"]
     }
     
-    First_Name = request.form.get('first_name')
-    Last_Name = request.form.get('last_name')
-    Phone_Number = request.form.get('phone_number')
+    First_Name = request.form.get('First_Name')
+    Last_Name = request.form.get('Last_Name')
+    Phone_Number = request.form.get('Phone_Number')
+    Email_ID = request.form.get('Email_ID')
+    Sex = request.form.get('Sex')[0].upper()
     Current_Password = request.form.get('cur_password')
     New_Password = request.form.get('new_password')
 
@@ -128,6 +140,12 @@ def edit_profile(sid):
 
     if Phone_Number != user_details['Phone_Number']:
         user_update_dict["Phone_Number"] = Phone_Number 
+    
+    if Email_ID != user_details['Email_ID']:
+        user_update_dict["Email_ID"] = Email_ID 
+    
+    if Sex != user_details['Sex']:
+        user_update_dict["Sex"] = Sex 
     
     headers = {
         'Authorization': sid['token'] 
@@ -155,7 +173,7 @@ def edit_profile(sid):
             return render_template("edit_profile.html", user=user_details)
         else:
             flash("Profile updated successfully","success")
-    return redirect("/edit-profile")
+    return redirect("/dashboard")
 
 @app.route("/history")
 @session_wrapper
@@ -170,7 +188,7 @@ def history(sid):
 def logout(sid):
     sid = session.get("sid", None)
     if sid:
-        session_dict.pop(sid)
+        session_dict.pop(sid,None)
         session.clear()
     return redirect("/login")
 
