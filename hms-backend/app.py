@@ -915,7 +915,7 @@ def Doctor_Lookup(auth_args):
     for doctor in doctors:
         doctor_dict = (dict(doctor._mapping))
         doctor_details.append(doctor_dict)
-    ret['doctor_details'] = doctor_details
+    ret['doctordept_details'] = doctor_details
     return ret, 200
 
 @app.route("/hms/appointment/create", methods=["POST"])

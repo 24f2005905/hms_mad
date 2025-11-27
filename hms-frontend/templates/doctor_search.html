@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Find a Doctor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-10 col-lg-8">
+    <div class="panel-card p-3">
+
+      <!-- Header -->
+      <div class="d-flex align-items-center mb-3">
+        <h5 class="mb-0">Find a Doctor</h5>
+        <div class="ms-auto small text-muted">
+          <a href="{{ url_for('dashboard') }}" class="text-decoration-none">Back</a>
+        </div>
+      </div>
+
+      <!-- Speciality Form -->
+      <form method="GET" class="row g-3 mb-4">
+        <div class="col-auto">
+          <select name="speciality" class="form-select" required>
+            <option value="">-- Select Speciality --</option>
+            {% for s in specialities %}
+              <option value="{{ s }}" 
+                {% if selected_speciality == s %}selected{% endif %}>
+                {{ s }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+
+        <div class="col-auto">
+          <a href="{{ url_for('Doctor_Search') }}" 
+             class="btn btn-outline-secondary">Clear</a>
+        </div>
+      </form>
+
+      <!-- Results Section -->
+      {% if selected_speciality %}
+        {% if doctors %}
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:6%; text-align:center;">SL No.</th>
+                  <th style="text-align:center;">Name</th>
+                  <th style="text-align:center;">Position</th>
+                  <th style="width:12%; text-align:center;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for d in doctors %}
+                  <tr>
+                    <td style="text-align:center;">{{ loop.index }}</td>
+                    <td style="text-align:center;">{{ d.First_Name }} {{ d.Last_Name }}</td>
+                    <td style="text-align:center;">{{ d.Dept_Position }}</td>
+                    <td class="text-center">
+                      <a class="btn btn-sm btn-primary"
+                         href="{{ url_for('Book_Appointment',
+                                           doctor_id=d.User_ID) }}">
+                        Book
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">No doctors found in {{ selected_speciality }}.</p>
+        {% endif %}
+      {% else %}
+        <p class="text-muted">Select a speciality to view available doctors.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

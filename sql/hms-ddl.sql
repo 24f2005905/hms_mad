@@ -68,6 +68,7 @@ CREATE VIEW Doctor_Lookup AS
 SELECT u.User_ID,
        u.First_Name,
        u.Last_Name,
+       dd.Dept_Position,
        GROUP_CONCAT(d.Speciality) AS Specialities
 FROM Users u 
 JOIN Doctor_Dept dd ON u.User_ID = dd.Doctor_ID

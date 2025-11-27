@@ -123,13 +123,59 @@ def treatment_detail(sid):
     treatments_lookup = requests.get(app_url + '/hms/treatments/lookup', params = lookup_dict, timeout = 60, headers = headers)
     if treatments_lookup.status_code != 200:
         flash(f"Treatment Lookup Failed {treatments_lookup.status_code}","error")
-        return redirect("/edit-profile") #Where do I redirect to? 
+        return redirect("/dashboard")  
     
     treatment_details = treatments_lookup.json().get('treatment_details')
     
     return render_template('treatment_detail.html',treatment = treatment_details[0],
         First_Name=sid['First_Name'], Last_Name= sid['Last_Name'],
         User_Type = sid['auth_token']['role'].lower())
+
+@app.route('/doctor_search', methods=['GET'])
+@session_wrapper
+def Doctor_Search(sid):
+    if not sid:
+        return redirect("/login")
+    
+    headers = {
+         "Authorization" : sid['token']
+    }
+
+    dept_doctor_lookup = requests.get(app_url + "/hms/departments/doctor-lookup", timeout = 60, headers = headers)
+    if dept_doctor_lookup.status_code != 200:
+        flash(f"Treatment Lookup Failed {dept_doctor_lookup.status_code}","error")
+        return redirect("/dashboard")
+
+    doctors_list = dept_doctor_lookup.json().get("doctordept_details")
+    print(doctors_list)
+    # Check for speciality in filter
+    speciality = request.args.get("speciality", None)
+
+    # Build Specialities list
+    specialities = sorted({d["Specialities"] for d in doctors_list})
+
+    doctors = []
+    if speciality:
+        doctors = [d for d in doctors_list
+                   if d["Specialities"].lower() == speciality.lower()]
+  
+    return render_template("doctor_search.html", \
+        First_Name= sid['First_Name'], Last_Name= sid['Last_Name'],  \
+        User_Type = sid['auth_token']['role'].lower(), \
+        specialities=specialities,
+        selected_speciality= speciality,
+        doctors=doctors)
+
+@app.route('/book_appointment', methods=['GET'])
+@session_wrapper
+def Book_Appointment(sid):
+    if not sid:
+        return redirect("/login")
+    
+    param_json = request.args.to_dict()
+
+    flash("Cancelled Appointment","success")
+    return redirect("/dashboard")
 
 @app.route('/cancel_appointment', methods=['POST'])
 @session_wrapper

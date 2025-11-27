@@ -18,8 +18,12 @@
 <div class="panel-card p-3">
   <div class="d-flex align-items-center mb-3">
     <h6 class="mb-0">Upcoming Appointments</h6>
-    <div class="ms-auto small text-muted">
-      <a href="{{ url_for('dashboard', patient_id=patient_id) }}" class="text-decoration-none">Refresh</a>
+    <div class="ms-auto small">
+      <a href="{{ url_for('Doctor_Search') }}"
+         class="text-decoration-none"
+         style="font-weight: 500; color: #3f51b5;">
+        Book an Appointment
+      </a>
     </div>
   </div>
 
