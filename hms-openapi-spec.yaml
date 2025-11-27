@@ -821,7 +821,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'   
-                    available_slots:
+                    Free_Slots:
                       type: array
                       items: 
                         type: string

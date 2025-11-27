@@ -897,7 +897,7 @@ def Doctor_Lookup(auth_args):
     
     #Generate lookup query
     match_clauses = []
-    for key in ['Specialities','First_Name','Last_Name']:
+    for key in ['User_ID','Specialities','First_Name','Last_Name']:
         if key in param_json:
             match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
     
@@ -1454,7 +1454,7 @@ def Available_Slots(auth_args):
     Appointment_Date = param_json["Appointment_Date"]
 
     #Creating Slots 9:00 - 12:00, 14:00-17:00
-    Free_Slots = ["9:00", "9:15", "9:30", "9:45",
+    Free_Slots = ["09:00", "09:15", "09:30", "09:45",
         "10:00", "10:15", "10:30", "10:45",
         "11:00", "11:15", "11:30", "11:45", 
         "14:00", "14:15", "14:30", "14:45", 
@@ -1479,23 +1479,21 @@ def Available_Slots(auth_args):
         details = slot_search.fetchone()
     
     if not details:
-        ret["status"] = "error"
-        ret["message"] = "Slots Unavailable"
-        return ret, 400
+        ret["Free_Slots"] = []
+        return ret, 200
    
     Days_Available = json.loads(details[0])
     # Figure out day of week from appt date and check in days available
     day_of_week = datetime.strptime(Appointment_Date, "%Y-%m-%d").strftime("%a").lower()
     if day_of_week not in [d.lower() for d in Days_Available]:
-        ret["status"] = "error"
-        ret["message"] = f"Doctor not available on {day_of_week.upper()}"
-        return ret, 400
+        ret["Free_Slots"] = []
+        return ret, 200
     
     #Find Appointments already booked on Date
     appt_search_q = text("SELECT Appointment_Time FROM Appointments "\
         f"WHERE Appointment_Date = '{Appointment_Date}' AND " \
         f"Doctor_ID = '{Doctor_ID}' AND Appointment_Status = 'SCHEDULED'")
-    print(appt_search_q)
+ 
     with app.app_context():
         appt_search = db.session.execute(appt_search_q)
         booked_slots = appt_search.fetchall()

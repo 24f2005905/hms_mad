@@ -7,6 +7,7 @@ import jwt
 import json
 from flask import session, flash
 from functools import wraps
+from datetime import datetime, timedelta, date
 
 app = Flask(__name__)
 app_url = None
@@ -15,6 +16,22 @@ valid_gender_str = {
 	'M': 'Male',
 	'F': 'Female'
 }
+
+Free_Slots = ["09:00", "09:15", "09:30", "09:45",
+        "10:00", "10:15", "10:30", "10:45",
+        "11:00", "11:15", "11:30", "11:45", 
+        "14:00", "14:15", "14:30", "14:45", 
+        "15:00", "15:15", "15:30", "15:45",
+        "16:00", "16:15", "16:30", "16:45"]
+
+def get_next_7_days():
+    current_date = datetime.now()
+    date_list = []
+    for i in range(7):
+       date_list.append(( current_date + timedelta(days = i + 1)).strftime('%d %B %Y'))
+    return date_list
+
+
 
 def session_wrapper(f):
     """ Session Wrapper Decorator"""
@@ -87,7 +104,8 @@ def login(sid):
             "token": auth_token_str,
             "auth_token": auth_token,
             "First_Name": First_Name,
-            "Last_Name": Last_Name
+            "Last_Name": Last_Name,
+            "User_Type": auth_token['role'].lower()
         }
         # Maintain SID -> Token Map
         session_dict[session_id] = my_session_dict
@@ -128,8 +146,7 @@ def treatment_detail(sid):
     treatment_details = treatments_lookup.json().get('treatment_details')
     
     return render_template('treatment_detail.html',treatment = treatment_details[0],
-        First_Name=sid['First_Name'], Last_Name= sid['Last_Name'],
-        User_Type = sid['auth_token']['role'].lower())
+       user_token = sid)
 
 @app.route('/doctor_search', methods=['GET'])
 @session_wrapper
@@ -143,11 +160,11 @@ def Doctor_Search(sid):
 
     dept_doctor_lookup = requests.get(app_url + "/hms/departments/doctor-lookup", timeout = 60, headers = headers)
     if dept_doctor_lookup.status_code != 200:
-        flash(f"Treatment Lookup Failed {dept_doctor_lookup.status_code}","error")
+        flash(f"Doctor Lookup Failed {dept_doctor_lookup.status_code}","error")
         return redirect("/dashboard")
 
     doctors_list = dept_doctor_lookup.json().get("doctordept_details")
-    print(doctors_list)
+    
     # Check for speciality in filter
     speciality = request.args.get("speciality", None)
 
@@ -160,21 +177,73 @@ def Doctor_Search(sid):
                    if d["Specialities"].lower() == speciality.lower()]
   
     return render_template("doctor_search.html", \
-        First_Name= sid['First_Name'], Last_Name= sid['Last_Name'],  \
-        User_Type = sid['auth_token']['role'].lower(), \
+        user_token  = sid, \
         specialities=specialities,
         selected_speciality= speciality,
-        doctors=doctors)
+        doctors=doctors) 
 
-@app.route('/book_appointment', methods=['GET'])
+@app.route('/book_appointment', methods=['GET','POST'])
 @session_wrapper
 def Book_Appointment(sid):
     if not sid:
         return redirect("/login")
     
-    param_json = request.args.to_dict()
+    headers = {
+        "Authorization" : sid['token']
+    }
+    print(json.dumps(request.args.to_dict()))
+    Doctor_ID = request.args.get("Doctor_ID")
+    if not Doctor_ID:
+        flash(f"Select the Doctor {Doctor_ID}", "error")
+        return redirect("/dashboard")
+    Slot = None
+    Appointment_Date = request.args.get("date", None)
 
-    flash("Cancelled Appointment","success")
+    if request.method == 'POST':
+        Slot = request.form.get("slot", None)
+        Appointment_Date = request.form.get("date", None)
+        print(f"Slot: {Slot}")
+        print(f"Appointment Date: {Appointment_Date}")
+
+    if request.method == 'GET' or \
+        not Slot:        
+        
+        lookup_dict = {
+            "User_ID" : Doctor_ID
+        }
+
+        dept_doctor_lookup = requests.get(app_url + "/hms/departments/doctor-lookup",params = lookup_dict,timeout = 60, headers = headers)
+        if dept_doctor_lookup.status_code != 200:
+            flash(f"Doctor Lookup Failed {dept_doctor_lookup.status_code}","error")
+            return redirect("/dashboard")
+        
+        doctor = dept_doctor_lookup.json().get("doctordept_details")[0]
+        print(json.dumps(doctor))
+        # Get Slots
+        date_list = get_next_7_days()
+        if not Appointment_Date:
+            Appointment_Date = date_list[0]
+        slot_date = datetime.strptime(Appointment_Date, '%d %B %Y').strftime('%Y-%m-%d')
+        slot_args = {
+            "Doctor_ID" : Doctor_ID,
+            "Appointment_Date" : slot_date
+        }
+        slots_lookup = requests.get(app_url + "/hms/slots/availability",params = slot_args,timeout = 60, headers = headers)
+        if slots_lookup.status_code != 200:
+                slot_reply = slots_lookup.json()
+                flash(f"Slots Lookup Failed {slot_reply['message']}","error")
+                return redirect("/dashboard")
+        
+        Available_Slots = slots_lookup.json().get('Free_Slots') 
+        slot_list = []
+        for f_slot in Free_Slots:
+            slot_list.append({
+                "slot": f_slot,
+                "available": True if f_slot in Available_Slots else False
+            })
+        print(json.dumps(slot_list))
+        return render_template("book_appointment.html",user_token = sid, days = date_list, selected_date = Appointment_Date, doctor= doctor, available = slot_list)
+    flash("Booked Appointment","success")
     return redirect("/dashboard")
 
 @app.route('/cancel_appointment', methods=['POST'])
@@ -219,8 +288,8 @@ def dashboard(sid):
     treatment_details = treatments_lookup.json().get('treatment_details')
     
     
-    return render_template('dashboard.html',First_Name= sid['First_Name'], Last_Name= sid['Last_Name'], treatments = treatment_details, \
-        User_Type = sid['auth_token']['role'].lower(), appointments = upcoming_appointments)
+    return render_template('dashboard.html', treatments = treatment_details, \
+       user_token = sid, appointments = upcoming_appointments)
 
 @app.route("/edit-profile", methods=['GET', 'POST'])
 @session_wrapper
@@ -247,8 +316,7 @@ def edit_profile(sid):
     if request.method == 'GET':
         user_details['Sex'] = valid_gender_str[user_details['Sex']]
         return render_template('edit_profile.html', user=user_details, 
-            First_Name= sid['First_Name'], Last_Name= sid['Last_Name'], 
-            User_Type = sid['auth_token']['role'].lower())
+            user_token = sid)
     
     #Handling Update
     user_update_dict = {
@@ -292,8 +360,7 @@ def edit_profile(sid):
         if http_resp.status_code != 200:
             flash("Invalid Password","error")
             return render_template("edit_profile.html", 
-                sid['First_Name'], Last_Name= sid['Last_Name'],
-                User_Type = sid['auth_token']['role'].lower(),
+                user_token = sid,
                 user=user_details)
 
         user_update_dict["Password"] = New_Password
@@ -304,14 +371,12 @@ def edit_profile(sid):
         if http_resp.status_code != 200:
             resp_json = http_resp.json()
             flash(f"Error Updating Profile: {resp_json['message']}","error")
-            return render_template("edit_profile.html", sid['First_Name'], Last_Name= sid['Last_Name'],
-                User_Type = sid['auth_token']['role'].lower(), user=user_details)
+            return render_template("edit_profile.html", user_token = sid, user=user_details)
         else:
             flash("Profile updated successfully","success")
     else:
         flash("No Updates Given", "warning")
-        return render_template("edit_profile.html", sid['First_Name'], Last_Name= sid['Last_Name'],
-                User_Type = sid['auth_token']['role'].lower(),user=user_details)
+        return render_template("edit_profile.html", user_token = sid ,user=user_details)
     return redirect("/dashboard")
 
 @app.route("/history")

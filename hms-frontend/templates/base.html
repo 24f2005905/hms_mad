@@ -53,8 +53,8 @@
       <div class="d-flex align-items-center">
        <h5 class="mb-0 brand">
   {% block brand %}
-    Welcome {{ First_Name }} {{ Last_Name }}
-    <sup style="font-size: 0.75em; color: #555;font-style: italic;">({{ User_Type }})</sup>
+    Welcome {{ user_token.First_Name }} {{ user_token.Last_Name }}
+    <sup style="font-size: 0.75em; color: #555;font-style: italic;">({{ user_token.User_Type }})</sup>
   {% endblock %}
 </h5>
 

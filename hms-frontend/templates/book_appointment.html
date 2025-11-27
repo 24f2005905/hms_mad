@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Book Appointment - {{ doctor.First_Name }} {{ doctor.Last_Name }}{% endblock %}
+
+{% block head_extra %}
+<style>
+/* slot visuals */
+.slot-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* default available: green outline with green text */
+.slot-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width:72px;
+  padding:6px 8px;
+  border-radius:6px;
+  border: 1px solid #198754; /* success green */
+  color: #198754;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+  font-weight:400;
+}
+
+/* when the preceding radio is checked -> make label solid green */
+.slot-input:checked + label.slot-label {
+  background: #198754 !important;
+  color: #fff !important;
+  border-color: #198754 !important;
+}
+
+/* unavailable: red outline and red text */
+.slot-unavail {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:72px;
+  padding:6px 8px;
+  border-radius:6px;
+  border: 1px solid #dc3545; /* danger red */
+  color: #dc3545;
+  background: #fff;
+  opacity: 0.95;
+  font-weight:400;
+}
+
+/* small tweak: on focus show subtle ring for accessibility */
+.slot-input:focus + label.slot-label {
+  box-shadow: 0 0 0 3px rgba(25,135,84,0.12);
+  outline: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="panel-card p-3">
+  <div class="d-flex align-items-start mb-3">
+    <div>
+      <h4 class="mb-1">Dr. {{ doctor.First_Name }} {{ doctor.Last_Name }}</h4>
+      <div class="small text-muted">Speciality: {{ doctor.Specialities }}</div>
+    </div>
+
+    <div class="ms-auto small text-muted">
+      <a href="{{ url_for('Doctor_Search') }}" class="text-decoration-none">Back</a>
+    </div>
+  </div>
+
+  {# ---------- Date selection (GET) ---------- #}
+  <form method="GET" class="row g-3 mb-3">
+    <input type="hidden" name="Doctor_ID" value="{{ doctor.User_ID }}">
+    <div class="col-12 col-md-6">
+      <label for="dateSelect" class="form-label">Select Date</label>
+      <select id="dateSelect" name="date" class="form-select" required>
+        <option value="">-- Select date --</option>
+        {% for d in days %}
+          <option value="{{ d }}" {% if d == selected_date %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-auto align-self-end">
+      <button type="submit" class="btn btn-primary">Show Slots</button>
+      <a href="{{ url_for('Book_Appointment', Doctor_ID=doctor.User_ID) }}" class="btn btn-outline-secondary ms-2">Clear</a>
+    </div>
+  </form>
+
+  {# ---------- Booking form (POST) ---------- #}
+  <form method="POST" action="{{ url_for('Book_Appointment', Doctor_ID=doctor.User_ID) }}">
+    {% if csrf_token is defined %}
+      {{ csrf_token() }}
+    {% endif %}
+
+    <input type="hidden" name="doctor_id" value="{{ doctor.User_ID }}">
+    <input type="hidden" name="patient_id" value="{{ patient_id }}">
+    <input type="hidden" name="date" value="{{ selected_date or '' }}">
+
+    <div class="mb-2 small text-muted">
+      Slots legend:
+      <span class="mx-2"><span class="badge bg-success">Available</span></span>
+      <span class="mx-2"><span class="badge bg-dark">Selected</span></span>
+      <span class="mx-2"><span class="badge bg-danger">Unavailable</span></span>
+    </div>
+
+    {# --------------------
+       Build hours_map without extensions
+       hours_map will be dict: hour -> list of items
+       -------------------- #}
+    {% set hours_map = {} %}
+    {% for item in available %}
+      {% set hr = item.slot[:2] %}
+      {% if hr not in hours_map %}
+        {% set _ = hours_map.update({hr: []}) %}
+      {% endif %}
+      {% set _ = hours_map[hr].append(item) %}
+    {% endfor %}
+    {% if hours_map|length == 0 %}
+      {% set hours_map = {'09': [], '10': [], '11': [], '14': [], '15': [], '16': []} %}
+    {% endif %}
+
+    {# We want exactly one 'required' radio in the whole group when a date is selected.
+       We'll track whether we've already output a required using a namespace. #}
+    {% set ns = namespace(required_assigned = false) %}
+
+    <div class="slots">
+      {% for hr, slots in hours_map.items() %}
+        <div class="d-flex align-items-center mb-2">
+          <div class="me-3" style="width:72px; font-weight:600; color:#374151;">{{ hr }}:00</div>
+
+          <div class="d-flex flex-wrap align-items-center">
+            {% if slots|length == 0 %}
+              {# show 4 placeholders (unavailable) #}
+              {% for i in range(0,4) %}
+                <div class="me-2 mb-2">
+                  <button type="button" class="btn btn-outline-danger slot-unavail" disabled style="min-width:72px;">
+                    --
+                  </button>
+                </div>
+              {% endfor %}
+            {% else %}
+              {% for item in slots %}
+                {% if item.available %}
+                  {# create a unique id for input/label pair #}
+                  {% set input_id = "slot_" ~ doctor.User_ID ~ "_" ~ item.slot|replace(":", "") %}
+                  <div class="me-2 mb-2">
+                    {# radio input comes BEFORE label so CSS selector input:checked + label works #}
+                    <input type="radio"
+                           id="{{ input_id }}"
+                           name="slot"
+                           value="{{ item.slot }}"
+                           class="slot-input"
+                           {% if item.slot == selected_slot %}checked{% endif %}
+                           {% if item.slot == selected_slot %}checked{% endif %}
+                           {% if (not ns.required_assigned) and selected_date %}{% set ns.required_assigned = true %}required{% endif %}>
+                    <label for="{{ input_id }}" class="slot-label">
+                      {{ item.slot }}
+                    </label>
+                  </div>
+                {% else %}
+                  <div class="me-2 mb-2">
+                    <div class="slot-unavail">
+                      {{ item.slot }}
+                    </div>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-3 text-end">
+      <button type="submit" class="btn btn-primary" {% if not selected_date %}disabled{% endif %}>
+        Confirm Booking
+      </button>
+      <a href="{{ url_for('Book_Appointment', Doctor_ID=doctor.User_ID) }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+    </div>
+
+    {# warning when no free slots #}
+    {% if selected_date %}
+      {% set free_list = available | selectattr('available') | list %}
+      {% if free_list|length == 0 %}
+        <div class="mt-3">
+          <div class="alert alert-warning">No free slots available on {{ selected_date }}. All slots are unavailable.</div>
+        </div>
+      {% endif %}
+    {% endif %}
+  </form>
+</div>
+{% endblock %}
