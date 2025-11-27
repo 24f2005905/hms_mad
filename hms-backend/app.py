@@ -1065,17 +1065,20 @@ def Appointment_Lookup(auth_args):
     
     #Get parameters
     param_json = request.args.to_dict()
+    
     if 'Appointment_Status' not in param_json:
         param_json['Appointment_Status'] = 'SCHEDULED'
+        
     elif param_json['Appointment_Status'] == 'ALL':
         param_json.pop('Appointment_Status')
+    
 
     User_ID = auth_token['user']
     User_Role = auth_token['role']
 
     match_clauses = []
 
-    for key in ['Patient_ID','Doctor_ID','Appointment_Date','Appointment_Status']:
+    for key in ['Appointment_ID','Patient_ID','Doctor_ID','Appointment_Date','Appointment_Status']:
         if key in param_json:
             # Enforce date format
             try:
@@ -1091,23 +1094,25 @@ def Appointment_Lookup(auth_args):
             
             match_clauses.append(f"{key} = '{param_json[key]}'")
     
-    if User_Role == 'PATIENT':
+    if User_Role == 'PATIENT' and 'Patient_ID' not in param_json:
         match_clauses.append(f"Patient_ID = '{User_ID}'")
-    elif User_Role == 'DOCTOR':
+    elif User_Role == 'DOCTOR' and 'Doctor_ID' not in param_json:
         match_clauses.append(f"Doctor_ID = '{User_ID}'")
     else:
         if "Patient_ID" not in param_json and \
             "Doctor_ID" not in param_json and \
-            "Appointment_Date" not in param_json:
+            "Appointment_Date" not in param_json and \
+            "Appointment_ID" not in param_json:
             ret["status"] = "error"
             ret["message"] = "ADMIN must use one of the filters"
             return ret, 400
         
-    query = "SELECT * FROM Appointments "
+    query = "SELECT * FROM Appointment_Lookup "
     if len(match_clauses):
         query += " WHERE "
         query += " AND ".join(match_clauses)
-  
+        query += " ORDER BY Appointment_Date"
+ 
     with app.app_context():
         result = db.session.execute(text(query))
         rows = result.fetchall() 
@@ -1115,7 +1120,6 @@ def Appointment_Lookup(auth_args):
     appointment_details = []
     for appt in rows:
         row_dict = (dict(appt._mapping))
-        row_dict.pop('Appointment_ID')
         appointment_details.append(row_dict)
     
     ret["appointment_details"] = appointment_details
@@ -1389,7 +1393,7 @@ def Treatment_Lookup(auth_args):
     param_json = request.args.to_dict()
 
     match_clauses = []
-    for key in ['Appointment_ID','Doctor_ID','Patient_ID']:
+    for key in ['Appointment_ID','Doctor_ID','Patient_ID','Appointment_Date']:
         if key in param_json:
             match_clauses.append(f"{key} = '{param_json[key]}'")
 
@@ -1402,6 +1406,7 @@ def Treatment_Lookup(auth_args):
     
     if "Patient_ID" not in param_json and \
         "Doctor_ID" not in param_json and \
+        "Appointment_ID" not in param_json and \
         "Appointment_Date" not in param_json:
         ret["status"] = "error"
         ret["message"] = "Must use one of the filters"
@@ -1411,6 +1416,7 @@ def Treatment_Lookup(auth_args):
     if len(match_clauses):
         query += " WHERE "
         query += " AND ".join(match_clauses)
+        query += " ORDER BY Appointment_Date"
   
     with app.app_context():
         result = db.session.execute(text(query))
@@ -1419,7 +1425,6 @@ def Treatment_Lookup(auth_args):
     treatment_details = []
     for treatment in rows:
         row_dict = (dict(treatment._mapping))
-        row_dict.pop('Appointment_ID')
         treatment_details.append(row_dict)
     
     ret["treatment_details"] = treatment_details

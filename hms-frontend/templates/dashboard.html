@@ -1,77 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - HMS{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
   <div class="row g-4">
-    <!-- Left column: Departments -->
-    <div class="col-12 col-lg-6">
-      <div class="panel-card p-3">
-        <h6 class="mb-3">Departments</h6>
 
-        <div>
-          {% if departments %}
-            {% for dept in departments %}
-              <div class="dept-item">
-                <div class="dept-name">{{ dept.name }}</div>
-                <div>
-                  <a href="{{ url_for('department_details', dept_id=dept.id) }}" class="btn btn-outline-primary btn-sm">
-                    view details
-                  </a>
-                </div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <p class="text-muted">No departments available.</p>
-          {% endif %}
-        </div>
+    <div class="col-12">
+      {% include "upcoming_appointments.html" %}
+    </div>
+
+   
+    <div class="col-12">
+      <div class="panel-card p-3">
+        <h6 class="mb-3">Treatment History</h6>
+
+        {% include "treatment_table.html" %}
       </div>
     </div>
 
-    <!-- Right column: Upcoming Appointments -->
-    <div class="col-12 col-lg-6">
-      <div class="panel-card p-3">
-        <h6 class="mb-3">Upcoming Appointments</h6>
-
-        <div class="table-responsive">
-          <table class="table table-bordered mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th style="width: 10%;">Sr No.</th>
-                <th>Doctor Name</th>
-                <th>Deptt</th>
-                <th style="width: 16%;">Date</th>
-                <th style="width: 16%;">Time</th>
-                <th style="width: 10%;">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% if appointments %}
-                {% for appt in appointments %}
-                  <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ appt.doctor_name }}</td>
-                    <td>{{ appt.department }}</td>
-                    <td>{{ appt.date }}</td>
-                    <td>{{ appt.time }}</td>
-                    <td>
-                      <form method="POST" action="{{ url_for('cancel_appointment', appt_id=appt.id) }}">
-                        <!-- add CSRF token if you use one -->
-                        <button type="submit" class="btn btn-outline-danger btn-sm btn-cancel">cancel</button>
-                      </form>
-                    </td>
-                  </tr>
-                {% endfor %}
-              {% else %}
-                <tr>
-                  <td colspan="6" class="text-center text-muted">No upcoming appointments.</td>
-                </tr>
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-    </div>
   </div>
 {% endblock %}

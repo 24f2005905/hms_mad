@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Treatment Details - {{ treatment.Appointment_ID }}{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
+      <div class="card panel-card p-3">
+        <div class="d-flex align-items-center mb-3">
+          <h5 class="mb-0">Treatment Details</h5>
+          <div class="ms-auto small text-muted">
+            <a href="{{ url_for('dashboard') }}" class="text-decoration-none">&larr; Back to Dashboard</a>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <strong>Appointment ID:</strong> {{ treatment.Appointment_ID }}
+        </div>
+        <div class="mb-3">
+          <strong>Appointment Date:</strong> {{ treatment.Appointment_Date }}
+        </div>
+        <div class="mb-3">
+          <strong>Doctor:</strong> {{ treatment.doctor_first_name }} {{ treatment.doctor_last_name }}
+        </div>
+        <div class="mb-3">
+          <strong>Speciality:</strong> {{ treatment.Specialities }}
+        </div>
+
+        <hr>
+
+        <div class="mb-3">
+          <h6>Diagnosis</h6>
+          <p class="small text-break">{{ treatment.Diagnosis or '—' }}</p>
+        </div>
+
+        <div class="mb-3">
+          <h6>Prescription</h6>
+          <p class="small text-break">{{ treatment.Prescription or '—' }}</p>
+        </div>
+
+        <div class="mb-3">
+          <h6>Notes</h6>
+          <p class="small text-break">{{ treatment.Notes }}</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

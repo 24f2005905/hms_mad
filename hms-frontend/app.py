@@ -104,13 +104,77 @@ def login(sid):
     
     return render_template('login.html')
 
+@app.route('/treatment_detail', methods=['GET'])
+@session_wrapper
+def treatment_detail(sid):
+    if not sid:
+        return redirect("/login")
+    
+    param_json = request.args.to_dict()
+    
+    lookup_dict = {
+        "Appointment_ID": param_json["Appointment_ID"]
+    }
+
+    headers = {
+        "Authorization" : sid['token']
+    }
+    
+    treatments_lookup = requests.get(app_url + '/hms/treatments/lookup', params = lookup_dict, timeout = 60, headers = headers)
+    if treatments_lookup.status_code != 200:
+        flash(f"Treatment Lookup Failed {treatments_lookup.status_code}","error")
+        return redirect("/edit-profile") #Where do I redirect to? 
+    
+    treatment_details = treatments_lookup.json().get('treatment_details')
+    
+    return render_template('treatment_detail.html',treatment = treatment_details[0],
+        First_Name=sid['First_Name'], Last_Name= sid['Last_Name'],
+        User_Type = sid['auth_token']['role'].lower())
+
+@app.route('/cancel_appointment', methods=['POST'])
+@session_wrapper
+def Cancel_Appointment(sid):
+    if not sid:
+        return redirect("/login")
+    
+    param_json = request.args.to_dict()
+
+    flash("Cancelled Appointment","success")
+    return redirect("/dashboard")
+
 @app.route('/dashboard', methods=['GET'])
 @session_wrapper
 def dashboard(sid):
     if not sid:
         return redirect("/login")
     
-    return render_template('dashboard.html',First_Name= sid['First_Name'], Last_Name= sid['Last_Name'])
+    headers = {
+        "Authorization" : sid['token']
+    } 
+
+    #Upcoming Appointments
+    lookup_dict = {
+        "Patient_ID": sid['auth_token']['user']
+    }
+
+    appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
+    if appointments_lookup.status_code != 200:
+        flash("Appointment Lookup Failed","error")
+        return redirect("/dashboard") 
+    
+    upcoming_appointments = appointments_lookup.json().get('appointment_details')
+
+    #Treatment Info
+    treatments_lookup = requests.get(app_url + '/hms/treatments/lookup', params = lookup_dict, timeout = 60, headers = headers)
+    if treatments_lookup.status_code != 200:
+        flash("Treatment Lookup Failed","error")
+        return redirect("/dashboard") 
+    
+    treatment_details = treatments_lookup.json().get('treatment_details')
+    
+    
+    return render_template('dashboard.html',First_Name= sid['First_Name'], Last_Name= sid['Last_Name'], treatments = treatment_details, \
+        User_Type = sid['auth_token']['role'].lower(), appointments = upcoming_appointments)
 
 @app.route("/edit-profile", methods=['GET', 'POST'])
 @session_wrapper
@@ -136,7 +200,9 @@ def edit_profile(sid):
 
     if request.method == 'GET':
         user_details['Sex'] = valid_gender_str[user_details['Sex']]
-        return render_template('edit_profile.html', user=user_details)
+        return render_template('edit_profile.html', user=user_details, 
+            First_Name= sid['First_Name'], Last_Name= sid['Last_Name'], 
+            User_Type = sid['auth_token']['role'].lower())
     
     #Handling Update
     user_update_dict = {
@@ -179,7 +245,10 @@ def edit_profile(sid):
         http_resp = requests.post(app_url + '/hms/user/check-password', json = req_json, headers = headers, timeout = 60)
         if http_resp.status_code != 200:
             flash("Invalid Password","error")
-            return render_template("edit_profile.html", user=user_details)
+            return render_template("edit_profile.html", 
+                sid['First_Name'], Last_Name= sid['Last_Name'],
+                User_Type = sid['auth_token']['role'].lower(),
+                user=user_details)
 
         user_update_dict["Password"] = New_Password
 
@@ -189,12 +258,14 @@ def edit_profile(sid):
         if http_resp.status_code != 200:
             resp_json = http_resp.json()
             flash(f"Error Updating Profile: {resp_json['message']}","error")
-            return render_template("edit_profile.html", user=user_details)
+            return render_template("edit_profile.html", sid['First_Name'], Last_Name= sid['Last_Name'],
+                User_Type = sid['auth_token']['role'].lower(), user=user_details)
         else:
             flash("Profile updated successfully","success")
     else:
         flash("No Updates Given", "warning")
-        return render_template("edit_profile.html", user=user_details)
+        return render_template("edit_profile.html", sid['First_Name'], Last_Name= sid['Last_Name'],
+                User_Type = sid['auth_token']['role'].lower(),user=user_details)
     return redirect("/dashboard")
 
 @app.route("/history")

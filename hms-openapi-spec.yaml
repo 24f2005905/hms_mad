@@ -290,6 +290,10 @@ paths:
       security:
         - JWT: []
       parameters:
+        - name: Appointment_ID
+          in: query
+          schema:
+            type: string
         - name: Patient_ID
           in: query
           schema:
@@ -321,7 +325,7 @@ paths:
                     appointment_details : 
                       type: array 
                       items: 
-                        $ref: '#/components/schemas/AppointmentCreate'
+                        $ref: '#/components/schemas/AppointmentLookup'
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -418,6 +422,14 @@ paths:
           in: query
           schema:
             type: string
+        - name: Appointment_ID
+          in: query
+          schema:
+            type: string
+        - name : Appointment_Date
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Treatment history returned
@@ -432,7 +444,7 @@ paths:
                     treatment_details:
                       type: array
                       items: 
-                        $ref: '#/components/schemas/TreatmentCreate'
+                        $ref: '#/components/schemas/TreatmentLookup'
                   
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -942,6 +954,39 @@ components:
           type: string
           enum: [SCHEDULED, COMPLETED, CANCELLED]
     
+    AppointmentLookup:
+      type: object
+      required:
+        - Patient_ID
+        - Doctor_ID
+        - Appointment_Date
+        - Appointment_Time
+      properties:
+        Patient_ID:
+          type: string
+        patient_First_Name:
+          type: string
+        patient_Last_Name:
+          type: string
+        Doctor_ID:
+          type: string
+        doctor_First_Name:
+          type: string
+        doctor_Last_Name:
+          type: string
+        Specialities:
+          type: string
+        Appointment_Date:
+          type: string
+          description: "Date in DD/MM/YY or ISO format"
+        Appointment_Time:
+          type: string
+          description: "Time in HH:MM"
+        Appointment_Status:
+          type: string
+          enum: [SCHEDULED, COMPLETED, CANCELLED]
+
+    
     # Treatments
     TreatmentCreate:
       type: object
@@ -957,6 +1002,7 @@ components:
           type: string
         Notes:
           type: string
+
     TreatmentUpdate:
       type: object
       required:
@@ -971,6 +1017,37 @@ components:
         Notes:
           type: string
   
+    TreatmentLookup:
+      type: object
+      required:
+        - Appointment_ID
+        - Notes
+      properties:
+        Appointment_ID:
+          type: string
+        Appointment_Date:
+          type: string
+        Diagnosis:
+          type: string
+        Prescription:
+          type: string
+        Notes:
+          type: string
+        Doctor_ID:
+          type: string
+        doctor_First_Name:
+          type: string
+        doctor_Last_Name:
+          type: string
+        Patient_ID:
+          type: string
+        patient_First_Name:
+          type: string
+        patient_Last_Name:
+          type: string
+        Specialities:
+          type: string
+
     # Departments & Doctor_Dept
     DepartmentCreate:
       type: object

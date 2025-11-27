@@ -1,0 +1,58 @@
+{# Partial: _treatment_table_nojs.html
+   Expects a `treatments` list
+#}
+
+<style>
+  /* Scroll area showing ~5 rows */
+  .scroll-panel {
+      max-height: 260px;  /* roughly 5 table rows; adjust if needed */
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+  }
+
+  /* Make table header fixed */
+  .scroll-panel table thead th {
+      position: sticky;
+      top: 0;
+      background: #f8f9fa; /* same as .table-light */
+      z-index: 2;
+  }
+</style>
+
+<div class="scroll-panel">
+  <table class="table table-bordered mb-0 align-middle">
+    <thead class="table-light">
+      <tr>
+        <th style="width: 6%; text-align: center;">SL No.</th>
+        <th style="text-align: center;">Appointment Date</th>
+        <th style="text-align: center;">Doctor</th>
+        <th style="text-align: center;">Speciality</th>
+        <th style="width: 10%; text-align: center;">View Details</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% if treatments %}
+        {% for t in treatments %}
+          <tr>
+            <td style="text-align: center;">{{ loop.index }}</td>
+            <td style="text-align: center;">{{ t.Appointment_Date }}</td>
+            <td style="text-align: center;">{{ t.doctor_First_Name }} {{ t.doctor_Last_Name }}</td>
+            <td style="text-align: center;">{{ t.Specialities }}</td>
+            <td class="text-center">
+              <a href="{{ url_for('treatment_detail', Appointment_ID=t.Appointment_ID) }}"
+                 class="btn btn-sm btn-primary">
+                View
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted">No treatment history available.</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
