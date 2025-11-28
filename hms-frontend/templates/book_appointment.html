@@ -66,10 +66,6 @@
       <h4 class="mb-1">Dr. {{ doctor.First_Name }} {{ doctor.Last_Name }}</h4>
       <div class="small text-muted">Speciality: {{ doctor.Specialities }}</div>
     </div>
-
-    <div class="ms-auto small text-muted">
-      <a href="{{ url_for('Doctor_Search') }}" class="text-decoration-none">Back</a>
-    </div>
   </div>
 
   {# ---------- Date selection (GET) ---------- #}
@@ -87,7 +83,6 @@
 
     <div class="col-auto align-self-end">
       <button type="submit" class="btn btn-primary">Show Slots</button>
-      <a href="{{ url_for('Book_Appointment', Doctor_ID=doctor.User_ID) }}" class="btn btn-outline-secondary ms-2">Clear</a>
     </div>
   </form>
 
@@ -179,7 +174,7 @@
       <button type="submit" class="btn btn-primary" {% if not selected_date %}disabled{% endif %}>
         Confirm Booking
       </button>
-      <a href="{{ url_for('Book_Appointment', Doctor_ID=doctor.User_ID) }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary ms-2">Back To Dashboard</a>
     </div>
 
     {# warning when no free slots #}

@@ -20,7 +20,10 @@
           <strong>Appointment Date:</strong> {{ treatment.Appointment_Date }}
         </div>
         <div class="mb-3">
-          <strong>Doctor:</strong> {{ treatment.doctor_First_Name }} {{ treatment.doctor_Last_Name }}
+          <strong>Doctor:</strong> 
+          <a href="{{ url_for('Doctor_Profile',Doctor_ID = treatment.Doctor_ID) }}" class="text-decoration-none">
+          {{ treatment.doctor_First_Name }} {{ treatment.doctor_Last_Name }}
+          </a>
         </div>
         <div class="mb-3">
           <strong>Speciality:</strong> {{ treatment.Specialities }}

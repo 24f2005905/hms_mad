@@ -37,7 +37,10 @@
              class="btn btn-outline-secondary">Clear</a>
         </div>
       </form>
-
+      <div> 
+        {{Details}}
+      </div> 
+      <br>
       <!-- Results Section -->
       {% if selected_speciality %}
         {% if doctors %}
@@ -55,7 +58,10 @@
                 {% for d in doctors %}
                   <tr>
                     <td style="text-align:center;">{{ loop.index }}</td>
-                    <td style="text-align:center;">{{ d.First_Name }} {{ d.Last_Name }}</td>
+                    <td style="text-align:center;">
+                      <a href="{{ url_for('Doctor_Profile') }}" class="text-decoration-none">
+                        {{ d.First_Name }} {{ d.Last_Name }}
+                      </a></td>
                     <td style="text-align:center;">{{ d.Dept_Position }}</td>
                     <td class="text-center">
                       <a class="btn btn-sm btn-primary"

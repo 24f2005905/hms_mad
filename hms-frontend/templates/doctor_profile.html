@@ -1,0 +1,64 @@
+{# templates/doctor_profile.html #}
+{% extends "base.html" %}
+
+{% block title %}Doctor Profile — {{ doctor.First_Name }} {{ doctor.Last_Name }}{% endblock %}
+
+{% block head_extra %}
+  {{ super() }}
+  <style>
+    .profile-card {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      background: #fff;
+    }
+    .profile-header {
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 1rem;
+    }
+    .profile-header h4 {
+      margin: 0;
+    }
+    .profile-label {
+      font-weight: 600;
+      color: #374151;
+    }
+    .profile-value {
+      color: #1e293b;
+    }
+    .profile-section {
+      margin-bottom: 1rem;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-card">
+  <div class="profile-header">
+    <h4>{{ doctor.First_Name }} {{ doctor.Last_Name }}</h4>
+    <div class="small text-muted">Profile</div>
+  </div>
+
+  <div class="profile-section">
+    <span class="profile-label">Specialities:</span>
+    <span class="profile-value">{{ doctor.Specialities }}</span>
+  </div>
+
+  <div class="profile-section">
+    <span class="profile-label">Position:</span>
+    <span class="profile-value">{{ doctor.Dept_Position }}</span>
+  </div>
+
+
+    {% for key, value in User_Profile.items() %}
+    <div class="profile-section">
+      <span class="profile-label">{{ key|capitalize }}:</span>
+      <span class="profile-value">{{ value }}</span>
+    </div>
+  {% endfor %}
+  </div>
+</div>
+{% endblock %}

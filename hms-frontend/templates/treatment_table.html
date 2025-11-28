@@ -38,7 +38,9 @@
           <tr>
             <td style="text-align: center;">{{ loop.index }}</td>
             <td style="text-align: center;">{{ t.Appointment_Date }}</td>
-            <td style="text-align: center;">{{ t.doctor_First_Name }} {{ t.doctor_Last_Name }}</td>
+            <td style="text-align: center;"><a href="{{ url_for('Doctor_Profile',Doctor_ID = t.Doctor_ID) }}" class="text-decoration-none">
+              {{ t.doctor_First_Name }} {{ t.doctor_Last_Name }}
+            </a></td>
             <td style="text-align: center;">{{ t.Specialities }}</td>
             <td class="text-center">
               <a href="{{ url_for('treatment_detail', Appointment_ID=t.Appointment_ID) }}"

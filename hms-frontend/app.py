@@ -172,15 +172,18 @@ def Doctor_Search(sid):
     specialities = sorted({d["Specialities"] for d in doctors_list})
 
     doctors = []
+    Details = None
     if speciality:
         doctors = [d for d in doctors_list
                    if d["Specialities"].lower() == speciality.lower()]
+        Details = doctors[0]['Details']
+        
   
     return render_template("doctor_search.html", \
         user_token  = sid, \
         specialities=specialities,
         selected_speciality= speciality,
-        doctors=doctors) 
+        doctors=doctors, Details = Details) 
 
 @app.route('/book_appointment', methods=['GET','POST'])
 @session_wrapper
@@ -305,7 +308,6 @@ def Cancel_Appointment(sid):
         flash("Appointment Cancelled","success")
     return redirect("/dashboard")
         
-
 @app.route('/dashboard', methods=['GET'])
 @session_wrapper
 def dashboard(sid):
@@ -444,6 +446,33 @@ def logout(sid):
         session_dict.pop(sid,None)
         session.clear()
     return redirect("/login")
+
+@app.route('/doctor_profile', methods=['GET'])
+@session_wrapper
+def Doctor_Profile(sid):
+    if not sid:
+        return redirect("/login")
+    
+    headers = {
+        "Authorization": sid['token']
+    }
+
+    Doctor_ID = request.args.get('Doctor_ID')
+
+    lookup_dict = {
+            "User_ID" : Doctor_ID
+        }
+    
+    # Do DoctorLookup
+    dept_doctor_lookup = requests.get(app_url + "/hms/departments/doctor-lookup",params = lookup_dict,timeout = 60, headers = headers)
+    if dept_doctor_lookup.status_code != 200:
+        flash(f"Doctor Lookup Failed {dept_doctor_lookup.status_code}","error")
+        return redirect("/dashboard")
+        
+    doctor = dept_doctor_lookup.json().get("doctordept_details")[0]
+    User_Profile = json.loads(doctor["User_Profile"])
+
+    return render_template("doctor_profile.html", user_token = sid,doctor=doctor,User_Profile = User_Profile)
 
 @app.route('/', methods=['GET'])
 @session_wrapper
