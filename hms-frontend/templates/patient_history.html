@@ -7,7 +7,12 @@
   <div class="row g-4">
     <div class="col-12">
       <div class="panel-card p-3">
-        <h6 class="mb-3">Treatment History</h6>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div> <h5 class="mb-3">Treatment History</h5> </div>
+          <div class="ms-auto text-end small">
+            <a href="{{ url_for('dashboard') }}" class="text-decoration-none">&larr; Back to dashboard</a>
+          </div>
+        </div>
         {% include "treatment_table.html" %}
       </div>
     </div>

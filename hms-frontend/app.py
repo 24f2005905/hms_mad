@@ -276,6 +276,80 @@ def Book_Appointment(sid):
     flash("Booking Confirmed","success")
     return redirect("/dashboard")
 
+@app.route('/close_appointment', methods=['POST'])
+@session_wrapper
+def Close_Appointment(sid):
+    if not sid:
+        return redirect("/login")
+    
+    headers = {
+        "Authorization": sid['token']
+    }
+    
+    Appointment_ID = request.args.get("Appointment_ID")
+    Save = request.args.get("Save",None)
+
+    #Upload to database if Save is Y
+    if Save:
+        treatment = {
+            "Appointment_ID": Appointment_ID,
+            "Diagnosis": request.form.get('Diagnosis',None),
+            "Prescription": request.form.get('Prescription',None),
+            "Notes": request.form.get('Notes')
+        }
+        
+        treatment_upload = requests.post(app_url + '/hms/treatments/upload',json = treatment,headers=headers, timeout = 60)
+        if treatment_upload.status_code != 200:
+            flash(f"Upload Failed{treatment_upload.json()['message']}","error")
+            return redirect("/dashboard")
+        
+        appt_complete_dict = {
+            "Appointment_ID": Appointment_ID,
+            "Appointment_Status":'COMPLETED'
+        }
+
+        appointment = requests.put(app_url + '/hms/appointment/update',params=appt_complete_dict,headers=headers,timeout=60)
+        if appointment.status_code != 200:
+            flash(f"Complete Failed {appointment.json()['message']}","error")
+            return redirect("/dashboard")
+        
+        flash("Uploaded Successfully","success")
+        return redirect("/dashboard")
+    
+    #Lookup Appointments
+    lookup_dict = {
+        "Appointment_ID": Appointment_ID
+     }
+
+    appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
+    if appointments_lookup.status_code != 200:
+        flash("Appointment Lookup Failed","error")
+        return redirect("/dashboard") 
+        
+    appointment = appointments_lookup.json().get('appointment_details')[0]
+    Patient_ID = appointment['Patient_ID']
+
+    #Patient Lookup
+    lookup_dict = {
+                "User_ID": Patient_ID
+            }
+            
+    user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
+    if user_lookup.status_code != 200:
+        flash("User Lookup Failed","error")
+        return redirect("/dashboard")
+            
+    user_details = (user_lookup.json().get('user_details'))[0]
+    Age = calculate_age(user_details['Date_Of_Birth'])
+    
+    
+    return render_template("treatment_upload.html",user_token=sid,
+        Appointment_ID=Appointment_ID,
+        Appointment_Date = appointment['Appointment_Date'],
+        Appointment_Time = appointment['Appointment_Time'], Age = Age, 
+        Sex = user_details['Sex'],First_Name = user_details['First_Name'], 
+        Last_Name = user_details['Last_Name'])
+
 @app.route('/cancel_appointment', methods=['POST'])
 @session_wrapper
 def Cancel_Appointment(sid):
@@ -360,7 +434,8 @@ def dashboard(sid):
         
         #Upcoming Appointments
         lookup_dict = {
-            "Doctor_ID": sid['auth_token']['user']
+            "Doctor_ID": sid['auth_token']['user'],
+            "Appointment_Status": "ALL"
         }
 
         appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
@@ -368,9 +443,13 @@ def dashboard(sid):
             flash("Appointment Lookup Failed","error")
             return redirect("/dashboard") 
         
-        upcoming_appointments = appointments_lookup.json().get('appointment_details')
+        all_appointments = appointments_lookup.json().get('appointment_details')
+        print(json.dumps(all_appointments))
+        upcoming_appointments = [ u_appt \
+            for u_appt in all_appointments \
+                if u_appt['Appointment_Status'] == "SCHEDULED"]
 
-        pid_list = sorted({p["Patient_ID"] for p in upcoming_appointments})
+        pid_list = sorted({p["Patient_ID"] for p in all_appointments})
         patients = []
         for pid in pid_list:
             lookup_dict = {
