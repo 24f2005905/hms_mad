@@ -13,12 +13,126 @@
       background: #f8f9fa;
       z-index: 2;
   }
+  
 </style>
+
+
+<!-- Modal (from dr_upcoming_appt.html) -->
+<div class="modal fade" id="availabilityModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Set Doctor Availability</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" action="{{ url_for('Update_Availability') }}" id="availabilityForm">
+
+        <div class="modal-body">
+
+          <!-- Start date -->
+          <div class="mb-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" name="Start_Date" class="form-control" id="start_date" required value="{{ avail.Start_Date }}">
+            <div class="text-danger small mt-1" id="startDateError" style="display:none;">
+              Start date must be today or a future date.
+            </div>
+          </div>
+
+          <!-- End date -->
+          <div class="mb-3">
+            <label class="form-label">End Date</label>
+            <input type="date" name="End_Date" class="form-control" id="end_date" required value = "{{ avail.End_Date }}">
+            <div class="text-danger small mt-1" id="endDateError" style="display:none;">
+              End date cannot be before start date.
+            </div>
+          </div>
+
+          <!-- Days of week (toggle buttons) -->
+          <label class="form-label">Days Available</label>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            {% for d in ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"] %}
+              <input type="checkbox"
+                     class="btn-check"
+                     name="Days_Available"
+                     value="{{ d }}"
+                     id="day_{{ d }}"
+                     {% if d.lower() in avail.Days_Available %}checked{% endif %}
+                     autocomplete="off">
+              <label class="btn btn-outline-primary" for="day_{{ d }}">{{ d }}</label>
+            {% endfor %}
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Availability</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('availabilityForm');
+  const startInput = document.getElementById('start_date');
+  const endInput = document.getElementById('end_date');
+  const startError = document.getElementById('startDateError');
+  const endError = document.getElementById('endDateError');
+
+  form.addEventListener('submit', function(event) {
+    let valid = true;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const startVal = startInput.value;
+    const endVal = endInput.value;
+
+    // Reset error display
+    startError.style.display = 'none';
+    endError.style.display = 'none';
+
+    // Check start date not in past
+    if (startVal) {
+      const dStart = new Date(startVal);
+      if (dStart < today) {
+        startError.style.display = 'block';
+        valid = false;
+      }
+    }
+
+    // Check end date not before start date
+    if (startVal && endVal) {
+      const dStart = new Date(startVal);
+      const dEnd = new Date(endVal);
+      if (dEnd < dStart) {
+        endError.style.display = 'block';
+        valid = false;
+      }
+    }
+
+    if (!valid) {
+      event.preventDefault();
+    }
+  });
+});
+</script>
+{% endblock %}
+
 
 <div class="panel-card p-3">
   <div class="d-flex align-items-center mb-3">
-    <h6 class="mb-0">Upcoming Appointments</h6>
-  </div>
+          <h5 class="mb-0">Upcoming Appointments</h5>
+          <!-- Popup Trigger -->
+          <button type="button" class="ms-auto btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#availabilityModal">
+        Set Availability
+      </button>
+        </div>
 
   <div class="appointments-scroll">
     <table class="table table-sm table-bordered mb-0 align-middle">

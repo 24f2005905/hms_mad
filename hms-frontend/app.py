@@ -432,7 +432,7 @@ def dashboard(sid):
     
     if sid['auth_token']['role'] == 'DOCTOR':
         
-        #Upcoming Appointments
+        #Query all Appointments
         lookup_dict = {
             "Doctor_ID": sid['auth_token']['user'],
             "Appointment_Status": "ALL"
@@ -444,11 +444,13 @@ def dashboard(sid):
             return redirect("/dashboard") 
         
         all_appointments = appointments_lookup.json().get('appointment_details')
-        print(json.dumps(all_appointments))
+        
+        # Filter only upcoming appointments
         upcoming_appointments = [ u_appt \
             for u_appt in all_appointments \
                 if u_appt['Appointment_Status'] == "SCHEDULED"]
 
+        # Lookup Unique Patients for this Doc
         pid_list = sorted({p["Patient_ID"] for p in all_appointments})
         patients = []
         for pid in pid_list:
@@ -464,11 +466,21 @@ def dashboard(sid):
             user_details = (user_lookup.json().get('user_details'))[0]
             user_details['Age'] = calculate_age(user_details['Date_Of_Birth'])
             patients.append(user_details)
-            
-            
-
-
-        return render_template('doctor_dashboard.html',user_token = sid,appointments=upcoming_appointments,patients=patients)
+        #Get Doctor's Available Slots
+        slot_dict = {
+            "Doctor_ID": sid["auth_token"]['user']
+        }
+        slot_lookup = requests.get(app_url + '/hms/slots/lookup', params = slot_dict, headers= headers,timeout =60)
+        if slot_lookup.status_code != 200:
+            flash("Slot Lookup Failed","error")
+            return redirect("/dashboard")
+        available_slots = slot_lookup.json().get('Slot')
+        available_slots["Days_Available"] = sorted({d.lower() for d in available_slots['Days_Available']})
+        
+        # Get all Appointment Slots for the doctor
+        return render_template('doctor_dashboard.html', user_token = sid,
+            appointments=upcoming_appointments, patients=patients, 
+            avail = available_slots)
 
 @app.route("/edit-profile", methods=['GET', 'POST'])
 @session_wrapper
@@ -623,6 +635,34 @@ def Doctor_Profile(sid):
     User_Profile = json.loads(doctor["User_Profile"])
 
     return render_template("doctor_profile.html", user_token = sid,doctor=doctor,User_Profile = User_Profile)
+
+@app.route('/update_availability', methods=['POST'])
+@session_wrapper
+def Update_Availability(sid):
+    if not sid:
+        return redirect("/login")
+    
+    headers = {
+        "Authorization" : sid['token']
+    }
+
+    #Post In Database
+    Days_Available = request.form.getlist("Days_Available")
+    Days_Available = sorted({d.upper() for d in Days_Available})
+    slot_dict = {
+    "Doctor_ID" : sid['auth_token']['user'],
+    "Start_Date": request.form.get('Start_Date'),
+    "End_Date": request.form.get('End_Date'),
+    "Days_Available": Days_Available 
+    }
+
+    updated_slots = requests.post(app_url + '/hms/slots/create', json = slot_dict,headers=headers,timeout = 60)
+    if updated_slots.status_code != 200:
+        flash(f"Update Failed {updated_slots.status_code}","error")
+        return redirect("/dashboard")
+
+    flash("Update Successful","success")
+    return redirect("/dashboard")
 
 @app.route('/', methods=['GET'])
 @session_wrapper

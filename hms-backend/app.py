@@ -725,18 +725,22 @@ def Slots_Lookup(auth_args):
         return ret, 400
      
 
-    doc_lookup_q = text(f"SELECT Doctor_ID, Days_Available FROM Slots WHERE Doctor_ID = '{Doctor_ID}' AND '{Current_Date}' BETWEEN Start_Date AND End_Date")
+    doc_lookup_q = text(f"SELECT Start_Date, End_Date, Days_Available FROM Slots WHERE Doctor_ID = '{Doctor_ID}'")
     with app.app_context():
         result = db.session.execute(doc_lookup_q)
-        doctors = result.fetchone() 
+        slots = result.fetchone() 
     
-    if not doctors:
+    if not slots:
         ret["status"] = "error"
         ret["message"] = "Doctor Currently Unavailable"
         return ret, 400
     
-    ret["Doctor_ID"] = doctors[0]
-    ret["Availabliity"] = json.loads(doctors[1])
+    ret["Slot"] = {
+        "Start_Date": slots[0],
+        "End_Date": slots[1],
+        "Days_Available": json.loads(slots[2])
+    }
+    
 
     return ret, 200
 
