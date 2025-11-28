@@ -49,7 +49,7 @@
               <td style="text-align:center;">{{ appt.doctor_First_Name }} {{ appt.doctor_Last_Name }}</td>
               <td style="text-align:center;">{{ appt.Specialities }}</td>
               <td class="text-center">
-                <form method="POST" action="{{ url_for('Cancel_Appointment', patient_id=appt.Patient_ID, appointment_id=appt.Appointment_ID) }}" style="display:inline;">
+                <form method="POST" action="{{ url_for('Cancel_Appointment', Appointment_ID=appt.Appointment_ID) }}" style="display:inline;">
                   {# If you use CSRF (Flask-WTF), render token here: {{ csrf_token() }} #}
                   <button type="submit" class="btn btn-sm btn-outline-danger">
                     Cancel

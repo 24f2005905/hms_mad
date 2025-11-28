@@ -191,7 +191,7 @@ def Book_Appointment(sid):
     headers = {
         "Authorization" : sid['token']
     }
-    print(json.dumps(request.args.to_dict()))
+    
     Doctor_ID = request.args.get("Doctor_ID")
     if not Doctor_ID:
         flash(f"Select the Doctor {Doctor_ID}", "error")
@@ -202,8 +202,7 @@ def Book_Appointment(sid):
     if request.method == 'POST':
         Slot = request.form.get("slot", None)
         Appointment_Date = request.form.get("date", None)
-        print(f"Slot: {Slot}")
-        print(f"Appointment Date: {Appointment_Date}")
+
 
     if request.method == 'GET' or \
         not Slot:        
@@ -218,7 +217,7 @@ def Book_Appointment(sid):
             return redirect("/dashboard")
         
         doctor = dept_doctor_lookup.json().get("doctordept_details")[0]
-        print(json.dumps(doctor))
+       
         # Get Slots
         date_list = get_next_7_days()
         if not Appointment_Date:
@@ -241,9 +240,24 @@ def Book_Appointment(sid):
                 "slot": f_slot,
                 "available": True if f_slot in Available_Slots else False
             })
-        print(json.dumps(slot_list))
+      
         return render_template("book_appointment.html",user_token = sid, days = date_list, selected_date = Appointment_Date, doctor= doctor, available = slot_list)
-    flash("Booked Appointment","success")
+    
+    #Confirm Booking
+    appt_details =  {
+        "Appointment_Time": Slot,
+        "Patient_ID":  sid['auth_token']['user'],
+        "Appointment_Date": datetime.strptime(Appointment_Date, '%d %B %Y').strftime('%Y-%m-%d'),
+        "Doctor_ID": Doctor_ID
+    }
+    
+
+    appt_create = requests.post(app_url + "/hms/appointment/create", json = appt_details, timeout =60 , headers = headers)
+    if appt_create.status_code != 200:
+        flash(f"Booking Failed {appt_details}","error")
+        return redirect("/doctor_search")
+    
+    flash("Booking Confirmed","success")
     return redirect("/dashboard")
 
 @app.route('/cancel_appointment', methods=['POST'])
@@ -252,10 +266,45 @@ def Cancel_Appointment(sid):
     if not sid:
         return redirect("/login")
     
-    param_json = request.args.to_dict()
+    headers = {
+        "Authorization": sid['token']
+    }
+    
+    Appointment_ID = request.args.get("Appointment_ID")
+    Confirm = request.args.get("Confirm")
 
-    flash("Cancelled Appointment","success")
+    if not Appointment_ID:
+        flash("Appointment ID missing","error")
+        return redirect("/dashboard")
+
+    lookup_dict = {
+        "Patient_ID": sid['auth_token']['user'],
+        "Appointment_ID": Appointment_ID
+    }
+
+    appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
+    if appointments_lookup.status_code != 200:
+        flash("Appointment Lookup Failed","error")
+        return redirect("/dashboard") 
+    
+    appointment_details = appointments_lookup.json().get('appointment_details')[0]
+
+    if not Confirm:
+        return render_template("cancel_appointment.html", user_token = sid, appointment= appointment_details)
+
+    #Delete in backend
+    appt_cancel_dict = {
+        "Appointment_ID": Appointment_ID ,
+        "Appointment_Status": 'CANCELLED'
+    }
+
+    appt_cancel = requests.put(app_url + '/hms/appointment/update', params = appt_cancel_dict, headers = headers, timeout = 60)
+    if appt_cancel.status_code != 200:
+        flash("Appointment Cancel Failed","error")
+    else:
+        flash("Appointment Cancelled","success")
     return redirect("/dashboard")
+        
 
 @app.route('/dashboard', methods=['GET'])
 @session_wrapper

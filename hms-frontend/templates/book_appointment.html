@@ -97,8 +97,7 @@
       {{ csrf_token() }}
     {% endif %}
 
-    <input type="hidden" name="doctor_id" value="{{ doctor.User_ID }}">
-    <input type="hidden" name="patient_id" value="{{ patient_id }}">
+    
     <input type="hidden" name="date" value="{{ selected_date or '' }}">
 
     <div class="mb-2 small text-muted">

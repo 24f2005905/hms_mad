@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="panel-card p-3">
+  <h4>Cancel Appointment</h4>
+  <div class="mb-3">
+    <p><strong>Doctor:</strong> {{ appointment.doctor_First_Name }} {{ appointment.doctor_Last_Name }}<br>
+       <strong>Date:</strong> {{ appointment.Appointment_Date }}<br>
+       <strong>Slot:</strong> {{ appointment.Appointment_Time }}</p>
+  </div>
+
+  <div class="alert alert-warning">
+    Are you sure you want to cancel this appointment?
+  </div>
+
+  <form method="POST" action="{{ url_for('Cancel_Appointment', Appointment_ID=appointment.Appointment_ID,Confirm='Y') }}">
+    {% if csrf_token is defined %}
+      {{ csrf_token() }}
+    {% endif %}
+    <button type="submit" class="btn btn-danger">Yes — Cancel Appointment</button>
+    <a href="{{ url_for('dashboard') }}"
+       class="btn btn-secondary ms-2">No — Keep Appointment</a>
+  </form>
+</div>
+{% endblock %}
