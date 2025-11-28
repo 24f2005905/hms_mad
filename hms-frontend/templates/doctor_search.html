@@ -8,7 +8,7 @@
 
       <!-- Header -->
       <div class="d-flex align-items-center mb-3">
-        <h5 class="mb-0">Find a Doctor</h5>
+        <h5 class="mb-0">Departments</h5>
         <div class="ms-auto small text-muted">
           <a href="{{ url_for('dashboard') }}" class="text-decoration-none">Back</a>
         </div>
@@ -37,21 +37,23 @@
              class="btn btn-outline-secondary">Clear</a>
         </div>
       </form>
-      <div> 
-        {{Details}}
-      </div> 
-      <br>
+      
       <!-- Results Section -->
       {% if selected_speciality %}
+      <div> 
+        <h5 class="mb-0">Overview</h5> <br>
+        <p>{{Details}}</p>
+      </div> 
+      
         {% if doctors %}
           <div class="table-responsive">
             <table class="table table-sm table-bordered align-middle mb-0">
               <thead class="table-light">
                 <tr>
-                  <th style="width:6%; text-align:center;">SL No.</th>
+                  <th style="width:10%; text-align:center;">SL No.</th>
                   <th style="text-align:center;">Name</th>
                   <th style="text-align:center;">Position</th>
-                  <th style="width:12%; text-align:center;">Action</th>
+                  <th style="width:15%; text-align:center;">Action</th>
                 </tr>
               </thead>
               <tbody>

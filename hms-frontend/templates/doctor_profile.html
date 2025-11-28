@@ -18,6 +18,10 @@
       margin-bottom: 1.5rem;
       border-bottom: 1px solid #dee2e6;
       padding-bottom: 1rem;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     .profile-header h4 {
       margin: 0;
@@ -32,33 +36,50 @@
     .profile-section {
       margin-bottom: 1rem;
     }
+    .back-link {
+      text-decoration: none;
+      color: #3f51b5;
+      font-weight: 500;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
   </style>
 {% endblock %}
 
 {% block content %}
 <div class="profile-card">
   <div class="profile-header">
-    <h4>{{ doctor.First_Name }} {{ doctor.Last_Name }}</h4>
-    <div class="small text-muted">Profile</div>
-  </div>
-
-  <div class="profile-section">
-    <span class="profile-label">Specialities:</span>
-    <span class="profile-value">{{ doctor.Specialities }}</span>
-  </div>
-
-  <div class="profile-section">
-    <span class="profile-label">Position:</span>
-    <span class="profile-value">{{ doctor.Dept_Position }}</span>
-  </div>
-
-
-    {% for key, value in User_Profile.items() %}
-    <div class="profile-section">
-      <span class="profile-label">{{ key|capitalize }}:</span>
-      <span class="profile-value">{{ value }}</span>
+    <div>
+      <h4>{{ doctor.First_Name }} {{ doctor.Last_Name }}</h4>
+      <div class="small text-muted">Profile</div>
     </div>
-  {% endfor %}
+    <div>
+      <a href="{{ url_for('dashboard') }}" class="back-link">&larr; Back to Dashboard</a>
+    </div>
   </div>
+
+  {% if doctor.Specialities %}
+    <div class="profile-section">
+      <span class="profile-label">Specialities:</span>
+      <span class="profile-value">{{ doctor.Specialities }}</span>
+    </div>
+  {% endif %}
+
+  {% if doctor.Dept_Position %}
+    <div class="profile-section">
+      <span class="profile-label">Position:</span>
+      <span class="profile-value">{{ doctor.Dept_Position }}</span>
+    </div>
+  {% endif %}
+
+  {% if User_Profile %}
+    {% for key, value in User_Profile.items() %}
+      <div class="profile-section">
+        <span class="profile-label">{{ key|capitalize }}:</span>
+        <span class="profile-value">{{ value }}</span>
+      </div>
+    {% endfor %}
+  {% endif %}
 </div>
 {% endblock %}
