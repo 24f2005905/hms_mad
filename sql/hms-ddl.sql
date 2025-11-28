@@ -148,4 +148,5 @@ GROUP BY
 
 
 INSERT INTO Users VALUES
-(1,"ADMIN","admin@123.com","F","Admin","Superuser","ADMIN","9999999999",'{}','$2b$14$hV74sc/onROU.XzHk.2TiOfVTOVQkhkRhEoI5S343yjGNGN.kUuTO','ACTIVE');
+(1,'ADMIN','admin@123.com','F','1970-01-01', '', 'Admin','Superuser','ADMIN','9999999999','{}','$2b$14$hV74sc/onROU.XzHk.2TiOfVTOVQkhkRhEoI5S343yjGNGN.kUuTO','ACTIVE'),
+('UI-FE','admin@123.com','F','1970-01-01', '','UI','Front End','ADMIN','9999999999','{}','$2b$14$hV74sc/onROU.XzHk.2TiOfVTOVQkhkRhEoI5S343yjGNGN.kUuTO','ACTIVE');

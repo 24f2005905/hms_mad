@@ -221,7 +221,7 @@ def User_Create(auth_args):
 
     # Now insert the user
     query_2 = text ('INSERT INTO Users '\
-        '(User_ID,Email_ID, Sex,Date_Of_Birth, Address First_Name, Last_Name, ' \
+        '(User_ID,Email_ID, Sex,Date_Of_Birth, Address, First_Name, Last_Name, ' \
         'User_Type, Phone_Number, User_Profile, Password) ' \
         'VALUES (:User_ID,:Email_ID, :Sex ,:Date_Of_Birth,' \
         ':Address, :First_Name, :Last_Name, :User_Type,' \
@@ -230,8 +230,8 @@ def User_Create(auth_args):
         "User_ID": User_ID,
         "Email_ID": req_json.get("Email_ID", ""),
         "Sex": req_json["Sex"],
-        "Date_Of_Birth": req_json("Date_Of_Birth",""),
-        "Address": req_json("Address",""),
+        "Date_Of_Birth": req_json.get("Date_Of_Birth",""),
+        "Address": req_json.get("Address",""),
         "First_Name": req_json["First_Name"],
         "Last_Name": req_json.get("Last_Name",""),
         "User_Type": User_Type,

@@ -16,6 +16,7 @@ valid_gender_str = {
 	'M': 'Male',
 	'F': 'Female'
 }
+my_auth_token = None
 
 Free_Slots = ["09:00", "09:15", "09:30", "09:45",
         "10:00", "10:15", "10:30", "10:45",
@@ -29,6 +30,24 @@ role_to_dash = {
     "PATIENT": "patient_dashboard.html",
     "DOCTOR": "doctor_dashboard.html"
 }
+def gen_backend_token(user, password):
+    # Generate auth token from backend
+    login_dict = {
+        "User_ID": user,
+        "Password": password
+    }
+    http_resp = requests.post(app_url + '/hms/id/generate/token', json=login_dict, timeout=60)
+    if http_resp.status_code != 200:
+        flash("Login Failed","error")
+        return redirect("/login")
+    
+    # Extract Auth Token and Save in session
+    auth_token_str = http_resp.json().get('token', None)
+    if not auth_token_str:
+        flash("Login Failed","error")
+        return redirect("/login")
+    
+    return auth_token_str
 
 def calculate_age(dob_str):
     dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
@@ -63,6 +82,41 @@ def session_wrapper(f):
         kwargs['sid'] = my_session_dict
         return f(*args, **kwargs)
     return sid_wrapper
+
+@app.route('/register', methods=['GET', 'POST'])
+@session_wrapper
+def register(sid):
+    if sid:
+        return redirect("/dashboard")
+    
+    # Present the form for new user
+    if request.method == 'GET':
+        return render_template("register.html")
+    
+    headers = {
+        "Authorization": my_auth_token
+    }
+    
+    create_dict = {
+    "First_Name": request.form.get('First_Name'),
+    "Last_Name" : request.form.get('Last_Name',None),
+    "Phone_Number" :request.form.get('Phone_Number'),
+    "User_Type": "PATIENT",
+    "Email_ID" : request.form.get('Email_ID'),
+    "Sex" : request.form.get('Sex')[0].upper(),
+    "Address" : request.form.get('Address',None),
+    "Date_Of_Birth" :request.form.get('Date_Of_Birth'),
+    "Password" : request.form.get('password'),
+    "New_Password" : request.form.get('cnf_password')
+    }
+
+    user_create = requests.post(app_url + '/hms/user/create',json= create_dict, headers= headers, timeout=60)
+    if user_create.status_code != 200:
+        flash(f"Registration Failed{user_create.json().get('message')}","error")
+        return redirect("/login")
+    
+    User_ID = user_create.json().get('User_ID')
+    return render_template("register_success.html", User_ID = User_ID)
 
 @app.route('/login', methods=['GET', 'POST'])
 @session_wrapper
@@ -472,10 +526,14 @@ def dashboard(sid):
         }
         slot_lookup = requests.get(app_url + '/hms/slots/lookup', params = slot_dict, headers= headers,timeout =60)
         if slot_lookup.status_code != 200:
-            flash("Slot Lookup Failed","error")
-            return redirect("/dashboard")
-        available_slots = slot_lookup.json().get('Slot')
-        available_slots["Days_Available"] = sorted({d.lower() for d in available_slots['Days_Available']})
+            available_slots = {
+                "Start_Date": date.today().strftime("%Y-%m-%d"),
+                "End_Date": date.today().strftime("%Y-%m-%d"),
+                "Days_Available":[]
+            }
+        else:    
+            available_slots = slot_lookup.json().get('Slot')
+            available_slots["Days_Available"] = sorted({d.lower() for d in available_slots['Days_Available']})
         
         # Get all Appointment Slots for the doctor
         return render_template('doctor_dashboard.html', user_token = sid,
@@ -683,5 +741,8 @@ if __name__ == '__main__' :
     
     #Load JWT Private and Public Keys
     jwt_public_str = open(config_dict["jwt_public"]).read()
+
+    # Get our auth token
+    my_auth_token = gen_backend_token(config_dict['account_id'], config_dict['account_pwd'])
     app.secret_key = "a-very-secret-key"
     app.run(debug=True, port=9001)
