@@ -1,0 +1,67 @@
+
+<style>
+  /* Keep the card/inner area a fixed height and scrollable (approx 5 rows) */
+  .appointments-scroll {
+      max-height: 260px;
+      overflow-y: auto;
+      border-top: 1px solid #e9ecef;
+  }
+  /* Stick header while scrolling */
+  .appointments-scroll thead th {
+      position: sticky;
+      top: 0;
+      background: #f8f9fa;
+      z-index: 2;
+  }
+</style>
+
+<div class="panel-card p-3">
+  <div class="d-flex align-items-center mb-3">
+    <h6 class="mb-0">Upcoming Appointments</h6>
+  </div>
+
+  <div class="appointments-scroll">
+    <table class="table table-sm table-bordered mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width:6%; text-align:center;">SL No.</th>
+          <th style="text-align:center;">Appointment Date</th>
+          <th style="text-align:center;">Appointment Time</th>
+          <th style="text-align:center;">Patient</th>
+          <th style="width:12%; text-align:center;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if appointments %}
+          {% for appt in appointments %}
+            <tr>
+              <td style="text-align:center;">{{ loop.index }}</td>
+              <td style="text-align:center;">{{ appt.Appointment_Date }}</td>
+              <td style="text-align:center;">{{ appt.Appointment_Time }}</td>
+              <td style="text-align:center;">
+                {{ appt.patient_First_Name }} {{ appt.patient_Last_Name }}</td>
+              <td class="text-center">
+                <form method="POST" action="{{ url_for('Cancel_Appointment', Appointment_ID=appt.Appointment_ID) }}" style="display:inline;">
+                  {# If you use CSRF (Flask-WTF), render token here: {{ csrf_token() }} #}
+                  <button type="submit" class="btn btn-sm btn-outline-success">
+                    Close
+                  </button>
+                </form>
+                <form method="POST" action="{{ url_for('Cancel_Appointment', Appointment_ID=appt.Appointment_ID,Patient_ID=appt.Patient_ID) }}" style="display:inline;">
+                  {# If you use CSRF (Flask-WTF), render token here: {{ csrf_token() }} #}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    Cancel
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-3">No upcoming appointments.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>

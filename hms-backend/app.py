@@ -21,7 +21,7 @@ Valid_User_Types = [
 Valid_User_Column = [
     "User_ID", "Email_ID","Sex","First_Name", "Last_Name", 
     "User_Type", "Phone_Number","User_Profile",
-    "Password"
+    "Password","Date_Of_Birth","Address"
 ]
 Valid_Days_Of_Week = [
     "mon", "tue", "wed", "thu", "fri", "sat", "sun"
@@ -196,7 +196,17 @@ def User_Create(auth_args):
         return ret, 400
     
     User_Type = req_json["User_Type"]
+    #Check for valid date of birth
+    try:
+        DOB = datetime.strptime(req_json["Date_Of_Birth"],'%Y-%m-%d').date()
+        if DOB > date.today():
+            raise Exception("DOB in future")
+    except:
+        ret["status"] = "error"
+        ret["message"] = "Invalid DOB Format"
+        return ret, 400
     
+
     # Generate an ID: [P/A/D]-YYYY-MM-DD-[SNO]
     # Query for all User IDs for partial match
     query_1 = text("SELECT User_ID FROM Users WHERE User_ID LIKE :partial_match ORDER BY id DESC")
@@ -211,15 +221,17 @@ def User_Create(auth_args):
 
     # Now insert the user
     query_2 = text ('INSERT INTO Users '\
-        '(User_ID,Email_ID, Sex, First_Name, Last_Name, ' \
+        '(User_ID,Email_ID, Sex,Date_Of_Birth, Address First_Name, Last_Name, ' \
         'User_Type, Phone_Number, User_Profile, Password) ' \
-        'VALUES (:User_ID,:Email_ID, :Sex ' \
-        ':First_Name, :Last_Name, :User_Type,' \
+        'VALUES (:User_ID,:Email_ID, :Sex ,:Date_Of_Birth,' \
+        ':Address, :First_Name, :Last_Name, :User_Type,' \
         ':Phone_Number, :User_Profile, :Password)')
     query_2_dict = {
         "User_ID": User_ID,
         "Email_ID": req_json.get("Email_ID", ""),
         "Sex": req_json["Sex"],
+        "Date_Of_Birth": req_json("Date_Of_Birth",""),
+        "Address": req_json("Address",""),
         "First_Name": req_json["First_Name"],
         "Last_Name": req_json.get("Last_Name",""),
         "User_Type": User_Type,
@@ -324,7 +336,18 @@ def User_Update(auth_args):
         
         if column_name == 'User_ID':
             continue 
-
+        if column_name == 'Date_Of_Birth':
+            #Check for valid date of birth
+            try:
+                DOB = datetime.strptime(req_json["Date_Of_Birth"],'%Y-%m-%d').date()
+                
+                if DOB > date.today():
+                    raise Exception("DOB in future")
+            except:
+                ret["status"] = "error"
+                ret["message"] = "Invalid DOB Format"
+                return ret, 400
+            
         column_data = (req_json[column_name] \
                 if column_name != "Password" else \
                     hash_password(req_json[column_name])) if \
@@ -1176,7 +1199,8 @@ def Appointment_Update(auth_args):
     if (User_Role == 'PATIENT' and \
             (User_ID != row[0] or Appointment_Status != "CANCELLED")) or \
         (User_Role == 'DOCTOR' and \
-            (User_ID != row[1] or Appointment_Status != "COMPLETED")) or \
+            (User_ID != row[1] or Appointment_Status not in \
+                ["COMPLETED", "CANCELLED"])) or \
         (User_Role == 'ADMIN' and \
             Appointment_Status != 'CANCELLED'):
         ret["status"] = "error"

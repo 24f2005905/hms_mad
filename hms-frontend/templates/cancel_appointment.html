@@ -13,7 +13,7 @@
     Are you sure you want to cancel this appointment?
   </div>
 
-  <form method="POST" action="{{ url_for('Cancel_Appointment', Appointment_ID=appointment.Appointment_ID,Confirm='Y') }}">
+  <form method="POST" action="{{ url_for('Cancel_Appointment', Appointment_ID=appointment.Appointment_ID, Patient_ID=appointment.Patient_ID,Confirm='Y') }}">
     {% if csrf_token is defined %}
       {{ csrf_token() }}
     {% endif %}

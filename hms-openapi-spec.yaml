@@ -869,6 +869,8 @@ components:
         - User_Type
         - Phone_Number
         - Password
+        - Date_Of_Birth
+        - Address
       properties:
         First_Name:
           type: string
@@ -877,6 +879,11 @@ components:
         Sex:
           type: string
           enum: [M, F, O]
+        Date_Of_Birth:
+          type: string
+          format: date
+        Address:
+          type: string
         Last_Name:
           type: string
         User_Type:
@@ -900,6 +907,11 @@ components:
         Sex:
           type: string
           enum: [M, F, O]
+        Date_Of_Birth:
+          type: string
+          format: date
+        Address:
+          type: string
         First_Name:
           type: string
         Last_Name:
@@ -919,6 +931,11 @@ components:
         Email_ID:
           type: string
         Sex:
+          type: string
+        Date_Of_Birth:
+          type: string
+          format: date
+        Address:
           type: string
         First_Name:
           type: string

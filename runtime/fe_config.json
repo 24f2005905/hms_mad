@@ -1,5 +1,0 @@
-{
-	"template_dir": "../hms-frontend/templates",
-	"app_url": "http://localhost:9000",
-	"jwt_public": "../ext/keys/public_key.pem"
-}

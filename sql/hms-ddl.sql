@@ -5,6 +5,8 @@ CREATE TABLE Users (
     User_ID Varchar(15) UNIQUE NOT NULL,
     Email_ID Varchar(100),
     Sex Char(1) NOT NULL,
+    Date_Of_Birth DATE NOT NULL,
+    Address TEXT  NULL,
     First_Name Varchar(50) NOT NULL,
     Last_Name Varchar(50)  NULL,
     User_Type Varchar(10) NOT NULL ,

@@ -1,6 +1,3 @@
-{# Partial: _treatment_table_nojs.html
-   Expects a `treatments` list
-#}
 
 <style>
   /* Scroll area showing ~5 rows */
@@ -43,8 +40,8 @@
             </a></td>
             <td style="text-align: center;">{{ t.Specialities }}</td>
             <td class="text-center">
-              <a href="{{ url_for('treatment_detail', Appointment_ID=t.Appointment_ID) }}"
-                 class="btn btn-sm btn-primary">
+              <a href="{{ url_for('treatment_detail', Appointment_ID=t.Appointment_ID, Patient_ID=t.Patient_ID) }}"
+                 class="btn btn-sm btn-outline-primary">
                 View
               </a>
             </td>

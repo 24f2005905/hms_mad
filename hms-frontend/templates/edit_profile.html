@@ -67,7 +67,23 @@
 	        </div>
 	      </div>
 	    </div>
+              <div class="mb-3 row">
+              <label for="Date_Of_Birth" class="col-sm-3 col-form-label">Date Of Birth </label>
+              <div class="col-sm-9">
+                <input id="date_of_birth" name="Date_Of_Birth" class="form-control" type="date"
+                       value="{{ (form_values.date_of_birth if form_values) or user['Date_Of_Birth'] }}" required>
+                <div class="form-text">Date of Birth as 'DD-MON-YYYY'. Example: 04-Nov-2024</div>
+              </div>
 
+            <div class="mb-3 row">
+              <label for="Address" class="col-sm-3 col-form-label">Address </label>
+              <div class="col-sm-9">
+                <input id="address" name="Address" class="form-control" type="text"
+                       value="{{ (form_values.address if form_values) or user['Address'] }}" required>
+                <div class="form-text">Current Residential Address</div>
+              </div>
+
+            </div>
             <div class="mb-3 row">
               <label for="phone_number" class="col-sm-3 col-form-label">Phone </label>
               <div class="col-sm-9">

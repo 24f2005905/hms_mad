@@ -24,14 +24,24 @@ Free_Slots = ["09:00", "09:15", "09:30", "09:45",
         "15:00", "15:15", "15:30", "15:45",
         "16:00", "16:15", "16:30", "16:45"]
 
+role_to_dash = {
+    "ADMIN" : "admin_dashboard.html",
+    "PATIENT": "patient_dashboard.html",
+    "DOCTOR": "doctor_dashboard.html"
+}
+
+def calculate_age(dob_str):
+    dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
+    today = date.today()
+    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    return age
+
 def get_next_7_days():
     current_date = datetime.now()
     date_list = []
     for i in range(7):
        date_list.append(( current_date + timedelta(days = i + 1)).strftime('%d %B %Y'))
     return date_list
-
-
 
 def session_wrapper(f):
     """ Session Wrapper Decorator"""
@@ -53,7 +63,6 @@ def session_wrapper(f):
         kwargs['sid'] = my_session_dict
         return f(*args, **kwargs)
     return sid_wrapper
-
 
 @app.route('/login', methods=['GET', 'POST'])
 @session_wrapper
@@ -134,13 +143,17 @@ def treatment_detail(sid):
         "Appointment_ID": param_json["Appointment_ID"]
     }
 
+    if "Patient_ID" in param_json:
+        lookup_dict["Patient_ID"] = param_json["Patient_ID"]
+
     headers = {
         "Authorization" : sid['token']
     }
     
     treatments_lookup = requests.get(app_url + '/hms/treatments/lookup', params = lookup_dict, timeout = 60, headers = headers)
     if treatments_lookup.status_code != 200:
-        flash(f"Treatment Lookup Failed {treatments_lookup.status_code}","error")
+        ret_json = treatments_lookup.json()
+        flash(f"Treatment Lookup Failed {ret_json['message']}","error")
         return redirect("/dashboard")  
     
     treatment_details = treatments_lookup.json().get('treatment_details')
@@ -275,13 +288,14 @@ def Cancel_Appointment(sid):
     
     Appointment_ID = request.args.get("Appointment_ID")
     Confirm = request.args.get("Confirm")
+    Patient_ID = request.args.get("Patient_ID", sid['auth_token']['user'])
 
     if not Appointment_ID:
         flash("Appointment ID missing","error")
         return redirect("/dashboard")
 
     lookup_dict = {
-        "Patient_ID": sid['auth_token']['user'],
+        "Patient_ID": Patient_ID,
         "Appointment_ID": Appointment_ID
     }
 
@@ -289,7 +303,7 @@ def Cancel_Appointment(sid):
     if appointments_lookup.status_code != 200:
         flash("Appointment Lookup Failed","error")
         return redirect("/dashboard") 
-    
+    print(appointments_lookup.json())
     appointment_details = appointments_lookup.json().get('appointment_details')[0]
 
     if not Confirm:
@@ -318,29 +332,64 @@ def dashboard(sid):
         "Authorization" : sid['token']
     } 
 
-    #Upcoming Appointments
-    lookup_dict = {
-        "Patient_ID": sid['auth_token']['user']
-    }
+    if sid['auth_token']['role'] == 'PATIENT':
+        #Upcoming Appointments
+        lookup_dict = {
+            "Patient_ID": sid['auth_token']['user']
+        }
 
-    appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
-    if appointments_lookup.status_code != 200:
-        flash("Appointment Lookup Failed","error")
-        return redirect("/dashboard") 
-    
-    upcoming_appointments = appointments_lookup.json().get('appointment_details')
+        appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
+        if appointments_lookup.status_code != 200:
+            flash("Appointment Lookup Failed","error")
+            return redirect("/dashboard") 
+        
+        upcoming_appointments = appointments_lookup.json().get('appointment_details')
 
-    #Treatment Info
-    treatments_lookup = requests.get(app_url + '/hms/treatments/lookup', params = lookup_dict, timeout = 60, headers = headers)
-    if treatments_lookup.status_code != 200:
-        flash("Treatment Lookup Failed","error")
-        return redirect("/dashboard") 
+        #Treatment Info
+        treatments_lookup = requests.get(app_url + '/hms/treatments/lookup', params = lookup_dict, timeout = 60, headers = headers)
+        if treatments_lookup.status_code != 200:
+            flash("Treatment Lookup Failed","error")
+            return redirect("/dashboard") 
+        
+        treatment_details = treatments_lookup.json().get('treatment_details')
+        
+        return render_template('patient_dashboard.html', treatments = treatment_details, \
+        user_token = sid, appointments = upcoming_appointments)
     
-    treatment_details = treatments_lookup.json().get('treatment_details')
-    
-    
-    return render_template('dashboard.html', treatments = treatment_details, \
-       user_token = sid, appointments = upcoming_appointments)
+    if sid['auth_token']['role'] == 'DOCTOR':
+        
+        #Upcoming Appointments
+        lookup_dict = {
+            "Doctor_ID": sid['auth_token']['user']
+        }
+
+        appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
+        if appointments_lookup.status_code != 200:
+            flash("Appointment Lookup Failed","error")
+            return redirect("/dashboard") 
+        
+        upcoming_appointments = appointments_lookup.json().get('appointment_details')
+
+        pid_list = sorted({p["Patient_ID"] for p in upcoming_appointments})
+        patients = []
+        for pid in pid_list:
+            lookup_dict = {
+                "User_ID": pid 
+            }
+            
+            user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
+            if user_lookup.status_code != 200:
+                flash("User Lookup Failed","error")
+                return redirect("/dashboard")
+            
+            user_details = (user_lookup.json().get('user_details'))[0]
+            user_details['Age'] = calculate_age(user_details['Date_Of_Birth'])
+            patients.append(user_details)
+            
+            
+
+
+        return render_template('doctor_dashboard.html',user_token = sid,appointments=upcoming_appointments,patients=patients)
 
 @app.route("/edit-profile", methods=['GET', 'POST'])
 @session_wrapper
@@ -379,6 +428,8 @@ def edit_profile(sid):
     Phone_Number = request.form.get('Phone_Number')
     Email_ID = request.form.get('Email_ID')
     Sex = request.form.get('Sex')[0].upper()
+    Address = request.form.get('Address')
+    Date_Of_Birth = request.form.get('Date_Of_Birth')
     Current_Password = request.form.get('cur_password')
     New_Password = request.form.get('new_password')
 
@@ -387,6 +438,9 @@ def edit_profile(sid):
     
     if Last_Name.lower() != user_details['Last_Name']:
         user_update_dict["Last_Name"] = Last_Name 
+    
+    if Address != user_details['Address']:
+        user_update_dict["Address"] = Address
 
     if Phone_Number != user_details['Phone_Number']:
         user_update_dict["Phone_Number"] = Phone_Number 
@@ -396,7 +450,7 @@ def edit_profile(sid):
     
     if Sex != user_details['Sex']:
         user_update_dict["Sex"] = Sex 
-    
+   
     headers = {
         'Authorization': sid['token'] 
     }
@@ -430,13 +484,30 @@ def edit_profile(sid):
         return render_template("edit_profile.html", user_token = sid ,user=user_details)
     return redirect("/dashboard")
 
-@app.route("/history")
+@app.route("/patient_history")
 @session_wrapper
-def history(sid):
+def Patient_History(sid):
     if not sid:
         return redirect("/login")
-    else:
+    
+    headers = {
+        "Authorization" : sid['token']
+    } 
+
+    Patient_ID = request.args.get('Patient_ID')
+
+    lookup_dict = {
+        "Patient_ID": Patient_ID
+    }
+
+    #Treatment Info
+    treatments_lookup = requests.get(app_url + '/hms/treatments/lookup', params = lookup_dict, timeout = 60, headers = headers)
+    if treatments_lookup.status_code != 200:
+        flash("Treatment Lookup Failed","error")
         return redirect("/dashboard") 
+        
+    treatment_details = treatments_lookup.json().get('treatment_details')
+    return render_template("patient_history.html",user_token = sid,treatments=treatment_details)
 
 @app.route("/logout")
 @session_wrapper

@@ -1,0 +1,16 @@
+{# templates/patient_history.html #}
+{% extends "base.html" %}
+
+{% block title %}Patient History{% endblock %}
+
+{% block content %}
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="panel-card p-3">
+        <h6 class="mb-3">Treatment History</h6>
+        {% include "treatment_table.html" %}
+      </div>
+    </div>
+
+  </div>
+{% endblock %}
