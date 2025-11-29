@@ -65,21 +65,21 @@
               <tr>
                 <td style="text-align:center;">{{ loop.index }}</td>
                 <td style="text-align:center;">
-                    <a href="{{ url_for('Doctor_Profile',Doctor_ID = doctors.User_ID) }}" class="text-decoration-none">
+                    <a href="{{ url_for('Doctor_Profile',User_ID = d.User_ID) }}" class="text-decoration-none">
                     {{ d.First_Name }} {{ d.Last_Name }}</a>
                 </td>
                 <td style="text-align:center;">{{ d.Specialities }}</td>
                 <td style="text-align:center;">{{ d.Dept_Position }}</td>
                 <td class="text-center">
-                  <a href="{{ url_for('Doctor_Profile', Doctor_ID = doctors.User_ID) }}"
+                  <a href="{{ url_for('Doctor_Profile', User_ID = d.User_ID) }}"
                      class="btn btn-sm btn-outline-primary btn-view">
                     View
                   </a>
-                  <a href="{{ url_for('edit_profile', Doctor_ID = doctors.User_ID) }}"
+                  <a href="{{ url_for('edit_profile', User_ID = d.User_ID) }}"
                      class="btn btn-sm btn-outline-yellow btn-view">
                     Edit
                   </a>
-                  <a href="{{ url_for('edit_profile', Doctor_ID = doctors.User_ID) }}"
+                  <a href="{{ url_for('edit_profile', User_ID = d.User_ID) }}"
                      class="btn btn-sm btn-outline-danger btn-view">
                     Delete
                   </a>

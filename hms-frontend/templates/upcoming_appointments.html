@@ -47,7 +47,7 @@
               <td style="text-align:center;">{{ appt.Appointment_Date }}</td>
               <td style="text-align:center;">{{ appt.Appointment_Time }}</td>
               <td style="text-align:center;">
-                <a href="{{ url_for('Doctor_Profile',Doctor_ID = appt.Doctor_ID) }}" class="text-decoration-none">
+                <a href="{{ url_for('Doctor_Profile',User_ID = appt.Doctor_ID) }}" class="text-decoration-none">
                 {{ appt.doctor_First_Name }} {{ appt.doctor_Last_Name }}</a></td>
               <td style="text-align:center;">{{ appt.Specialities }}</td>
               <td class="text-center">

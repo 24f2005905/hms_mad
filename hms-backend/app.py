@@ -351,7 +351,7 @@ def User_Update(auth_args):
                 if column_name != "Password" else \
                     hash_password(req_json[column_name])) if \
             column_name != "User_Profile" else \
-            json.loads(req_json[column_name])
+            json.dumps(req_json[column_name])
         updates.append(f"{column_name} = '{column_data}'")
         
     
@@ -1045,7 +1045,7 @@ def Appointment_Create(auth_args):
         ret["message"] = f"Doctor not available on {day_of_week.upper()}"
         return ret, 400
 
-    #Check for existing appoinments in appointment table
+    #Check for existing appoinments in appointment table for Doctor
     appt_search_q = text("SELECT Appointment_ID FROM Appointments " \
         f"WHERE Appointment_Date = '{Appointment_Date}' AND " \
         f"Appointment_Time = '{Appointment_Time}' AND Doctor_ID = '{Doctor_ID}' " \
@@ -1058,6 +1058,21 @@ def Appointment_Create(auth_args):
     if details:
         ret["status"] = "error"
         ret["message"] = "Appointment Slot Taken"
+        return ret, 400
+    
+    #Check for existing appoinments in appointment table for Patient
+    appt_search_q = text("SELECT Appointment_ID FROM Appointments " \
+        f"WHERE Appointment_Date = '{Appointment_Date}' AND " \
+        f"Appointment_Time = '{Appointment_Time}' AND Patient_ID = '{Patient_ID}' " \
+        "AND Appointment_Status = 'SCHEDULED'")
+    
+    with app.app_context():
+        appt_search = db.session.execute(appt_search_q)
+        details = appt_search.fetchone()
+    
+    if details:
+        ret["status"] = "error"
+        ret["message"] = "Patient Slot not available"
         return ret, 400
     
     #Generate Appointment_ID 

@@ -20,7 +20,7 @@
           <div id="pwAlert" class="alert alert-danger d-none"></div>
 
           <form method="POST" id="editForm" novalidate>
-
+            <input type="hidden" name="User_ID" value="{{ user['User_ID'] }}">
             <div class="mb-3 row">
               <label class="col-sm-3 col-form-label">User ID</label>
               <div class="col-sm-9">
@@ -37,7 +37,7 @@
             </div>
 
             <div class="mb-3 row">
-              <label for="last_name" class="col-sm-3 col-form-label">Last Name</label>
+              <label for="last_name" class="col-sm-3 col-form-label">Last Name </label>
               <div class="col-sm-9">
                 <input id="last_name" name="Last_Name" class="form-control" type="text"
                        value="{{ (form_values.last_name if form_values) or user['Last_Name'] or '' }}">
@@ -72,7 +72,7 @@
               <div class="col-sm-9">
                 <input id="date_of_birth" name="Date_Of_Birth" class="form-control" type="date"
                        value="{{ (form_values.date_of_birth if form_values) or user['Date_Of_Birth'] }}" required>
-                <div class="form-text">Date of Birth as 'DD-MON-YYYY'. Example: 04-Nov-2024</div>
+                <div class="form-text">Date of Birth as 'DD/MM/YYYY'. </div>
               </div>
 
             <div class="mb-3 row">
@@ -101,7 +101,59 @@
               </div>
             </div>
 
-            <!-- Password fields -->
+             {% if User_Type == "DOCTOR" %}
+             <!-- Doctor Profile -->
+        <!-- Educational Qualification -->
+                <div class="mb-3 row">
+                  <label for="qualification" class="col-sm-3 col-form-label">Educational Qualifications</label>
+                  <div class="col-sm-9">
+                    <input id="qualification"
+                          name="Qualification"
+                          class="form-control"
+                          type="text"
+                          >
+                  </div>
+                </div>
+
+                <!-- Experience (in years) -->
+                <div class="mb-3 row">
+                  <label for="experience" class="col-sm-3 col-form-label">Experience (years)</label>
+                  <div class="col-sm-9">
+                    <input id="experience"
+                          name="Experience"
+                          class="form-control"
+                          type="number"
+                          min="0"
+                          >
+                  </div>
+                </div>
+
+                <!-- Expertise -->
+                <div class="mb-3 row">
+                  <label for="expertise" class="col-sm-3 col-form-label">Expertise</label>
+                  <div class="col-sm-9">
+                    <input id="expertise"
+                          name="Expertise"
+                          class="form-control"
+                          type="text"
+                          >
+                  </div>
+                </div>
+
+                <!-- Bio / Additional Profile Details -->
+                <div class="mb-3 row">
+                  <label for="bio" class="col-sm-3 col-form-label">Bio / Profile Details</label>
+                  <div class="col-sm-9">
+                    <textarea id="bio"
+                              name="Bio"
+                              class="form-control"
+                              rows="4"
+                              ></textarea>
+                  </div>
+                </div>
+             {% endif %}
+            
+             <!-- Password fields -->
             <div class="mb-3 row">
               <label for="cur_password" class="col-sm-3 col-form-label">Current Password</label>
               <div class="col-sm-9">

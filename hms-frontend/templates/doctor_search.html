@@ -61,7 +61,7 @@
                   <tr>
                     <td style="text-align:center;">{{ loop.index }}</td>
                     <td style="text-align:center;">
-                      <a href="{{ url_for('Doctor_Profile') }}" class="text-decoration-none">
+                      <a href="{{ url_for('Doctor_Profile', User_ID=d.User_ID) }}" class="text-decoration-none">
                         {{ d.First_Name }} {{ d.Last_Name }}
                       </a></td>
                     <td style="text-align:center;">{{ d.Dept_Position }}</td>

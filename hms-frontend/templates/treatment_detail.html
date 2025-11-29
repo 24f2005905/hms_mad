@@ -17,7 +17,7 @@
         </div>
         <div class="mb-3">
           <strong>Doctor:</strong> 
-          <a href="{{ url_for('Doctor_Profile',Doctor_ID = treatment.Doctor_ID) }}" class="text-decoration-none">
+          <a href="{{ url_for('Doctor_Profile',User_ID = treatment.Doctor_ID) }}" class="text-decoration-none">
           {{ treatment.doctor_First_Name }} {{ treatment.doctor_Last_Name }}
           </a>
         </div>

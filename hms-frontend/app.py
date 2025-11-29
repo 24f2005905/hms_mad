@@ -139,6 +139,13 @@ def Doctor_Register(sid):
         return render_template("doctor_register.html", user_token = sid, specialisations_list = specialisations)
     
     # Updating Database with User details
+    User_Profile = {
+        "Qualifications": request.form.get("Qualification",None),
+        "Experience": request.form.get("Experience",None),
+        "Expertise": request.form.get("Expertise",None),
+        "Bio": request.form.get("Bio",None)
+
+    }
     create_user_dict = {
     "First_Name": request.form.get('First_Name'),
     "Last_Name" : request.form.get('Last_Name',None),
@@ -150,7 +157,7 @@ def Doctor_Register(sid):
     "Date_Of_Birth" :request.form.get('Date_Of_Birth'),
     "Password" : request.form.get('password'),
     "New_Password" : request.form.get('cnf_password'),
-    "User_Profile": request.form.get("Doctor_Profile",None)
+    "User_Profile": User_Profile
     }
 
     user_create = requests.post(app_url + '/hms/user/create',json= create_user_dict, headers= headers, timeout=60)
@@ -517,9 +524,11 @@ def Cancel_Appointment(sid):
         return redirect("/dashboard")
 
     lookup_dict = {
-        "Patient_ID": Patient_ID,
         "Appointment_ID": Appointment_ID
     }
+
+    if sid['auth_token']['role'] == 'DOCTOR':
+        lookup_dict['Patient_ID'] = Patient_ID
 
     appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
     if appointments_lookup.status_code != 200:
@@ -687,9 +696,14 @@ def edit_profile(sid):
     if not sid:
         return redirect("/login")
     
+    if request.method == 'GET':
+        User_ID = request.args.get("User_ID", sid['auth_token']['user'])
+    else:
+        User_ID = request.form.get("User_ID", sid['auth_token']['user'])
+
     # Call backend to fetch user details
     lookup_dict = {
-        "User_ID": sid['auth_token']['user']
+        "User_ID": User_ID
     }
 
     headers = {
@@ -699,20 +713,29 @@ def edit_profile(sid):
     user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
     if user_lookup.status_code != 200:
         flash("User Lookup Failed","error")
-        return redirect("/edit-profile")
+        return redirect("/dashboard")
     
     user_details = (user_lookup.json().get('user_details'))[0]
-
+    User_Type = user_details['User_Type']
     if request.method == 'GET':
         user_details['Sex'] = valid_gender_str[user_details['Sex']]
         return render_template('edit_profile.html', user=user_details, 
-            user_token = sid)
+            user_token = sid, User_Type = User_Type)
     
+    print(f"Handling Update {user_details['User_ID']}")
     #Handling Update
     user_update_dict = {
         "User_ID": user_details["User_ID"]
     }
-    
+    if sid['auth_token']['role'] == 'DOCTOR':
+        User_Profile = {
+            "Qualifications": request.form.get("Qualification"),
+            "Experience": request.form.get("Experience"),
+            "Expertise": request.form.get("Expertise"),
+            "Bio": request.form.get("Bio")
+        }
+        user_update_dict["User_Profile"] = User_Profile
+
     First_Name = request.form.get('First_Name')
     Last_Name = request.form.get('Last_Name')
     Phone_Number = request.form.get('Phone_Number')
@@ -739,12 +762,15 @@ def edit_profile(sid):
         user_update_dict["Email_ID"] = Email_ID 
     
     if Sex != user_details['Sex']:
-        user_update_dict["Sex"] = Sex 
+        user_update_dict["Sex"] = Sex
+
+    if Date_Of_Birth != user_details['Date_Of_Birth']:
+        user_update_dict["Date_Of_Birth"] = Date_Of_Birth 
    
     headers = {
         'Authorization': sid['token'] 
     }
-    
+    print(json.dumps(user_update_dict))
     if New_Password:
         #Verifying Current_Password with backend
         req_json = {
@@ -754,24 +780,27 @@ def edit_profile(sid):
         http_resp = requests.post(app_url + '/hms/user/check-password', json = req_json, headers = headers, timeout = 60)
         if http_resp.status_code != 200:
             flash("Invalid Password","error")
-            return render_template("edit_profile.html", 
-                user_token = sid,
-                user=user_details)
+            return redirect("/dashboard")
 
         user_update_dict["Password"] = New_Password
 
     if len(user_update_dict.keys()) > 1:
         # Update the user record
         http_resp = requests.post(app_url + '/hms/user/update', json = user_update_dict, headers = headers, timeout = 60)
+        resp_json = http_resp.json()
         if http_resp.status_code != 200:
-            resp_json = http_resp.json()
             flash(f"Error Updating Profile: {resp_json['message']}","error")
-            return render_template("edit_profile.html", user_token = sid, user=user_details)
+            return redirect("/dashboard")
         else:
             flash("Profile updated successfully","success")
     else:
         flash("No Updates Given", "warning")
-        return render_template("edit_profile.html", user_token = sid ,user=user_details)
+        return render_template("edit_profile.html", user_token = sid ,user=user_details, User_Type=sid['auth_token']['role'])
+    
+    if User_ID == sid['auth_token']['user']:
+        sid['First_Name'] = user_update_dict.get('First_Name', user_details['First_Name'])
+        sid['Last_Name'] = user_update_dict.get('Last_Name', user_details['Last_Name'])
+
     return redirect("/dashboard")
 
 @app.route("/patient_history")
@@ -818,11 +847,11 @@ def Doctor_Profile(sid):
         "Authorization": sid['token']
     }
 
-    Doctor_ID = request.args.get('Doctor_ID')
+    Doctor_ID = request.args.get('User_ID')
 
     lookup_dict = {
             "User_ID" : Doctor_ID
-        }
+    }
     
     # Do DoctorLookup
     dept_doctor_lookup = requests.get(app_url + "/hms/departments/doctor-lookup",params = lookup_dict,timeout = 60, headers = headers)

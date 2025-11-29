@@ -1,0 +1,80 @@
+{# templates/patient_profile.html #}
+{% extends "base.html" %}
+
+{% block title %}Patient Profile — {{ patient.First_Name }} {{ patient.Last_Name }}{% endblock %}
+
+{% block head_extra %}
+  {{ super() }}
+  <style>
+    .profile-card {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      background: #fff;
+    }
+    .profile-header {
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 1rem;
+    }
+    .profile-header h4 {
+      margin: 0;
+    }
+    .profile-label {
+      font-weight: 600;
+      color: #374151;
+      display: inline-block;
+      width: 140px;
+    }
+    .profile-value {
+      color: #1e293b;
+    }
+    .profile-section {
+      margin-bottom: 0.75rem;
+    }
+  </style>
+{% endblock head_extra %}
+
+{% block content %}
+  <div class="profile-card">
+    <div class="profile-header">
+      <h4>{{ patient.First_Name }} {{ patient.Last_Name }}</h4>
+      <div class="small text-muted">Patient Profile</div>
+    </div>
+
+    <div class="profile-section">
+      <span class="profile-label">First Name:</span>
+      <span class="profile-value">{{ patient.First_Name }}</span>
+    </div>
+    <div class="profile-section">
+      <span class="profile-label">Last Name:</span>
+      <span class="profile-value">{{ patient.Last_Name }}</span>
+    </div>
+    <div class="profile-section">
+      <span class="profile-label">Age:</span>
+      <span class="profile-value">{{ patient.Age }}</span>
+    </div>
+    <div class="profile-section">
+      <span class="profile-label">Sex:</span>
+      <span class="profile-value">{{ patient.Sex }}</span>
+    </div>
+    <div class="profile-section">
+      <span class="profile-label">Address:</span>
+      <span class="profile-value">{{ patient.Address }}</span>
+    </div>
+    <div class="profile-section">
+      <span class="profile-label">Phone Number:</span>
+      <span class="profile-value">{{ patient.Phone_Number }}</span>
+    </div>
+    <div class="profile-section">
+      <span class="profile-label">Email:</span>
+      <span class="profile-value">{{ patient.Email_ID }}</span>
+    </div>
+
+    <div class="mt-4 text-center">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+  </div>
+{% endblock content %}
