@@ -17,7 +17,7 @@
 
 <div class="panel-card p-3">
   <div class="d-flex align-items-center mb-3">
-    <h6 class="mb-0">Upcoming Appointments</h6>
+    <h6 class="mb-0">Upcoming Appointments | Total: {{upcoming_appt}}</h6>
     
   </div>
 
@@ -41,7 +41,8 @@
               <td style="text-align:center;">{{ loop.index }}</td>
               <td style="text-align:center;">{{ appt.Appointment_Date }}</td>
               <td style="text-align:center;">{{ appt.Appointment_Time }}</td>
-              <td style="text-align:center;">{{ appt.patient_First_Name }} {{appt.patient_Last_Name}}</td>
+              <td style="text-align:center;"><a href="{{ url_for('Patient_Profile',User_ID = appt.Patient_ID) }}" class="text-decoration-none">
+                {{ appt.patient_First_Name }} {{appt.patient_Last_Name}}</a></td>
               <td style="text-align:center;">
                 <a href="{{ url_for('Doctor_Profile',User_ID = appt.Doctor_ID) }}" class="text-decoration-none">
                 {{ appt.doctor_First_Name }} {{ appt.doctor_Last_Name }}</a></td>

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}User Search{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center" style="height: 100vh;">
+  <div class="col-12 col-md-10 col-lg-8" style="height: 90%;">
+    <div class="panel-card p-3 d-flex flex-column" style="height: 100%; overflow-y: auto;">
+
+      <!-- Header -->
+      <div class="d-flex align-items-center mb-3 flex-shrink-0">
+        <h5 class="mb-0">User Search</h5>
+        <div class="ms-auto small text-muted">
+          <a href="{{ url_for('dashboard') }}" class="text-decoration-none">Back</a>
+        </div>
+      </div>
+
+      <!-- Search Form (GET to show page, POST to submit) -->
+      <form method="post" action="{{ url_for('User_Search') }}" class="row g-3 mb-4 flex-shrink-0">
+
+        <div class="col-md-6">
+          <label class="form-label small">First Name</label>
+          <input type="text" name="First_Name" class="form-control"
+                 value="{{ request.values.get('first_name','') }}" placeholder="First name">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label small">Last Name</label>
+          <input type="text" name="Last_Name" class="form-control"
+                 value="{{ request.values.get('last_name','') }}" placeholder="Last name">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label small">Phone Number</label>
+          <input type="text" name="Phone_Number" class="form-control"
+                 value="{{ request.values.get('phone_number','') }}" placeholder="Phone number">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label small">User Type</label>
+          <select name="User_Type" class="form-select">
+            <option value="">-- Any --</option>
+            <option value="DOCTOR" {% if request.values.get('user_type') == 'DOCTOR' %}selected{% endif %}>DOCTOR</option>
+            <option value="PATIENT" {% if request.values.get('user_type') == 'PATIENT' %}selected{% endif %}>PATIENT</option>
+          </select>
+        </div>
+
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+
+        <div class="col-auto">
+          <a href="{{ url_for('User_Search') }}" class="btn btn-outline-secondary">Clear</a>
+        </div>
+      </form>
+
+      <!-- Results Section -->
+      <div class="flex-grow-1" style="overflow-y: auto;">
+        {% if users is defined and users %}
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:8%; text-align:center;">SNo.</th>
+                  <th style="text-align:center;">User ID</th>
+                  <th style="text-align:center;">First Name</th>
+                  <th style="text-align:center;">Last Name</th>
+                  <th style="width:8%; text-align:center;">Gender</th>
+                  <th style="width:8%; text-align:center;">Age</th>
+                  <th style="width:12%; text-align:center;">Phone Number</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in users %}
+                <tr>
+                  <td style="text-align:center;">{{ loop.index }}</td>
+                  <td style="text-align:center;">
+                    {% if u.User_Type == 'DOCTOR' %}
+                    <a href="{{ url_for('Doctor_Profile', User_ID=u.User_ID) }}" class="text-decoration-none">
+                      {{ u.User_ID }}
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('Patient_Profile', User_ID=u.User_ID) }}" class="text-decoration-none">
+                      {{ u.User_ID }}</a>
+                    {% endif %}
+                  </td>
+                  <td style="text-align:center;">{{ u.First_Name }}</td>
+                  <td style="text-align:center;">{{ u.Last_Name }}</td>
+                  <td style="text-align:center;">{{ u.Sex }}</td>
+                  <td style="text-align:center;">{{ u.Date_Of_Birth }}</td>
+                  <td style="text-align:center;">{{ u.Phone_Number }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% elif users is defined and not users %}
+          <p class="text-muted">No users found for the entered criteria.</p>
+        {% else %}
+          <p class="text-muted">Enter search criteria and click <strong>Search</strong>.</p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

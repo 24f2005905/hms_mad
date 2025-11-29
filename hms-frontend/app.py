@@ -116,7 +116,7 @@ def register(sid):
         return redirect("/login")
     
     User_ID = user_create.json().get('User_ID')
-    return render_template("register_success.html", User_ID = User_ID)
+    return render_template("register_success.html", User_ID = User_ID, User_Type=create_dict['User_Type'])
 
 @app.route('/doctor_register', methods=['GET', 'POST'])
 @session_wrapper
@@ -190,7 +190,7 @@ def Doctor_Register(sid):
         return redirect("/dashboard")
     
     flash("User Create Success","success")
-    return render_template("register_success.html",user_token = sid ,User_ID = Doctor_ID)
+    return render_template("register_success.html",user_token = sid ,User_ID = Doctor_ID,User_Type = 'ADMIN')
 
 @app.route('/create_department', methods=['POST'])
 @session_wrapper
@@ -772,7 +772,8 @@ def dashboard(sid):
         registered_patients = len(patients)
 
         return render_template("/admin_dashboard.html", user_token = sid, appointments=appointments, 
-        doctors = doctors, patients = patients, registered_doctors = registered_doctors, registered_patients = registered_patients, upcoming_appt = upcoming_appt)
+            doctors = doctors, patients = patients, registered_doctors = registered_doctors,
+            registered_patients = registered_patients, upcoming_appt = upcoming_appt)
     
 @app.route("/edit-profile", methods=['GET', 'POST'])
 @session_wrapper
@@ -948,6 +949,35 @@ def Doctor_Profile(sid):
 
     return render_template("doctor_profile.html", user_token = sid,doctor=doctor,User_Profile = User_Profile)
 
+@app.route('/patient_profile', methods=['GET'])
+@session_wrapper
+def Patient_Profile(sid):
+    if not sid:
+        return redirect("/login")
+    
+    headers = {
+        "Authorization": sid['token']
+    }
+
+    Patient_ID = request.args.get('User_ID')
+
+    lookup_dict = {
+            "User_ID" : Patient_ID
+    }
+    
+    # Do DoctorLookup
+    user_lookup = requests.get(app_url + "/hms/user/lookup",params = lookup_dict,timeout = 60, headers = headers)
+    if user_lookup.status_code != 200:
+        flash(f"Patient Lookup Failed","error")
+        return redirect("/dashboard")
+        
+    patient = user_lookup.json().get("user_details")[0]
+    Age = calculate_age(patient['Date_Of_Birth'])
+    patient["Age"] = Age
+
+
+    return render_template("patient_profile.html", user_token = sid,patient=patient)
+
 @app.route('/update_availability', methods=['POST'])
 @session_wrapper
 def Update_Availability(sid):
@@ -999,6 +1029,38 @@ def Cancel_All_Appointments(sid):
 
     flash("Cancelled All Appointments","success")
     return redirect("/dashboard")
+
+@app.route('/user-search', methods=['GET', 'POST'])
+@session_wrapper
+def User_Search(sid):
+    if not sid:
+        return redirect("/login")
+    headers ={
+         "Authorization": sid['token']
+    }
+
+    if request.method == 'GET':
+        return render_template("user_search.html",user_token = sid)
+    
+    lookup_dict = {}
+    parameters = request.form.to_dict()
+    for key in ["First_Name","Last_Name","Phone_Number","User_Type"]:
+        if key in parameters:
+            lookup_dict[key] = parameters[key]
+    print(parameters)
+    
+    user_lookup = requests.get(app_url + '/hms/user/lookup',params = lookup_dict,
+        headers = headers, timeout = 60)
+    
+    if user_lookup.status_code != 200:
+        flash("Search Failed","error")
+        return redirect("/dashboard")
+    
+    users = user_lookup.json().get("user_details")
+    flash("Search Successful","success")
+
+    return render_template("user_search.html", user_token = sid, users = users)
+
 
 @app.route('/', methods=['GET'])
 @session_wrapper

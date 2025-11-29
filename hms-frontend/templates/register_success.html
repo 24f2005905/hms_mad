@@ -61,13 +61,14 @@
         <strong>Registration Success!</strong><br>
         Here is your User ID: <strong>{{ User_ID }}</strong>
       </p>
+
       {% if User_Type == 'ADMIN' %}
        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
-       {% endif %}
+       {% else %}
       
       <a href="{{ url_for('login') }}" class="btn btn-primary">Back to Login</a>
     
-
+      {% endif %}
     </div>
   </div>
 </div>

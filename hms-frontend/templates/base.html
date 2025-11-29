@@ -41,6 +41,7 @@
       right: 1rem;
       z-index: 1080;
     }
+    
   </style>
 
   {% block head_extra %}{% endblock %}
@@ -62,11 +63,10 @@
 
       <div class="nav-links small">
         {# If you pass user_id to the template, link to route with parameter. Fallback to no-param endpoint. #}
-        {% if user_id %}
-          <a href="{{ url_for('edit_profile', user_id=user_id) }}">Edit Profile</a> |
-        {% else %}
-          <a href="{{ url_for('edit_profile') }}">Edit Profile</a> |
+        {% if user_token.User_Type == 'admin' %}
+          <a href="{{ url_for('User_Search') }}">Search Users</a> |
         {% endif %}
+        <a href="{{ url_for('edit_profile') }}">Edit Profile</a> |
         <a href="{{ url_for('logout') }}">Logout</a>
       </div>
     </div>
