@@ -266,7 +266,10 @@ def User_Lookup(auth_args):
     if len(match_clauses):
         query += " WHERE "
         query += " AND ".join(match_clauses)
-  
+
+    if 'User_Status' in param_json:
+        query += f" AND User_Status = '{param_json['User_Status']}' "
+        
     with app.app_context():
         result = db.session.execute(text(query))
         rows = result.fetchall() 

@@ -563,24 +563,68 @@ def Delete_User(sid):
         "Authorization": sid['token']
     }
     
+    
+    User_ID = request.args.get("User_ID")
+    user_dict = {
+        "User_ID": User_ID
+    }
+    user_lookup = requests.get(app_url + '/hms/user/lookup', params = user_dict, headers = headers,
+    timeout = 60)
+    if user_lookup.status_code != 200:
+        message = user_lookup.json().get("message")
+        flash(f"User lookup: {message}","error")
+        return redirect("/dashboard")
+    user_details = user_lookup.json().get("user_details")[0]
+    First_Name = user_details["First_Name"]
+    Last_Name = user_details["Last_Name"]
+    User_Type = user_details["User_Type"]
+
     if request.method == 'GET':
-        User_ID = request.args.get("User_ID")
-        user_dict = {
-            "User_ID": User_ID
+        return render_template("user_delete.html",user_token = sid, First_Name = First_Name,
+            Last_Name = Last_Name, User_ID = User_ID)
+
+
+    if User_Type == 'DOCTOR':
+        lookup_dict = {
+            "Doctor_ID": User_ID,
+            "Appointment_Status": 'SCHEDULED'
         }
-        user_lookup = requests.get(app_url + '/hms/user/lookup', params = user_dict, headers = headers,
-        timeout = 60)
-        if user_lookup.status_code != 200:
-            message = user_lookup.json().get("message")
+    if User_Type == 'PATIENT':
+        lookup_dict = {
+            "Patient_ID": User_ID,
+            "Appointment_Status": 'SCHEDULED'
+        }
+    
+    appt_lookup = requests.get(app_url + '/hms/appointments/lookup',params = lookup_dict,
+        headers = headers, timeout = 60)
+    
+    #Appointment lookup
+    if appt_lookup.status_code != 200:
+            message = appt_lookup.json().get("message")
             flash(f"{message}","error")
             return redirect("/dashboard")
-        user_details = user_lookup.json().get("user_details")[0]
-        First_Name = user_details["First_Name"]
-        Last_Name = user_details["Last_Name"]
-        
-    return render_template("user_delete.html",user_token = sid, First_Name = First_Name,
-    Last_Name = Last_Name, User_ID = User_ID )
-
+    
+    appointment_details = appt_lookup.json().get("appointment_details")
+    if len(appointment_details) > 0:
+        flash("Cancel all upcoming appointments before delete","error")
+        return redirect("/dashboard")
+    
+    #User Delete 
+    delete_dict = {
+        "User_ID": User_ID
+    }
+    user_del = requests.delete(app_url + '/hms/user/delete', params = delete_dict,
+        headers = headers, timeout = 60 )
+    
+    if user_del.status_code != 200:
+        message = user_del.json().get("message")
+        flash(f"{message}","error")
+        return redirect("/dashboard")
+    
+    user = user_del.json().get("User_ID")
+    flash(f"User {user} deleted","success")
+    return redirect("/dashboard")
+    
 @app.route('/dashboard', methods=['GET'])
 @session_wrapper
 def dashboard(sid):
@@ -690,7 +734,9 @@ def dashboard(sid):
         appointments = [ d for d in all_appointments \
             if (Current_Date <= datetime.strptime(d['Appointment_Date'],"%Y-%m-%d") < Last_Date)]
         upcoming_appt = len(all_appointments)
+
         #Lookup to display All registered Doctors 
+        
         doc_lookup = requests.get(app_url + "/hms/departments/doctor-lookup",timeout = 60, headers = headers)
         if doc_lookup.status_code != 200:
             flash("Doctor Lookup Failed","error")
@@ -701,7 +747,8 @@ def dashboard(sid):
 
         #Lookup to display ALL registered Patients
         user_dict = {
-            "User_Type": 'PATIENT'
+            "User_Type": 'PATIENT',
+            "User_Status": 'ACTIVE'
         }
         user_lookup = requests.get(app_url + '/hms/user/lookup', params = user_dict, headers=headers,timeout=60)
         if user_lookup.status_code != 200:
