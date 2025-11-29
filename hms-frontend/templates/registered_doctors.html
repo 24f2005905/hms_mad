@@ -39,12 +39,24 @@
   <div class="patients-panel">
     <div class="d-flex align-items-center mb-3">
       <h6 class="mb-0">Registered Doctors | Total: {{registered_doctors}}</h6>
+      
       <div class="ms-auto small">
+     
+      <button type="button" class="ms-auto btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#availabilityModal">
+        <a href="{{ url_for('Doctor_Search') }}"
+         class="text-decoration-none"
+         style="font-weight: 500; ">
+        Departments
+        </a>
+      </button>
+
       <a href="{{ url_for('Doctor_Register') }}"
          class="btn btn-sm btn-outline-primary btn-view">
         Register Doctor
       </a>
+      
     </div>
+    
     </div>
 
     <div class="patients-scroll">
@@ -55,7 +67,7 @@
           <th style="text-align:center;">Name</th>
           <th style="width:15%;text-align:center;">Speciality</th>
           <th style="width:15%;text-align:center;">Position</th>
-          <th style="width:18%; text-align:center;">Action</th>
+          <th style="width:20%; text-align:center;">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -70,10 +82,13 @@
                 <td style="text-align:center;">{{ d.Specialities }}</td>
                 <td style="text-align:center;">{{ d.Dept_Position }}</td>
                 <td class="text-center">
-                  <a href="{{ url_for('Doctor_Profile', User_ID = d.User_ID) }}"
-                     class="btn btn-sm btn-outline-primary btn-view">
-                    View
+                 
+                  <a href="{{ url_for('Book_Appointment',Doctor_ID = d.User_ID) }}"
+                  class="btn btn-sm btn-outline-primary btn-view"
+                  style="font-weight: 500; ">
+                  Book 
                   </a>
+
                   <a href="{{ url_for('edit_profile', User_ID = d.User_ID) }}"
                      class="btn btn-sm btn-outline-yellow btn-view">
                     Edit
