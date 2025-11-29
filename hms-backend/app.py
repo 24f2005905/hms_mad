@@ -1188,25 +1188,36 @@ def Appointment_Update(auth_args):
     param_json = request.args.to_dict()
 
     #Check mandatory fields
-    if "Appointment_ID" not in param_json or \
+    if ("Appointment_ID" not in param_json and \
+            "Patient_ID" not in param_json and \
+            "Doctor_ID" not in param_json) or \
         "Appointment_Status" not in param_json or \
         param_json["Appointment_Status"] not in ['COMPLETED','CANCELLED']:
         ret["status"] = "error"
         ret["message"] = "Invalid Parameters"
         return ret, 400
     
-    Appointment_ID = param_json["Appointment_ID"]
+    Appointment_ID = param_json.get("Appointment_ID", None)
     Appointment_Status = param_json["Appointment_Status"]
 
+    # Build match clauses
+    match_clauses = []
+    for key in ["Appointment_ID", "Patient_ID", "Doctor_ID"]:
+        if key in param_json:
+            match_clauses.append(f"{key} = '{param_json[key]}'")
 
     #Check Appointment Exists 
     appt_query = "SELECT Patient_ID, Doctor_ID FROM Appointments WHERE " \
-        f"Appointment_ID = '{Appointment_ID}' AND " \
         "Appointment_Status = 'SCHEDULED' " 
     
+    if len(match_clauses):
+        appt_query += ' AND '.join(match_clauses) \
+            if len(match_clauses) > 1 else f" AND {match_clauses[0]}"
+
     if Appointment_Status == 'COMPLETED':
         appt_query += " AND Appointment_Date <= CURRENT_DATE"
     
+    print(json.dumps(appt_query))
     with app.app_context():
         result = db.session.execute(text(appt_query))
         row = result.fetchone()
@@ -1216,7 +1227,6 @@ def Appointment_Update(auth_args):
         ret["message"] = "Appointment Not Found"
         return ret, 400
     
-
     #Enforce Role
     if (User_Role == 'PATIENT' and \
             (User_ID != row[0] or Appointment_Status != "CANCELLED")) or \
@@ -1231,14 +1241,17 @@ def Appointment_Update(auth_args):
     
     #Update the database 
     update_query = "UPDATE Appointments SET " \
-        f"Appointment_Status = '{Appointment_Status}' WHERE " \
-        f"Appointment_ID = '{Appointment_ID}'"
+        f"Appointment_Status = '{Appointment_Status}' WHERE "
+    
+    if len(match_clauses):
+        update_query += ' AND '.join(match_clauses) \
+            if len(match_clauses) > 1 else f"{match_clauses[0]}"
     
     with app.app_context():
         result = db.session.execute(text(update_query))
         db.session.commit()
     
-    if result.rowcount != 1:
+    if result.rowcount < 1:
         ret["status"] = "error"
         ret["message"] = "Appointment Update Failed"
         return ret, 500

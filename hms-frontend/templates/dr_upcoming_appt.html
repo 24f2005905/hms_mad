@@ -130,10 +130,11 @@ document.addEventListener('DOMContentLoaded', function() {
           <h5 class="mb-0">Upcoming Appointments</h5>
           <div class="ms-auto small">
           <!-- Popup Trigger -->
-           <a href="{{ url_for('Doctor_Search') }}"
-          class="btn btn-sm btn-outline-danger btn-view">
-          Cancel All Appointments
-        </a>
+           <form action="{{ url_for('Cancel_All_Appointments') }}" method="POST" style="display:inline;">
+  <button type="submit" class="btn btn-sm btn-outline-danger btn-view">
+    Cancel All Appointments
+  </button>
+</form>
           <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#availabilityModal">
         Set Availability
       </button></div>

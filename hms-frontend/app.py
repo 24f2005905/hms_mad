@@ -526,7 +526,7 @@ def Cancel_Appointment(sid):
     lookup_dict = {
         "Appointment_ID": Appointment_ID
     }
-
+    
     if sid['auth_token']['role'] == 'DOCTOR':
         lookup_dict['Patient_ID'] = Patient_ID
 
@@ -545,7 +545,7 @@ def Cancel_Appointment(sid):
         "Appointment_ID": Appointment_ID ,
         "Appointment_Status": 'CANCELLED'
     }
-
+   
     appt_cancel = requests.put(app_url + '/hms/appointment/update', params = appt_cancel_dict, headers = headers, timeout = 60)
     if appt_cancel.status_code != 200:
         flash("Appointment Cancel Failed","error")
@@ -583,7 +583,7 @@ def Delete_User(sid):
         return render_template("user_delete.html",user_token = sid, First_Name = First_Name,
             Last_Name = Last_Name, User_ID = User_ID)
 
-
+    cancel_appt = request.form.get("cancel_appointments")
     if User_Type == 'DOCTOR':
         lookup_dict = {
             "Doctor_ID": User_ID,
@@ -598,17 +598,29 @@ def Delete_User(sid):
     appt_lookup = requests.get(app_url + '/hms/appointments/lookup',params = lookup_dict,
         headers = headers, timeout = 60)
     
-    #Appointment lookup
-    if appt_lookup.status_code != 200:
-            message = appt_lookup.json().get("message")
-            flash(f"{message}","error")
+    if cancel_appt != "on":
+        #Appointment lookup
+        if appt_lookup.status_code != 200:
+                message = appt_lookup.json().get("message")
+                flash(f"{message}","error")
+                return redirect("/dashboard")
+        
+        appointment_details = appt_lookup.json().get("appointment_details")
+        if len(appointment_details) > 0:
+            flash("Cancel all upcoming appointments before delete","error")
             return redirect("/dashboard")
-    
-    appointment_details = appt_lookup.json().get("appointment_details")
-    if len(appointment_details) > 0:
-        flash("Cancel all upcoming appointments before delete","error")
-        return redirect("/dashboard")
-    
+    else:
+        # Now call Backend to cancel all the appointments for this User.
+        appt_cancel_dict = {
+            "Appointment_Status":'CANCELLED',
+            f"{'Patient_ID' if User_Type == 'PATIENT' else 'Doctor_ID'}": User_ID
+        }
+
+        appointment = requests.put(app_url + '/hms/appointment/update',params=appt_cancel_dict,headers=headers,timeout=60)
+        if appointment.status_code != 200:
+            flash(f"Cancel Failed {appointment.json()['message']}","error")
+            return redirect("/dashboard")
+        
     #User Delete 
     delete_dict = {
         "User_ID": User_ID
@@ -720,9 +732,7 @@ def dashboard(sid):
     if sid['auth_token']['role'] == 'ADMIN':
 
         #Lookup to display Upcoming Appointments for the day
-        today = date.today()
-        Current_Date = datetime(today.year, today.month, today.day)
-        Last_Date = Current_Date + timedelta(days=5)
+        
 
         appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', timeout = 60, headers = headers)
         if appointments_lookup.status_code != 200:
@@ -730,10 +740,9 @@ def dashboard(sid):
             flash("Appointment Lookup Failed","error")
             return f"Appointment Failed {resp_json['message']}"
         
-        all_appointments = appointments_lookup.json().get('appointment_details')
-        appointments = [ d for d in all_appointments \
-            if (Current_Date <= datetime.strptime(d['Appointment_Date'],"%Y-%m-%d") < Last_Date)]
-        upcoming_appt = len(all_appointments)
+        appointments = appointments_lookup.json().get('appointment_details')
+        
+        upcoming_appt = len(appointments)
 
         #Lookup to display All registered Doctors 
         
@@ -961,10 +970,34 @@ def Update_Availability(sid):
 
     updated_slots = requests.post(app_url + '/hms/slots/create', json = slot_dict,headers=headers,timeout = 60)
     if updated_slots.status_code != 200:
-        flash(f"Update Failed {updated_slots.status_code}","error")
+        flash(f"Update Failed {updated_slots.json().get('message')}","error")
         return redirect("/dashboard")
 
     flash("Update Successful","success")
+    return redirect("/dashboard")
+
+@app.route('/cancel_all_appt', methods=['POST'])
+@session_wrapper
+def Cancel_All_Appointments(sid):
+    if not sid:
+        return redirect("/login")
+    headers ={
+         "Authorization": sid['token']
+    }
+
+    User_Type = sid['auth_token']['role']
+    User_ID = sid['auth_token']['user']
+    appt_cancel_dict = {
+         "Appointment_Status":'CANCELLED',
+        f"{'Patient_ID' if User_Type == 'PATIENT' else 'Doctor_ID'}": User_ID
+    }
+
+    appointment = requests.put(app_url + '/hms/appointment/update',params=appt_cancel_dict,headers=headers,timeout=60)
+    if appointment.status_code != 200:
+        flash(f"Cancel Failed {appointment.json()['message']}","error")
+        return redirect("/dashboard")
+
+    flash("Cancelled All Appointments","success")
     return redirect("/dashboard")
 
 @app.route('/', methods=['GET'])

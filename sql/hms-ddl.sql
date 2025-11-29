@@ -30,7 +30,6 @@ CREATE TABLE Appointments (
     FOREIGN KEY (Doctor_ID) REFERENCES Users(User_ID),
     CHECK (Patient_ID <> Doctor_ID),
     CHECK (Appointment_Status IN ('SCHEDULED', 'COMPLETED', 'CANCELLED'))
-    UNIQUE (Doctor_ID, Appointment_Date, Appointment_Time)
 );  
 
 CREATE TABLE Treatments (
