@@ -41,8 +41,7 @@
       <h6 class="mb-0">Registered Doctors | Total: {{registered_doctors}}</h6>
       <div class="ms-auto small">
       <a href="{{ url_for('Doctor_Register') }}"
-         class="text-decoration-none"
-         style="font-weight: 500; color: #3f51b5;">
+         class="btn btn-sm btn-outline-primary btn-view">
         Register Doctor
       </a>
     </div>
@@ -79,7 +78,7 @@
                      class="btn btn-sm btn-outline-yellow btn-view">
                     Edit
                   </a>
-                  <a href="{{ url_for('edit_profile', User_ID = d.User_ID) }}"
+                  <a href="{{ url_for('Delete_User', User_ID = d.User_ID) }}"
                      class="btn btn-sm btn-outline-danger btn-view">
                     Delete
                   </a>

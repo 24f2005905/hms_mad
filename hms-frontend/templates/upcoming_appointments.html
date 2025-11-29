@@ -19,11 +19,14 @@
   <div class="d-flex align-items-center mb-3">
     <h6 class="mb-0">Upcoming Appointments</h6>
     <div class="ms-auto small">
-      <a href="{{ url_for('Doctor_Search') }}"
-         class="text-decoration-none"
-         style="font-weight: 500; color: #3f51b5;">
-        Book an Appointment
-      </a>
+        <a href="{{ url_for('Doctor_Search') }}"
+          class="btn btn-sm btn-outline-danger btn-view">
+          Cancel All Appointments
+        </a>
+        <a href="{{ url_for('Doctor_Search') }}"
+          class="btn btn-sm btn-outline-primary btn-view">
+          Book an Appointment
+        </a>
     </div>
   </div>
 

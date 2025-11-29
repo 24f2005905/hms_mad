@@ -128,10 +128,15 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="panel-card p-3">
   <div class="d-flex align-items-center mb-3">
           <h5 class="mb-0">Upcoming Appointments</h5>
+          <div class="ms-auto small">
           <!-- Popup Trigger -->
-          <button type="button" class="ms-auto btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#availabilityModal">
+           <a href="{{ url_for('Doctor_Search') }}"
+          class="btn btn-sm btn-outline-danger btn-view">
+          Cancel All Appointments
+        </a>
+          <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#availabilityModal">
         Set Availability
-      </button>
+      </button></div>
         </div>
 
   <div class="appointments-scroll">

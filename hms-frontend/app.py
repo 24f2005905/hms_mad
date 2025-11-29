@@ -553,6 +553,34 @@ def Cancel_Appointment(sid):
         flash("Appointment Cancelled","success")
     return redirect("/dashboard")
         
+@app.route('/delete_user', methods=['GET','POST'])
+@session_wrapper
+def Delete_User(sid):
+    if not sid:
+        return redirect("/login")
+    
+    headers = {
+        "Authorization": sid['token']
+    }
+    
+    if request.method == 'GET':
+        User_ID = request.args.get("User_ID")
+        user_dict = {
+            "User_ID": User_ID
+        }
+        user_lookup = requests.get(app_url + '/hms/user/lookup', params = user_dict, headers = headers,
+        timeout = 60)
+        if user_lookup.status_code != 200:
+            message = user_lookup.json().get("message")
+            flash(f"{message}","error")
+            return redirect("/dashboard")
+        user_details = user_lookup.json().get("user_details")[0]
+        First_Name = user_details["First_Name"]
+        Last_Name = user_details["Last_Name"]
+        
+    return render_template("user_delete.html",user_token = sid, First_Name = First_Name,
+    Last_Name = Last_Name, User_ID = User_ID )
+
 @app.route('/dashboard', methods=['GET'])
 @session_wrapper
 def dashboard(sid):
