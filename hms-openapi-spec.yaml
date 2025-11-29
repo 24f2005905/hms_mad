@@ -110,6 +110,11 @@ paths:
           in: query
           schema:
             type: string
+        - name: User_Type
+          in: query
+          schema:
+            type: string
+            enum: [PATIENT, DOCTOR]
       responses:
         "200":
           description: Found users / user details

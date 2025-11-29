@@ -101,7 +101,6 @@ def id_token_generate():
     if not pwd_hash:
         return {"status":"error", "message":"Login Failed"}, 401
     else:
-        print(pwd_hash)
         if not verify_password(Password, pwd_hash):
             return {"status":"error", "message":"Login Failed"}, 401
     
@@ -260,7 +259,7 @@ def User_Lookup(auth_args):
     #Get parameters
     param_json = request.args.to_dict()
     match_clauses = []
-    for key in ['User_ID','Email_ID','Phone_Number','First_Name','Last_Name']:
+    for key in ['User_ID','Email_ID','Phone_Number','First_Name','Last_Name','User_Type']:
         if key in param_json:
             match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
     query = "SELECT * FROM Users "
@@ -1066,7 +1065,7 @@ def Appointment_Create(auth_args):
     appt_create_q = text("INSERT INTO Appointments VALUES " \
         f"('{Appointment_ID}', '{Patient_ID}', " \
         f"'{Doctor_ID}', '{Appointment_Date}', '{Appointment_Time}', 'SCHEDULED')")
-    
+    print(str(appt_create_q))
     with app.app_context():
         appt_create = db.session.execute(appt_create_q)
         db.session.commit()
@@ -1129,7 +1128,8 @@ def Appointment_Lookup(auth_args):
         if "Patient_ID" not in param_json and \
             "Doctor_ID" not in param_json and \
             "Appointment_Date" not in param_json and \
-            "Appointment_ID" not in param_json:
+            "Appointment_ID" not in param_json and \
+            "Appointment_Status" not in param_json:
             ret["status"] = "error"
             ret["message"] = "ADMIN must use one of the filters"
             return ret, 400

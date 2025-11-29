@@ -1,0 +1,308 @@
+{# templates/register_doctor.html #}
+{% extends "base.html" %}
+
+{% block title %}Register Doctor — HMS{% endblock title %}
+
+{% block head_extra %}
+  {{ super() }}
+  <style>
+    body { background: #e8eaf6; }
+    .container-card { width: 100%; max-width: 600px; margin: 0 auto; }
+    .shadow-sm { box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
+    .card-body { padding: 2rem; }
+    .card-title { color: #3f51b5; text-align: center; margin-bottom: 1.5rem; }
+    .btn-primary { background-color: #3f51b5 !important; border-color: #3f51b5 !important; }
+    .form-text { font-size: 0.875rem; color: #6c757d; }
+    .is-invalid { border-color: #dc3545 !important; }
+  </style>
+{% endblock head_extra %}
+
+
+{% block content %}
+<div class="container-card">
+  <div class="card shadow-sm mt-3">
+    <div class="card-body">
+
+      <h4 class="card-title mb-4">Register Doctor</h4>
+
+      <form method="POST" id="regForm" novalidate>
+
+        <div id="formAlert" class="alert alert-danger d-none"></div>
+
+        <!-- First Name -->
+        <div class="mb-3 row">
+          <label for="first_name" class="col-sm-3 col-form-label">First Name</label>
+          <div class="col-sm-9">
+            <input id="first_name" name="First_Name" class="form-control" type="text" required>
+          </div>
+        </div>
+
+        <!-- Last Name -->
+        <div class="mb-3 row">
+          <label for="last_name" class="col-sm-3 col-form-label">Last Name</label>
+          <div class="col-sm-9">
+            <input id="last_name" name="Last_Name" class="form-control" type="text">
+          </div>
+        </div>
+
+        <!-- Gender -->
+        <div class="mb-3 row">
+          <label class="col-sm-3 col-form-label">Gender</label>
+          <div class="col-sm-9">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="Sex" id="gender_male" value="Male" checked required>
+              <label class="form-check-label" for="gender_male">Male</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="Sex" id="gender_female" value="Female" required>
+              <label class="form-check-label" for="gender_female">Female</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Date of Birth -->
+        <div class="mb-3 row">
+          <label for="Date_Of_Birth" class="col-sm-3 col-form-label">Date Of Birth</label>
+          <div class="col-sm-9">
+            <input id="Date_Of_Birth" name="Date_Of_Birth" class="form-control" type="date" required>
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="mb-3 row">
+          <label for="address" class="col-sm-3 col-form-label">Address</label>
+          <div class="col-sm-9">
+            <input id="address" name="Address" class="form-control" type="text" required>
+            <div class="form-text">Current Residential Address</div>
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div class="mb-3 row">
+          <label for="phone_number" class="col-sm-3 col-form-label">Phone</label>
+          <div class="col-sm-9">
+            <input id="phone_number" name="Phone_Number" class="form-control" type="tel" required maxlength="10">
+            <div class="form-text">Exactly 10 digits (Indian mobile)</div>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3 row">
+          <label for="email_id" class="col-sm-3 col-form-label">Email</label>
+          <div class="col-sm-9">
+            <input id="email_id" name="Email_ID" class="form-control" type="email" required>
+          </div>
+        </div>
+
+        <!-- Specialisation / Department + Add Dept Button -->
+        <div class="mb-3 row align-items-center">
+          <label class="col-sm-3 col-form-label">Specialisation</label>
+          <div class="col-sm-5">
+            <select name="Speciality" class="form-select">
+              <option value="">-- Select Speciality --</option>
+              {% for spec in specialisations_list %}
+                <option value="{{ spec }}">{{ spec }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-2">
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addDeptModal">
+              New
+            </button>
+          </div>
+        </div>
+
+        <!-- Doctor Profile -->
+        <div class="mb-3 row">
+          <label for="doctor_profile" class="col-sm-3 col-form-label">Doctor Profile</label>
+          <div class="col-sm-9">
+            <textarea id="doctor_profile" name="Doctor_Profile" class="form-control" rows="4" placeholder="Brief profile / bio (optional)"></textarea>
+          </div>
+        </div>
+
+        <!-- Dept Position -->
+        <div class="mb-3 row">
+          <label class="col-sm-3 col-form-label">Department Position</label>
+          <div class="col-sm-9">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="Dept_Position" id="pos_hod" value="HOD" required>
+              <label class="form-check-label" for="pos_hod">HOD</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="Dept_Position" id="pos_consultant" value="CONSULTANT">
+              <label class="form-check-label" for="pos_consultant">Consultant</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="Dept_Position" id="pos_specialist" value="RESIDENT" checked>
+              <label class="form-check-label" for="pos_specialist">Resident</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3 row">
+          <label for="password" class="col-sm-3 col-form-label">Password</label>
+          <div class="col-sm-9">
+            <input id="password" name="password" class="form-control" type="password" required>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="mb-3 row">
+          <label for="cnf_password" class="col-sm-3 col-form-label">Confirm Password</label>
+          <div class="col-sm-9">
+            <input id="cnf_password" name="cnf_password" class="form-control" type="password" required>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="text-center mt-4">
+          <button type="submit" class="btn btn-primary">Register Doctor</button>
+          <a href="{{ url_for('login') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDeptModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Department / Speciality</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" action="{{ url_for('Create_Department') }}" id="addDeptForm">
+        {% if csrf_token is defined %}
+          {{ csrf_token() }}
+        {% endif %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Department Name</label>
+            <input type="text" name="Department_Name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description / Details</label>
+            <textarea name="Department_Details" class="form-control" rows="3"></textarea>
+          </div>
+          {% if dept_dup_error %}
+            <div class="alert alert-danger">
+              Department "{{ dup_name }}" already exists.
+            </div>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Department</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+
+{% block scripts %}
+  {{ super() }}
+  <!-- if base.html does not include bootstrap JS, include it here or elsewhere -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('regForm');
+      const alertBox = document.getElementById('formAlert');
+      if (!form) return;
+      
+      form.addEventListener('submit', function(e) {
+        alertBox.classList.add('d-none');
+        alertBox.textContent = '';
+
+      	// Empty First Name Check
+      	const val = document.getElementById("first_name").value;
+      	if (!val || val.trim().length === 0) {
+      	      e.preventDefault();
+      	      alertBox.textContent = "First Name cannot be empty.";
+      	      alertBox.classList.remove('d-none');
+      	      document.getElementById('first_name').classList.add('is-invalid');
+      	      return false;
+      	}
+
+        // Password match
+        const pw = document.getElementById('password').value;
+        const cpw = document.getElementById('cnf_password').value;
+        if (pw !== cpw || pw.length === 0 || cpw.length === 0) 
+        {
+          e.preventDefault();
+          alertBox.textContent = "Password and Confirm Password do not match.";
+          alertBox.classList.remove('d-none');
+          document.getElementById('password').classList.add('is-invalid');
+          document.getElementById('cnf_password').classList.add('is-invalid');
+          return false;
+        }
+
+      	// --- PHONE NUMBER VALIDATION (Indian 10-digit mobile) ---
+      	const phone = document.getElementById('phone_number').value.trim();
+      	// Must be exactly 10 digits, starting with 6-9
+      	const phoneRegex = /^[6-9]\d{9}$/;
+      	if (!phoneRegex.test(phone)) {
+      	  e.preventDefault();
+      	  alertBox.textContent = "Please enter a valid 10-digit Indian mobile number (starts with 6–9).";
+      	  alertBox.classList.remove('d-none');
+      	  document.getElementById('phone_number').classList.add('is-invalid');
+      	  return false;
+      	}
+
+      	// --- DATE OF BIRTH: Not future ---
+      	const dobInput = document.getElementById('Date_Of_Birth').value;
+      	if (!dobInput || dobInput.trim().length === 0) {
+      	      e.preventDefault();
+      	      alertBox.textContent = "Date of Birth cannot be empty.";
+      	      alertBox.classList.remove('d-none');
+      	      document.getElementById('Date_of_Birth').classList.add('is-invalid');
+      	      return false;
+      	}
+      	if (dobInput) {
+      	  const dob = new Date(dobInput);
+      	  const today = new Date();
+      	  dob.setHours(0,0,0,0);
+      	  today.setHours(0,0,0,0);
+      	  if (dob > today) {
+      	    e.preventDefault();
+      	    alertBox.textContent = "Date of Birth cannot be in the future.";
+      	    alertBox.classList.remove('d-none');
+      	    document.getElementById('Date_Of_Birth').classList.add('is-invalid');
+      	    return false;
+          }
+      	}
+      	// -------- EMAIL VALIDATION --------
+      	// Basic but reliable email regex
+      	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      	email = document.getElementById("email_id").value.trim();
+      	if (!emailRegex.test(email)) {
+      	    e.preventDefault();
+      	    alertBox.textContent = "Please enter a valid email address.";
+      	    alertBox.classList.remove('d-none');
+
+      	    emailField.classList.add('is-invalid');
+      	    return false;
+      	};
+      	// Specialization cannot be Empty
+      	const sel = document.querySelector('select[name="Speciality"]');
+    	if (!sel.value || sel.value.trim() === "") {
+      	      e.preventDefault();
+      	      alertBox.textContent = "Specialization cannot be empty.";
+      	      alertBox.classList.remove('d-none');
+      	      document.getElementById('Speciality').classList.add('is-invalid');
+      	      return false;
+      	}
+
+        // If all validations pass — allow submit.
+      });
+    });
+  </script>
+{% endblock scripts %}

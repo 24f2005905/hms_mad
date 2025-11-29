@@ -1,0 +1,98 @@
+{# templates/assigned_patients.html #}
+
+  <style>
+    /* Panel card similar to appointments panel */
+    .patients-panel {
+      padding: 1rem;
+      border: 1px solid #e9ecef;
+      border-radius: 0.375rem;
+      background: #fff;
+      margin-bottom: 1.5rem;
+    }
+    /* Scrollable table container: fixed height, vertical scroll */
+    .patients-scroll {
+      max-height: 260px;
+      overflow-y: auto;
+      border-top: 1px solid #e9ecef;
+    }
+    /* Make table headers sticky when scrolling */
+    .patients-scroll thead th {
+      position: sticky;
+      top: 0;
+      background: #f8f9fa;
+      z-index: 2;
+    }
+    /* Use Bootstrap table styling (assuming Bootstrap or similar) */
+    .patients-table th,
+    .patients-table td {
+      vertical-align: middle;
+    }
+    .patients-table .btn-view {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+      line-height: 1.2;
+    }
+  </style>
+
+
+{% block content %}
+  <div class="patients-panel">
+    <div class="d-flex align-items-center mb-3">
+      <h6 class="mb-0">Registered Doctors | Total: {{registered_doctors}}</h6>
+      <div class="ms-auto small">
+      <a href="{{ url_for('Doctor_Register') }}"
+         class="text-decoration-none"
+         style="font-weight: 500; color: #3f51b5;">
+        Register Doctor
+      </a>
+    </div>
+    </div>
+
+    <div class="patients-scroll">
+      <table class="table table-sm table-bordered mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+           <th style="width:6%; text-align:center;">SL No.</th>
+          <th style="text-align:center;">Name</th>
+          <th style="width:15%;text-align:center;">Speciality</th>
+          <th style="width:15%;text-align:center;">Position</th>
+          <th style="width:18%; text-align:center;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if doctors %}
+            {% for d in doctors %}
+              <tr>
+                <td style="text-align:center;">{{ loop.index }}</td>
+                <td style="text-align:center;">
+                    <a href="{{ url_for('Doctor_Profile',Doctor_ID = doctors.User_ID) }}" class="text-decoration-none">
+                    {{ d.First_Name }} {{ d.Last_Name }}</a>
+                </td>
+                <td style="text-align:center;">{{ d.Specialities }}</td>
+                <td style="text-align:center;">{{ d.Dept_Position }}</td>
+                <td class="text-center">
+                  <a href="{{ url_for('Doctor_Profile', Doctor_ID = doctors.User_ID) }}"
+                     class="btn btn-sm btn-outline-primary btn-view">
+                    View
+                  </a>
+                  <a href="{{ url_for('edit_profile', Doctor_ID = doctors.User_ID) }}"
+                     class="btn btn-sm btn-outline-yellow btn-view">
+                    Edit
+                  </a>
+                  <a href="{{ url_for('edit_profile', Doctor_ID = doctors.User_ID) }}"
+                     class="btn btn-sm btn-outline-danger btn-view">
+                    Delete
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-3">No doctors currently registered.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

@@ -68,6 +68,9 @@
     </div>
   </div>
 
+
+
+
   {# ---------- Date selection (GET) ---------- #}
   <form method="GET" class="row g-3 mb-3">
     <input type="hidden" name="Doctor_ID" value="{{ doctor.User_ID }}">
@@ -91,8 +94,19 @@
     {% if csrf_token is defined %}
       {{ csrf_token() }}
     {% endif %}
+    {% if User_Type == 'ADMIN' %}
+  <div class="mb-3 row">
+    <label class="col-sm-3 col-form-label">Patient ID</label>
+    <div class="col-sm-9">
+      <input style = "width:16ch;"
+      type="text"
+             name="patient_id"
+             class="form-control"
+             value="">
+    </div>
+  </div>
+{% endif %}
 
-    
     <input type="hidden" name="date" value="{{ selected_date or '' }}">
 
     <div class="mb-2 small text-muted">

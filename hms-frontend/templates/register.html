@@ -77,9 +77,9 @@
       <form method="POST" id="regForm" novalidate>
 
         <div class="mb-3 row">
-          <label for="first_name" class="col-sm-3 col-form-label">First Name</label>
+          <label for="First_Name" class="col-sm-3 col-form-label">First Name</label>
           <div class="col-sm-9">
-            <input id="first_name" name="First_Name" class="form-control" type="text" required>
+            <input id="First_Name" name="First_Name" class="form-control" type="text" required>
           </div>
         </div>
 
@@ -94,7 +94,7 @@
           <label class="col-sm-3 col-form-label">Gender</label>
           <div class="col-sm-9">
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="Sex" id="gender_male" value="Male" required>
+              <input class="form-check-input" type="radio" name="Sex" id="gender_male" value="Male" checked required>
               <label class="form-check-label" for="gender_male">Male</label>
             </div>
             <div class="form-check">
@@ -175,7 +175,7 @@ document.getElementById('regForm').addEventListener('submit', function(e) {
   // --- PASSWORD MATCH CHECK ---
   const pw = document.getElementById('password').value;
   const cpw = document.getElementById('cnf_password').value;
-  if (pw !== cpw) {
+  if (pw !== cpw || pw.length === 0 || cpw.length === 0) {
     e.preventDefault();
     alertBox.textContent = "Password and Confirm Password do not match.";
     alertBox.classList.remove('d-none');
@@ -195,9 +195,24 @@ document.getElementById('regForm').addEventListener('submit', function(e) {
     document.getElementById('phone_number').classList.add('is-invalid');
     return false;
   }
-
+// Empty First Name Check
+      const val = document.getElementById("First_Name").value;
+if (!val || val.trim().length === 0) {
+  e.preventDefault();
+      alertBox.textContent = "First Name cannot be empty.";
+      alertBox.classList.remove('d-none');
+      document.getElementById('First_Name').classList.add('is-invalid');
+      return false;
+}
   // --- DATE OF BIRTH: Not future ---
   const dobInput = document.getElementById('date_of_birth').value;
+  if (!dobInput || dobInput.trim().length === 0) {
+  e.preventDefault();
+      alertBox.textContent = "Date of Birth cannot be empty.";
+      alertBox.classList.remove('d-none');
+      document.getElementById('Date_of_Birth').classList.add('is-invalid');
+      return false;
+}
   if (dobInput) {
     const dob = new Date(dobInput);
     const today = new Date();
@@ -211,6 +226,18 @@ document.getElementById('regForm').addEventListener('submit', function(e) {
       return false;
     }
   }
+  // -------- EMAIL VALIDATION --------
+      // Basic but reliable email regex
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      email = document.getElementById("email_id").value.trim();
+      if (!emailRegex.test(email)) {
+          e.preventDefault();
+          alertBox.textContent = "Please enter a valid email address.";
+          alertBox.classList.remove('d-none');
+
+          emailField.classList.add('is-invalid');
+          return false;
+      }
 
   // --- OPTIONAL: other checks (e.g. email pattern) ---
 

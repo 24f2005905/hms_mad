@@ -118,6 +118,98 @@ def register(sid):
     User_ID = user_create.json().get('User_ID')
     return render_template("register_success.html", User_ID = User_ID)
 
+@app.route('/doctor_register', methods=['GET', 'POST'])
+@session_wrapper
+def Doctor_Register(sid):
+    if not sid:
+        return redirect("/login")
+    
+    headers = {
+        "Authorization": sid['token']
+    }
+
+    # Present the form for new user
+    if request.method == 'GET':
+         #Specialisation Lookup
+        spec_lookup = requests.get(app_url + '/hms/departments/lookup',headers=headers, timeout =60)
+        departments = spec_lookup.json().get('department_details')
+        specialisations = []
+        for spec in departments:
+            specialisations.append(spec["Speciality"]) 
+        return render_template("doctor_register.html", user_token = sid, specialisations_list = specialisations)
+    
+    # Updating Database with User details
+    create_user_dict = {
+    "First_Name": request.form.get('First_Name'),
+    "Last_Name" : request.form.get('Last_Name',None),
+    "Phone_Number" :request.form.get('Phone_Number'),
+    "User_Type": "DOCTOR",
+    "Email_ID" : request.form.get('Email_ID'),
+    "Sex" : request.form.get('Sex')[0].upper(),
+    "Address" : request.form.get('Address',None),
+    "Date_Of_Birth" :request.form.get('Date_Of_Birth'),
+    "Password" : request.form.get('password'),
+    "New_Password" : request.form.get('cnf_password'),
+    "User_Profile": request.form.get("Doctor_Profile",None)
+    }
+
+    user_create = requests.post(app_url + '/hms/user/create',json= create_user_dict, headers= headers, timeout=60)
+    if user_create.status_code != 200:
+        flash(f"Registration Failed{user_create.json().get('message')}","error")
+        return redirect("/login")
+    
+    Doctor_ID = user_create.json().get('User_ID')
+
+    #Adding doctor to department
+    #Specialisation Lookup
+    spec = {
+        "Speciality": request.form.get("Speciality")
+    }
+    spec_lookup = requests.get(app_url + '/hms/departments/lookup',params = spec,headers=headers, timeout =60)
+    departments = spec_lookup.json().get('department_details')[0]
+    
+    Dept_ID = departments["Dept_ID"]
+
+    spec_dict = {
+        "Doctor_ID": Doctor_ID,
+        "Dept_ID" : Dept_ID,
+        "Dept_Position": request.form.get("Dept_Position")
+
+    }
+    
+    doc_assign = requests.post(app_url + '/hms/departments/assign',json = spec_dict, headers=headers,timeout = 60)
+    if doc_assign.status_code != 200:
+        flash("Doctor Assignment Failed","error")
+        return redirect("/dashboard")
+    
+    flash("User Create Success","success")
+    return render_template("register_success.html",user_token = sid ,User_ID = Doctor_ID)
+
+@app.route('/create_department', methods=['POST'])
+@session_wrapper
+def Create_Department(sid):
+    if not sid:
+        return redirect("/login")
+    headers ={
+         "Authorization": sid['token']
+    }
+   
+    #Creating new department 
+
+    dept_dict = {
+        "Speciality" :request.form.get("Department_Name"),
+        "Details": request.form.get("Department_Details",None)
+    }
+
+    dept_create = requests.post(app_url + '/hms/departments/create', json = dept_dict, 
+    headers = headers, timeout = 60)
+    if dept_create.status_code != 200:
+        flash("Department Create Failed","error")
+        return redirect("/doctor_register")
+    
+    flash("Department Create Successfully","success")
+    return redirect("/doctor_register")
+
 @app.route('/login', methods=['GET', 'POST'])
 @session_wrapper
 def login(sid):
@@ -311,12 +403,14 @@ def Book_Appointment(sid):
                 "available": True if f_slot in Available_Slots else False
             })
       
-        return render_template("book_appointment.html",user_token = sid, days = date_list, selected_date = Appointment_Date, doctor= doctor, available = slot_list)
+        return render_template("book_appointment.html",user_token = sid, days = date_list, 
+        selected_date = Appointment_Date, doctor= doctor, available = slot_list, User_Type = sid['auth_token']['role'])
     
     #Confirm Booking
+    Patient_ID = request.form.get('patient_id', sid['auth_token']['user'])
     appt_details =  {
         "Appointment_Time": Slot,
-        "Patient_ID":  sid['auth_token']['user'],
+        "Patient_ID": Patient_ID ,
         "Appointment_Date": datetime.strptime(Appointment_Date, '%d %B %Y').strftime('%Y-%m-%d'),
         "Doctor_ID": Doctor_ID
     }
@@ -511,13 +605,15 @@ def dashboard(sid):
             lookup_dict = {
                 "User_ID": pid 
             }
-            
             user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
             if user_lookup.status_code != 200:
                 flash("User Lookup Failed","error")
                 return redirect("/dashboard")
             
-            user_details = (user_lookup.json().get('user_details'))[0]
+            if len(user_lookup.json().get('user_details',[])) != 1:
+                continue
+
+            user_details = user_lookup.json().get('user_details')[0]
             user_details['Age'] = calculate_age(user_details['Date_Of_Birth'])
             patients.append(user_details)
         #Get Doctor's Available Slots
@@ -540,6 +636,51 @@ def dashboard(sid):
             appointments=upcoming_appointments, patients=patients, 
             avail = available_slots)
 
+    if sid['auth_token']['role'] == 'ADMIN':
+
+        #Lookup to display Upcoming Appointments for the day
+        today = date.today()
+        Current_Date = datetime(today.year, today.month, today.day)
+        Last_Date = Current_Date + timedelta(days=5)
+
+        appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', timeout = 60, headers = headers)
+        if appointments_lookup.status_code != 200:
+            resp_json = appointments_lookup.json()
+            flash("Appointment Lookup Failed","error")
+            return f"Appointment Failed {resp_json['message']}"
+        
+        all_appointments = appointments_lookup.json().get('appointment_details')
+        appointments = [ d for d in all_appointments \
+            if (Current_Date <= datetime.strptime(d['Appointment_Date'],"%Y-%m-%d") < Last_Date)]
+        upcoming_appt = len(all_appointments)
+        #Lookup to display All registered Doctors 
+        doc_lookup = requests.get(app_url + "/hms/departments/doctor-lookup",timeout = 60, headers = headers)
+        if doc_lookup.status_code != 200:
+            flash("Doctor Lookup Failed","error")
+            return "Doctor Lookup Failed"
+
+        doctors = doc_lookup.json().get('doctordept_details')
+        registered_doctors = len(doctors)
+
+        #Lookup to display ALL registered Patients
+        user_dict = {
+            "User_Type": 'PATIENT'
+        }
+        user_lookup = requests.get(app_url + '/hms/user/lookup', params = user_dict, headers=headers,timeout=60)
+        if user_lookup.status_code != 200:
+            flash("Patient Lookup Failed")
+            return "Doctor Lookup Failed"
+        
+        patients = user_lookup.json().get('user_details')
+
+        for patient in patients:
+            patient['Age'] = calculate_age(patient['Date_Of_Birth'])
+        
+        registered_patients = len(patients)
+
+        return render_template("/admin_dashboard.html", user_token = sid, appointments=appointments, 
+        doctors = doctors, patients = patients, registered_doctors = registered_doctors, registered_patients = registered_patients, upcoming_appt = upcoming_appt)
+    
 @app.route("/edit-profile", methods=['GET', 'POST'])
 @session_wrapper
 def edit_profile(sid):

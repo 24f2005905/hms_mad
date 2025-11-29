@@ -1,0 +1,54 @@
+{# templates/doctor_dashboard.html #}
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block head_extra %}
+  {{ super() }}
+  <style>
+    /* optional: add custom styling for patient table wrapper if needed */
+    .patients-container {
+      margin-top: 2rem;
+    }
+    .patients-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .patients-table th,
+    .patients-table td {
+      border: 1px solid #dee2e6;
+      padding: 6px 8px;
+    }
+    .patients-table thead th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: #374151;
+      text-align: center;
+    }
+    .patients-table tbody td {
+      text-align: center;
+    }
+  </style>
+{% endblock %}
+
+
+{% block content %}
+  <div class="row g-4">
+    
+    <div class="col-12 patients-container">
+      {% include "admin_upcoming_appt.html" %}
+    </div> 
+
+    <div class="col-12">
+      {% include "registered_doctors.html" %}
+    </div>
+   
+    <div class="col-12 patients-container">
+      {% include "registered_patients.html" %}
+    </div>
+
+    
+
+  </div>
+{% endblock %}
+ 
