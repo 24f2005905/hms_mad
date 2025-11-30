@@ -15,5 +15,5 @@ cp -r README.md \
     ${package_dir}
 
 echo "Creating the package"
-zip -qr hms-mad.zip ${package_dir}
+zip -qr project_24f2005905.zip ${package_dir}
 
