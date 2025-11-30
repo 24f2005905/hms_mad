@@ -29,13 +29,13 @@ Hospital Mangement System - IIT Online BS Degree - MAD I Project
 
 - Start the backend application. Runs flask in debug mode
     cd runtime
-    cp ../hms-backend/config.json 
+    cp ../hms-backend/config.json . 
     <change SQL Lite dir in config.json>
     ../ext/py3/bin/python3 ../hms-backend/app.py
     
 - Start the front application in a separate shell. Runs flask in debug mode
     cd runtime
-    cp ../hms-frontend/config.json
+    cp ../hms-frontend/fe_config.json .
     ../ext/py3/bin/python3 ../hms-frontend/app.py
 
 - Access the application in http://localhost:9001

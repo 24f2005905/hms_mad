@@ -9,6 +9,7 @@ cp -r README.md \
     hms-frontend \
     hms-backend \
     docs/hms-openapi-spec.yaml \
+	docs/hms-mad-1-project-report.pdf \
     py-env \
     sql \
     ${package_dir}
