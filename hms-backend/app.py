@@ -149,9 +149,7 @@ def Check_Password(auth_args):
         result = db.session.execute(query,{"user_id": User_ID})
         details = result.fetchone()
         if details:
-            Role = details[0]
             pwd_hash = details[1] #Fetch password corresponding to User_ID
-
     
     #Password verification
     if not pwd_hash:
@@ -647,7 +645,6 @@ def Slots_Create(auth_args):
    
    #If Doctor_ID exists, update row instead
     if rows:
-        print(rows)
         Old_Start_Date = rows[1]
         Old_End_Date = rows[2]
         
@@ -655,8 +652,6 @@ def Slots_Create(auth_args):
             "WHERE Appointment_Status = 'SCHEDULED' AND " \
             f"Doctor_ID = '{req_json['Doctor_ID']}' AND " \
             f"(Appointment_Date BETWEEN '{Old_Start_Date}' AND '{Old_End_Date}');"
-        
-        print(open_app_query)
         
         with app.app_context():
             open_appointments = db.session.execute(text(open_app_query))
@@ -710,9 +705,6 @@ def Slots_Lookup(auth_args):
     #Get parameters
     param_json = request.args.to_dict()
     Doctor_ID = param_json["Doctor_ID"]
-
-    #Check Current Date
-    Current_Date = datetime.now().strftime("%Y-%m-%d") 
 
     #Check Doctor_Status 
     doctor_status_q = text("SELECT User_Status FROM Users " \
@@ -1083,7 +1075,7 @@ def Appointment_Create(auth_args):
     appt_create_q = text("INSERT INTO Appointments VALUES " \
         f"('{Appointment_ID}', '{Patient_ID}', " \
         f"'{Doctor_ID}', '{Appointment_Date}', '{Appointment_Time}', 'SCHEDULED')")
-    print(str(appt_create_q))
+
     with app.app_context():
         appt_create = db.session.execute(appt_create_q)
         db.session.commit()
@@ -1217,7 +1209,6 @@ def Appointment_Update(auth_args):
     if Appointment_Status == 'COMPLETED':
         appt_query += " AND Appointment_Date <= CURRENT_DATE"
     
-    print(json.dumps(appt_query))
     with app.app_context():
         result = db.session.execute(text(appt_query))
         row = result.fetchone()
@@ -1571,7 +1562,6 @@ def Available_Slots(auth_args):
 
     
 if __name__ == '__main__' :
-    print(__name__)
     # Read the config from config.json
     config_dict = json.loads(open("config.json",'r').read())
     

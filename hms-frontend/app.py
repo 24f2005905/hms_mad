@@ -1,10 +1,9 @@
 import json
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect
 from jinja2 import FileSystemLoader
 import requests
 import uuid
 import jwt
-import json
 from flask import session, flash
 from functools import wraps
 from datetime import datetime, timedelta, date
@@ -75,7 +74,7 @@ def session_wrapper(f):
             auth_token_str = my_session_dict["token"]
             try:
                 _ = jwt.decode(auth_token_str, jwt_public_str, algorithms = ["RS256"])
-            except Exception as e:
+            except Exception:
                 my_session_dict = None
                 session_dict.pop(sid,None)
                 session.clear()
@@ -534,7 +533,7 @@ def Cancel_Appointment(sid):
     if appointments_lookup.status_code != 200:
         flash("Appointment Lookup Failed","error")
         return redirect("/dashboard")
-    print(appointments_lookup.json())
+    
     appointment_details = appointments_lookup.json().get('appointment_details')[0]
 
     if not Confirm:
@@ -807,7 +806,6 @@ def edit_profile(sid):
         return render_template('edit_profile.html', user=user_details,
             user_token = sid, User_Type = User_Type)
 
-    print(f"Handling Update {user_details['User_ID']}")
     #Handling Update
     user_update_dict = {
         "User_ID": user_details["User_ID"]
@@ -855,7 +853,6 @@ def edit_profile(sid):
     headers = {
         'Authorization': sid['token']
     }
-    print(json.dumps(user_update_dict))
     if New_Password:
         #Verifying Current_Password with backend
         req_json = {
@@ -968,7 +965,7 @@ def Patient_Profile(sid):
     # Do DoctorLookup
     user_lookup = requests.get(app_url + "/hms/user/lookup",params = lookup_dict,timeout = 60, headers = headers)
     if user_lookup.status_code != 200:
-        flash(f"Patient Lookup Failed","error")
+        flash("Patient Lookup Failed","error")
         return redirect("/dashboard")
 
     patient = user_lookup.json().get("user_details")[0]
@@ -1047,7 +1044,6 @@ def User_Search(sid):
     for key in ["First_Name","Last_Name","Phone_Number","User_Type"]:
         if key in parameters:
             lookup_dict[key] = parameters[key]
-    print(parameters)
 
     user_lookup = requests.get(app_url + '/hms/user/lookup',params = lookup_dict,
         headers = headers, timeout = 60)
