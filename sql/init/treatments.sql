@@ -1,6 +1,6 @@
 -- Treatments with continuity across patient appointments
 
-PRAGMA foreign_keys=OFF;
+/* PRAGMA foreign_keys=OFF; */
 BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS Treatments (
     Appointment_ID varchar(15) PRIMARY KEY,

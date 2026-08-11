@@ -1,18 +1,28 @@
 #!/bin/bash
 
-TARGET_DB=${1}
-INIT_SQL_DIR=${2}
+#Set the environment variables
+export PGHOST=${1}
+export PGPORT=${2}
+export PGUSER=${3}
+export PGPASSWORD=${4}
+export PGDATABASE=${5}
+export INIT_SQL_DIR=${6}
 
 set -x
 
-mkdir -p $(dirname ${TARGET_DB})
-rm -f ${TARGET_DB}
+#Drop database if it already exists
+psql postgres --command "DROP DATABASE ${PGDATABASE};"
 
-sqlite3 ${TARGET_DB} < ${INIT_SQL_DIR}/hms-ddl.sql
-sqlite3 ${TARGET_DB} < ${INIT_SQL_DIR}/init/users.sql
-sqlite3 ${TARGET_DB} < ${INIT_SQL_DIR}/init/doctor_slots.sql
-sqlite3 ${TARGET_DB} < ${INIT_SQL_DIR}/init/departments.sql
-sqlite3 ${TARGET_DB} < ${INIT_SQL_DIR}/init/doctor-dept.sql
-sqlite3 ${TARGET_DB} < ${INIT_SQL_DIR}/init/appointments.sql
-sqlite3 ${TARGET_DB} < ${INIT_SQL_DIR}/init/treatments.sql
+#Create database 
+psql postgres --command "CREATE DATABASE ${PGDATABASE};"
+
+#Run DDL
+
+psql -d ${PGDATABASE} -f ${INIT_SQL_DIR}/hms-ddl.sql
+psql -d ${PGDATABASE} -f ${INIT_SQL_DIR}/init/users.sql
+psql -d ${PGDATABASE} -f ${INIT_SQL_DIR}/init/doctor_slots.sql
+psql -d ${PGDATABASE} -f ${INIT_SQL_DIR}/init/departments.sql
+psql -d ${PGDATABASE} -f ${INIT_SQL_DIR}/init/doctor-dept.sql
+psql -d ${PGDATABASE} -f ${INIT_SQL_DIR}/init/appointments.sql
+psql -d ${PGDATABASE} -f ${INIT_SQL_DIR}/init/treatments.sql
 set +x

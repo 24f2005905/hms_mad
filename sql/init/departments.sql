@@ -1,9 +1,9 @@
 -- Departments table and inserts generated from doctor specialities
 
-PRAGMA foreign_keys=OFF;
+/* PRAGMA foreign_keys=OFF; */
 BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS Departments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     Dept_ID VARCHAR(15) UNIQUE NOT NULL,
     Speciality Varchar(50) UNIQUE NOT NULL,
     Details TEXT NULL

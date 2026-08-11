@@ -1,5 +1,5 @@
 -- Appointments with randomized COMPLETED/CANCELLED
-PRAGMA foreign_keys=OFF;
+ /*PRAGMA foreign_keys=OFF;*/
 BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS Appointments (
     Appointment_ID varchar(64) PRIMARY KEY ,
