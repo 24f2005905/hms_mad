@@ -1081,4 +1081,4 @@ if __name__ == '__main__' :
     # Get our auth token
     my_auth_token = gen_backend_token(config_dict['account_id'], config_dict['account_pwd'])
     app.secret_key = "a-very-secret-key"
-    app.run(debug=True, port=9001)
+    app.run(debug=True,host='0.0.0.0', port=9001)

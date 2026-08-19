@@ -4,7 +4,7 @@
     "jwt_private": "../ext/keys/private_key.pem",
     "jwt_public": "../ext/keys/public_key.pem",
     "flask_config": {
-        "SQLALCHEMY_DATABASE_URI": "sqlite:////Users/varshu/git/hms/hms/runtime/hms.db",
+        "SQLALCHEMY_DATABASE_URI": "postgresql://postgres:mysecretpassword@localhost/postgres",
         "SQLALCHEMY_TRACK_MODIFICATIONS": false
     }
 }

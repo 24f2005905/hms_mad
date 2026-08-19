@@ -10,7 +10,7 @@ python3 -m venv $PY_ROOT
 
 # Install dependencies 
 $PY_ROOT/bin/pip install --upgrade pip
-$PY_ROOT/bin/pip install Flask Flask-SQLAlchemy PyJWT cryptography bcrypt requests
+$PY_ROOT/bin/pip install Flask Flask-SQLAlchemy PyJWT cryptography bcrypt requests psycopg2-binary
 
 # Create Asymmetric keys for JWT token signing
 KEYS_DIR=${EXT_ROOT}/keys

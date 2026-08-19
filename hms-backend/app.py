@@ -3,9 +3,10 @@ import os
 import jwt
 import uuid
 import bcrypt
+import psycopg2
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text,exc
+from sqlalchemy import text,exc,inspect
 from datetime import datetime, timedelta, date
 from functools import wraps
 
@@ -44,24 +45,25 @@ def verify_password(password: str, pwd_hash: str) -> bool:
         # Invalid hash format, treat as mismatch
         return False
 
-def init_db(db_uri, ddl_f_name):
-    db_f_name = db_uri.removeprefix("sqlite:///")
-    if os.path.exists(db_f_name): #Check if db already exists 
-        return 0
-    
-    print(f"Creating the DB {db_f_name}")
-    # Create the SQL Lite using Alchemy
-    sql_script = open(ddl_f_name,'r').read() 
-   
-    # Run the sql script
+def init_db(ddl_path,table_name="users"):
+    db_f_name = ddl_path.removeprefix("../sql/") 
+    #Check whether the database is already initialized
     with app.app_context():
-        raw_conn = db.engine.raw_connection()
-        try:
-            raw_conn.executescript(sql_script)
-            raw_conn.commit()
-        finally:
-            raw_conn.close() 
-    return 0 
+        inspector = inspect(db.engine)
+        if inspector.has_table(table_name):
+            print("Database already initialized")
+            return 0
+    
+        print(f"Creating the DB {db_f_name}")
+        # Create the SQL Lite using Alchemy
+        sql_script = open(ddl_path,'r').read() 
+   
+        # Run the sql script
+        with db.engine.begin() as conn:
+            conn.execute(text(sql_script))
+
+        print("Database successfully initialized")
+        return 0 
 
 def auth_wrapper(f):
     """ Auth Wrapper Decorator"""
@@ -1576,7 +1578,7 @@ if __name__ == '__main__' :
     # Bind the db to the app
     db.init_app(app)
 
-    init_db(app.config["SQLALCHEMY_DATABASE_URI"], config_dict["ddl_path"])
+    init_db(config_dict["ddl_path"],"users")
 
-    app.run(debug = True , port = config_dict['port'])
+    app.run(host='0.0.0.0',debug = True , port = config_dict['port'])
     
