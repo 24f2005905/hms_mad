@@ -660,7 +660,7 @@ paths:
           in: query
           schema:
             type: string
-        - name: Speciality
+        - name: Specialities
           in: query
           schema:
             type: string

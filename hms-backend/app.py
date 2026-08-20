@@ -4,7 +4,7 @@ import jwt
 import uuid
 import bcrypt
 import psycopg2
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text,exc,inspect
 from datetime import datetime, timedelta, date
@@ -277,13 +277,13 @@ def User_Lookup(auth_args):
     user_details = []
     for row_ent in rows:
         row_dict = (dict(row_ent._mapping))
-        row_dict.pop('Password')
+        row_dict.pop('password')
         row_dict.pop('id')
         if auth_token['role'] == 'ADMIN' or \
             auth_token['role'] == 'DOCTOR' and row_dict['User_ID'][0] == 'P' and \
                  row_dict['User_Status'] == 'ACTIVE' or \
             auth_token['user'] == row_dict['User_ID']:
-            row_dict['User_Profile'] = json.loads(row_dict['User_Profile'])
+            row_dict['user_profile'] = json.loads(row_dict['user_profile'])
             user_details.append(row_dict)
 
     ret['user_details'] = user_details 
@@ -730,7 +730,6 @@ def Slots_Lookup(auth_args):
         ret["status"] = "error"
         ret["message"] = "Doctor Currently Unavailable"
         return ret, 400
-    
     ret["Slot"] = {
         "Start_Date": slots[0],
         "End_Date": slots[1],
@@ -857,9 +856,16 @@ def Unassign_Doctor(auth_args):
 
     #Get parameters
     param_json = request.args.to_dict()
+    
+    #Check for mandatory fields₹
+    if "Doctor_ID" not in param_json or "Dept_ID" not in param_json:
+        ret["status"] = "error"
+        ret["message"] = "missing mandatory fields"
+        return ret, 400
+
     Doctor_ID = param_json["Doctor_ID"]
     Dept_ID = param_json["Dept_ID"]
-
+    
     #Enforce Roles 
     if auth_token['role'] != 'ADMIN':
         ret["status"] = "error"
@@ -930,6 +936,7 @@ def Doctor_Lookup(auth_args):
         query += " WHERE "
         query += " AND ".join(match_clauses)
 
+    print(query)
     with app.app_context():
         doctor_lookup = db.session.execute(text(query))
         doctors = doctor_lookup.fetchall() 
@@ -1469,7 +1476,8 @@ def Treatment_Lookup(auth_args):
         query += " WHERE "
         query += " AND ".join(match_clauses)
         query += " ORDER BY Appointment_Date"
-  
+    
+    print(query)
     with app.app_context():
         result = db.session.execute(text(query))
         rows = result.fetchall() 
