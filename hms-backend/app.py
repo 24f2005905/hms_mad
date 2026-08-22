@@ -1573,7 +1573,7 @@ def Available_Slots(auth_args):
     
 if __name__ == '__main__' :
     # Read the config from config.json
-    config_dict = json.loads(open("config.json",'r').read())
+    config_dict = json.loads(open("/app/config.json",'r').read())
     
     # Load JWT Private and Public Keys
     jwt_private_str = open(config_dict["jwt_private"]).read()

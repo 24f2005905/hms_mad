@@ -4,7 +4,7 @@
     "jwt_private": "../ext/keys/private_key.pem",
     "jwt_public": "../ext/keys/public_key.pem",
     "flask_config": {
-        "SQLALCHEMY_DATABASE_URI": "postgresql://postgres:mysecretpassword@localhost/postgres",
+        "SQLALCHEMY_DATABASE_URI": "postgresql://postgres:mysecretpassword@172.17.0.1/postgres",
         "SQLALCHEMY_TRACK_MODIFICATIONS": false
     }
 }
