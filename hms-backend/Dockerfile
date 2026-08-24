@@ -26,5 +26,5 @@ COPY --from=builder /py-root /usr/local
 # Copy application source code and configuration
 COPY hms-backend/app.py .
 
-# Run application (replace main.py with your entry point script)
+# Run application
 CMD ["python", "app.py"]

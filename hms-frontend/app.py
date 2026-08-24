@@ -1069,7 +1069,7 @@ def home(sid):
 
 if __name__ == '__main__' :
     # Read the config from config.json
-    config_dict = json.loads(open("fe_config.json",'r').read())
+    config_dict = json.loads(open("/app/fe_config.json",'r').read())
 
     # Set My Templates Dir
     app.jinja_loader = FileSystemLoader(config_dict["template_dir"])
