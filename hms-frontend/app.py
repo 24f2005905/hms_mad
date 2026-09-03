@@ -134,7 +134,7 @@ def Doctor_Register(sid):
         departments = spec_lookup.json().get('department_details')
         specialisations = []
         for spec in departments:
-            specialisations.append(spec["Speciality"])
+            specialisations.append(spec["speciality"])
         return render_template("doctor_register.html", user_token = sid, specialisations_list = specialisations)
 
     # Updating Database with User details
@@ -146,17 +146,17 @@ def Doctor_Register(sid):
 
     }
     create_user_dict = {
-    "First_Name": request.form.get('First_Name'),
-    "Last_Name" : request.form.get('Last_Name',None),
-    "Phone_Number" :request.form.get('Phone_Number'),
-    "User_Type": "DOCTOR",
-    "Email_ID" : request.form.get('Email_ID'),
-    "Sex" : request.form.get('Sex')[0].upper(),
-    "Address" : request.form.get('Address',None),
-    "Date_Of_Birth" :request.form.get('Date_Of_Birth'),
-    "Password" : request.form.get('password'),
+    "first_name": request.form.get('First_Name'),
+    "last_name" : request.form.get('Last_Name',None),
+    "phone_number" :request.form.get('Phone_Number'),
+    "user_type": "DOCTOR",
+    "email_id" : request.form.get('Email_ID'),
+    "sex" : request.form.get('Sex')[0].upper(),
+    "address" : request.form.get('Address',None),
+    "date_of_birth" :request.form.get('Date_Of_Birth'),
+    "password" : request.form.get('password'),
     "New_Password" : request.form.get('cnf_password'),
-    "User_Profile": User_Profile
+    "user_profile": User_Profile
     }
 
     user_create = requests.post(app_url + '/hms/user/create',json= create_user_dict, headers= headers, timeout=60)
@@ -164,7 +164,7 @@ def Doctor_Register(sid):
         flash(f"Registration Failed{user_create.json().get('message')}","error")
         return redirect("/login")
 
-    Doctor_ID = user_create.json().get('User_ID')
+    Doctor_ID = user_create.json().get('user_id')
 
     #Adding doctor to department
     #Specialisation Lookup
@@ -334,13 +334,13 @@ def Doctor_Search(sid):
     speciality = request.args.get("speciality", None)
 
     # Build Specialities list
-    specialities = sorted({d["Specialities"] for d in doctors_list})
+    specialities = sorted({d["specialities"] for d in doctors_list})
 
     doctors = []
     Details = None
     if speciality:
         doctors = [d for d in doctors_list
-                   if d["Specialities"].lower() == speciality.lower()]
+                   if d["specialities"].lower() == speciality.lower()]
         Details = doctors[0]['Details']
 
 

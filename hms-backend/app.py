@@ -179,25 +179,25 @@ def User_Create(auth_args):
     req_json = request.get_json()
 
     # Check for Mandatory Fields
-    if "First_Name" not in req_json or \
-        "User_Type" not in req_json or \
-        "Sex" not in req_json or \
-        "Phone_Number" not in req_json or \
-        "Password" not in req_json :
+    if "first_name" not in req_json or \
+        "user_type" not in req_json or \
+        "sex" not in req_json or \
+        "phone_number" not in req_json or \
+        "password" not in req_json :
         ret["status"] = "error"
         ret["message"] = "Invalid request: Missing Mandatory Fields"
         return ret, 400
     
     # Check for valid User_Type
-    if req_json["User_Type"] not in Valid_User_Types:
+    if req_json["user_type"] not in Valid_User_Types:
         ret["status"] = "error"
-        ret["message"] = f"Invalid User Type: {req_json['User_Type']}"
+        ret["message"] = f"Invalid User Type: {req_json['user_type']}"
         return ret, 400
     
-    User_Type = req_json["User_Type"]
+    User_Type = req_json["user_type"]
     #Check for valid date of birth
     try:
-        DOB = datetime.strptime(req_json["Date_Of_Birth"],'%Y-%m-%d').date()
+        DOB = datetime.strptime(req_json["date_of_birth"],'%Y-%m-%d').date()
         if DOB > date.today():
             raise Exception("DOB in future")
     except:
@@ -208,7 +208,7 @@ def User_Create(auth_args):
 
     # Generate an ID: [P/A/D]-YYYY-MM-DD-[SNO]
     # Query for all User IDs for partial match
-    query_1 = text("SELECT User_ID FROM Users WHERE User_ID LIKE :partial_match ORDER BY id DESC")
+    query_1 = text("SELECT user_id FROM Users WHERE user_id LIKE :partial_match ORDER BY id DESC")
     partial_match = f'{User_Type[0]}-{date.today().strftime("%Y-%m-%d")}-'
     serial_no = 1
     with app.app_context():
@@ -219,24 +219,24 @@ def User_Create(auth_args):
     User_ID = f"{partial_match}{serial_no:03d}"
 
     # Now insert the user
-    query_2 = text ('INSERT INTO Users '\
-        '(User_ID,Email_ID, Sex,Date_Of_Birth, Address, First_Name, Last_Name, ' \
-        'User_Type, Phone_Number, User_Profile, Password) ' \
+    query_2 = text ('INSERT INTO users '\
+        '(user_id,email_id, sex,date_of_birth, address, first_name, last_name, ' \
+        'user_type, phone_number, user_profile, password) ' \
         'VALUES (:User_ID,:Email_ID, :Sex ,:Date_Of_Birth,' \
         ':Address, :First_Name, :Last_Name, :User_Type,' \
         ':Phone_Number, :User_Profile, :Password)')
     query_2_dict = {
         "User_ID": User_ID,
-        "Email_ID": req_json.get("Email_ID", ""),
-        "Sex": req_json["Sex"],
-        "Date_Of_Birth": req_json.get("Date_Of_Birth",""),
-        "Address": req_json.get("Address",""),
-        "First_Name": req_json["First_Name"],
-        "Last_Name": req_json.get("Last_Name",""),
+        "Email_ID": req_json.get("email_id", ""),
+        "Sex": req_json["sex"],
+        "Date_Of_Birth": req_json.get("date_of_birth",""),
+        "Address": req_json.get("address",""),
+        "First_Name": req_json["first_name"],
+        "Last_Name": req_json.get("last_name",""),
         "User_Type": User_Type,
-        "Phone_Number": req_json["Phone_Number"],
-        "User_Profile": json.dumps(req_json.get("User_Profile",{})),
-        "Password": hash_password(req_json["Password"])
+        "Phone_Number": req_json["phone_number"],
+        "User_Profile": json.dumps(req_json.get("user_profile",{})),
+        "Password": hash_password(req_json["password"])
     }
     with app.app_context():
          result = db.session.execute(query_2,query_2_dict)
@@ -512,11 +512,11 @@ def Dept_Lookup(auth_args):
 
     #Query Database
     match_clauses = []
-    for key in ["Dept_ID","Speciality"]:
+    for key in ["dept_id","speciality"]:
         if key in param_json:
             match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
     
-    query = "SELECT * FROM Departments"
+    query = "SELECT * FROM departments"
     if len(match_clauses):
         query += " WHERE "
         query += " AND ".join(match_clauses)
@@ -929,11 +929,11 @@ def Doctor_Lookup(auth_args):
     
     #Generate lookup query
     match_clauses = []
-    for key in ['User_ID','Specialities','First_Name','Last_Name']:
+    for key in ['user_id','specialities','first_Name','last_Name']:
         if key in param_json:
             match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
     
-    query = "SELECT * FROM Doctor_Lookup "
+    query = "SELECT * FROM doctor_lookup "
 
     if len(match_clauses):
         query += " WHERE "
