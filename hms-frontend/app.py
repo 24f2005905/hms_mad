@@ -32,8 +32,8 @@ role_to_dash = {
 def gen_backend_token(user, password):
     # Generate auth token from backend
     login_dict = {
-        "User_ID": user,
-        "Password": password
+        "user_id": user,
+        "password": password
     }
     http_resp = requests.post(app_url + '/hms/id/generate/token', json=login_dict, timeout=60)
     if http_resp.status_code != 200:
@@ -224,8 +224,8 @@ def login(sid):
         password = request.form.get('password')
         # Verify Creds With Backend
         login_dict = {
-            "User_ID": username,
-            "Password": password
+            "user_id": username,
+            "password": password
         }
 
         # Generate auth token from backend
@@ -248,7 +248,7 @@ def login(sid):
 
         # Call backend to fetch user details
         lookup_dict = {
-            "User_ID": username
+            "user_id": username
         }
         user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
         if user_lookup.status_code != 200:
@@ -256,8 +256,8 @@ def login(sid):
             return redirect("/login")
 
         user_details = (user_lookup.json().get('user_details'))[0]
-        First_Name = user_details['First_Name']
-        Last_Name = user_details['Last_Name']
+        First_Name = user_details['first_name']
+        Last_Name = user_details['last_name']
 
         # Create a session id
         session_id = str(uuid.uuid4())
@@ -755,8 +755,8 @@ def dashboard(sid):
 
         #Lookup to display ALL registered Patients
         user_dict = {
-            "User_Type": 'PATIENT',
-            "User_Status": 'ACTIVE'
+            "user_type": 'PATIENT',
+            "user_status": 'ACTIVE'
         }
         user_lookup = requests.get(app_url + '/hms/user/lookup', params = user_dict, headers=headers,timeout=60)
         if user_lookup.status_code != 200:
@@ -766,7 +766,7 @@ def dashboard(sid):
         patients = user_lookup.json().get('user_details')
 
         for patient in patients:
-            patient['Age'] = calculate_age(patient['Date_Of_Birth'])
+            patient['Age'] = calculate_age(patient['date_of_birth'])
 
         registered_patients = len(patients)
 
@@ -787,7 +787,7 @@ def edit_profile(sid):
 
     # Call backend to fetch user details
     lookup_dict = {
-        "User_ID": User_ID
+        "user_id": User_ID
     }
 
     headers = {
@@ -800,15 +800,15 @@ def edit_profile(sid):
         return redirect("/dashboard")
 
     user_details = (user_lookup.json().get('user_details'))[0]
-    User_Type = user_details['User_Type']
+    User_Type = user_details['user_type']
     if request.method == 'GET':
-        user_details['Sex'] = valid_gender_str[user_details['Sex']]
+        user_details['sex'] = valid_gender_str[user_details['sex']]
         return render_template('edit_profile.html', user=user_details,
             user_token = sid, User_Type = User_Type)
 
     #Handling Update
     user_update_dict = {
-        "User_ID": user_details["User_ID"]
+        "user_id": user_details["user_id"]
     }
     if sid['auth_token']['role'] == 'DOCTOR':
         User_Profile = {
@@ -817,7 +817,7 @@ def edit_profile(sid):
             "Expertise": request.form.get("Expertise"),
             "Bio": request.form.get("Bio")
         }
-        user_update_dict["User_Profile"] = User_Profile
+        user_update_dict["user_profile"] = User_Profile
 
     First_Name = request.form.get('First_Name')
     Last_Name = request.form.get('Last_Name')
@@ -825,30 +825,30 @@ def edit_profile(sid):
     Email_ID = request.form.get('Email_ID')
     Sex = request.form.get('Sex')[0].upper()
     Address = request.form.get('Address')
-    Date_Of_Birth = request.form.get('Date_Of_Birth')
+    Date_Of_Birth = request.form.get('Date_Of_Birth',"").strip()
     Current_Password = request.form.get('cur_password')
     New_Password = request.form.get('new_password')
 
-    if First_Name.lower() != user_details['First_Name']:
-        user_update_dict["First_Name"] = First_Name
+    if First_Name.lower() != user_details['first_name']:
+        user_update_dict["first_name"] = First_Name
 
-    if Last_Name.lower() != user_details['Last_Name']:
-        user_update_dict["Last_Name"] = Last_Name
+    if Last_Name.lower() != user_details['last_name']:
+        user_update_dict["last_name"] = Last_Name
 
-    if Address != user_details['Address']:
-        user_update_dict["Address"] = Address
+    if Address != user_details['address']:
+        user_update_dict["address"] = Address
 
-    if Phone_Number != user_details['Phone_Number']:
-        user_update_dict["Phone_Number"] = Phone_Number
+    if Phone_Number != user_details['phone_number']:
+        user_update_dict["phone_number"] = Phone_Number
 
-    if Email_ID != user_details['Email_ID']:
-        user_update_dict["Email_ID"] = Email_ID
+    if Email_ID != user_details['email_id']:
+        user_update_dict["email_id"] = Email_ID
 
-    if Sex != user_details['Sex']:
-        user_update_dict["Sex"] = Sex
+    if Sex != user_details['sex']:
+        user_update_dict["sex"] = Sex
 
-    if Date_Of_Birth != user_details['Date_Of_Birth']:
-        user_update_dict["Date_Of_Birth"] = Date_Of_Birth
+    if Date_Of_Birth != user_details['date_of_birth']:
+        user_update_dict["date_of_birth"] = Date_Of_Birth
 
     headers = {
         'Authorization': sid['token']
@@ -856,15 +856,15 @@ def edit_profile(sid):
     if New_Password:
         #Verifying Current_Password with backend
         req_json = {
-            "User_ID": user_details["User_ID"],
-            "Password": Current_Password
+            "user_id": user_details["user_id"],
+            "password": Current_Password
         }
         http_resp = requests.post(app_url + '/hms/user/check-password', json = req_json, headers = headers, timeout = 60)
         if http_resp.status_code != 200:
             flash("Invalid Password","error")
             return redirect("/dashboard")
 
-        user_update_dict["Password"] = New_Password
+        user_update_dict["password"] = New_Password
 
     if len(user_update_dict.keys()) > 1:
         # Update the user record
@@ -880,8 +880,8 @@ def edit_profile(sid):
         return render_template("edit_profile.html", user_token = sid ,user=user_details, User_Type=sid['auth_token']['role'])
 
     if User_ID == sid['auth_token']['user']:
-        sid['First_Name'] = user_update_dict.get('First_Name', user_details['First_Name'])
-        sid['Last_Name'] = user_update_dict.get('Last_Name', user_details['Last_Name'])
+        sid['First_Name'] = user_update_dict.get('first_name', user_details['first_name'])
+        sid['Last_Name'] = user_update_dict.get('last_name', user_details['last_name'])
 
     return redirect("/dashboard")
 
@@ -1041,7 +1041,7 @@ def User_Search(sid):
 
     lookup_dict = {}
     parameters = request.form.to_dict()
-    for key in ["First_Name","Last_Name","Phone_Number","User_Type"]:
+    for key in ["first_name","last_name","phone_number","user_type"]:
         if key in parameters:
             lookup_dict[key] = parameters[key]
 

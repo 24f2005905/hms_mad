@@ -20,9 +20,9 @@ Valid_User_Types = [
     "DOCTOR", "PATIENT", "ADMIN"
 ]
 Valid_User_Column = [
-    "User_ID", "Email_ID","Sex","First_Name", "Last_Name", 
-    "User_Type", "Phone_Number","User_Profile",
-    "Password","Date_Of_Birth","Address"
+    "user_id", "email_id","sex","first_name", "last_name", 
+    "user_type", "phone_number","user_profile",
+    "password","date_of_birth","address"
 ]
 Valid_Days_Of_Week = [
     "mon", "tue", "wed", "thu", "fri", "sat", "sun"
@@ -85,13 +85,13 @@ def auth_wrapper(f):
 def id_token_generate():
     req_json = request.get_json()
 
-    if "User_ID" not in req_json or "Password" not in req_json:
+    if "user_id" not in req_json or "password" not in req_json:
         return {"status":"error", "message":"Invalid request"}, 400
     
-    User_ID = req_json["User_ID"]
-    Password = req_json["Password"]
+    User_ID = req_json["user_id"]
+    Password = req_json["password"]
 
-    query = text("SELECT User_Type, Password, User_Status FROM Users WHERE User_ID = :user_id and User_Status = 'ACTIVE'")
+    query = text("SELECT user_type, password, user_status FROM Users WHERE user_id = :user_id and user_status = 'ACTIVE'")
     with app.app_context():
         result = db.session.execute(query,{"user_id": User_ID})
         details = result.fetchone()
@@ -137,16 +137,16 @@ def Check_Password(auth_args):
     # Get the request body
     req_json = request.get_json()
 
-    if "User_ID" not in req_json or "Password" not in req_json:
+    if "user_id" not in req_json or "password" not in req_json:
         return {"status":"error", "message":"Invalid request"}, 400
     
-    User_ID = req_json["User_ID"]
-    Password = req_json["Password"]
+    User_ID = req_json["user_id"]
+    Password = req_json["password"]
 
     if auth_token['user'] != User_ID:
         return {"status":"error", "message":"Unauthorized request"}, 403
 
-    query = text("SELECT User_Type, Password, User_Status FROM Users WHERE User_ID = :user_id and User_Status = 'ACTIVE'")
+    query = text("SELECT user_type, password, user_status FROM users WHERE user_id = :user_id and user_status = 'ACTIVE'")
     with app.app_context():
         result = db.session.execute(query,{"user_id": User_ID})
         details = result.fetchone()
@@ -259,7 +259,7 @@ def User_Lookup(auth_args):
     #Get parameters
     param_json = request.args.to_dict()
     match_clauses = []
-    for key in ['User_ID','Email_ID','Phone_Number','First_Name','Last_Name','User_Type']:
+    for key in ['user_id','email_id','phone_number','first_name','last_name','user_type']:
         if key in param_json:
             match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
     query = "SELECT * FROM Users "
@@ -267,8 +267,8 @@ def User_Lookup(auth_args):
         query += " WHERE "
         query += " AND ".join(match_clauses)
 
-    if 'User_Status' in param_json:
-        query += f" AND User_Status = '{param_json['User_Status']}' "
+    if 'user_status' in param_json:
+        query += f" AND user_status = '{param_json['user_status']}' "
         
     with app.app_context():
         result = db.session.execute(text(query))
@@ -304,7 +304,7 @@ def User_Update(auth_args):
     req_json = request.get_json()
 
     #Checking for User_ID 
-    if 'User_ID' not in req_json:
+    if 'user_id' not in req_json:
         ret["status"] = "error" 
         ret["message"] = "User_ID not found"
         return ret, 400
@@ -317,7 +317,7 @@ def User_Update(auth_args):
             return ret, 403
     
     # Check for User ID
-    query_check = f"SELECT User_ID from Users WHERE User_ID = '{req_json['User_ID']}';"
+    query_check = f"SELECT user_id from users WHERE user_id = '{req_json['user_id']}';"
     with app.app_context():
         result = db.session.execute(text(query_check))
         rows = result.fetchall()
@@ -327,7 +327,7 @@ def User_Update(auth_args):
         ret["message"] = "User Not Found"
         return ret, 400
 
-    query = "UPDATE Users SET "
+    query = "UPDATE users SET "
     updates = []
 
     for column_name in req_json:
@@ -336,12 +336,15 @@ def User_Update(auth_args):
             ret["message"] = "Invalid Attribute"
             return ret, 400
         
-        if column_name == 'User_ID':
+        if column_name == 'user_id':
             continue 
-        if column_name == 'Date_Of_Birth':
+        if column_name == 'date_of_birth' :
+            dob_str= req_json.get('date_of_birth',"").strip()
+            if dob_str == "" or dob_str == None:
+                continue
             #Check for valid date of birth
             try:
-                DOB = datetime.strptime(req_json["Date_Of_Birth"],'%Y-%m-%d').date()
+                DOB = datetime.strptime(dob_str,'%Y-%m-%d').date()
                 
                 if DOB > date.today():
                     raise Exception("DOB in future")
@@ -351,9 +354,9 @@ def User_Update(auth_args):
                 return ret, 400
             
         column_data = (req_json[column_name] \
-                if column_name != "Password" else \
+                if column_name != "password" else \
                     hash_password(req_json[column_name])) if \
-            column_name != "User_Profile" else \
+            column_name != "user_profile" else \
             json.dumps(req_json[column_name])
         updates.append(f"{column_name} = '{column_data}'")
         
@@ -364,7 +367,7 @@ def User_Update(auth_args):
         return ret, 400
 
     query += ",".join(updates)
-    query += f" WHERE User_ID = '{req_json['User_ID']}';"
+    query += f" WHERE user_id = '{req_json['user_id']}';"
 
     with app.app_context():
         result = db.session.execute(text(query))
@@ -375,7 +378,7 @@ def User_Update(auth_args):
         ret["message"] = "Failed to update"
         return ret, 500
     
-    ret["User_ID"] = req_json["User_ID"]
+    ret["User_ID"] = req_json["user_id"]
     ret["query"] = query
    
     return ret, 200

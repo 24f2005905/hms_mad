@@ -20,11 +20,11 @@
           <div id="pwAlert" class="alert alert-danger d-none"></div>
 
           <form method="POST" id="editForm" novalidate>
-            <input type="hidden" name="User_ID" value="{{ user['User_ID'] }}">
+            <input type="hidden" name="User_ID" value="{{ user['user_id'] }}">
             <div class="mb-3 row">
               <label class="col-sm-3 col-form-label">User ID</label>
               <div class="col-sm-9">
-                <input type="text" class="form-control-plaintext" readonly value="{{ user['User_ID'] }}">
+                <input type="text" class="form-control-plaintext" readonly value="{{ user['user_id'] }}">
               </div>
             </div>
 
@@ -32,7 +32,7 @@
               <label for="first_name" class="col-sm-3 col-form-label">First Name </label>
               <div class="col-sm-9">
                 <input id="first_name" name="First_Name" class="form-control" type="text"
-                       value="{{ (form_values.first_name if form_values) or user['First_Name'] }}" required>
+                       value="{{ (form_values.first_name if form_values) or user['first_name'] }}" required>
               </div>
             </div>
 
@@ -40,7 +40,7 @@
               <label for="last_name" class="col-sm-3 col-form-label">Last Name </label>
               <div class="col-sm-9">
                 <input id="last_name" name="Last_Name" class="form-control" type="text"
-                       value="{{ (form_values.last_name if form_values) or user['Last_Name'] or '' }}">
+                       value="{{ (form_values.last_name if form_values) or user['last_name'] or '' }}">
               </div>
             </div>
 
@@ -48,7 +48,7 @@
 	      <label class="col-sm-3 col-form-label">Gender</label>
 	      <div class="col-sm-9">
 	    
-	        {% set gender_value = (form_values.Sex if form_values) or user['Sex'] %}
+	        {% set gender_value = (form_values.Sex if form_values) or user['sex'] %}
 	    
 	        <div class="form-check">
 	          <input class="form-check-input" type="radio" name="Sex" id="gender_male" value="Male"
@@ -71,7 +71,7 @@
               <label for="Date_Of_Birth" class="col-sm-3 col-form-label">Date Of Birth </label>
               <div class="col-sm-9">
                 <input id="date_of_birth" name="Date_Of_Birth" class="form-control" type="date"
-                       value="{{ (form_values.date_of_birth if form_values) or user['Date_Of_Birth'] }}" required>
+                       value="{{ (form_values.date_of_birth if form_values) or user['date_of_birth']}}" required >
                 <div class="form-text">Date of Birth as 'DD/MM/YYYY'. </div>
               </div>
 
@@ -79,7 +79,7 @@
               <label for="Address" class="col-sm-3 col-form-label">Address </label>
               <div class="col-sm-9">
                 <input id="address" name="Address" class="form-control" type="text"
-                       value="{{ (form_values.address if form_values) or user['Address'] }}" required>
+                       value="{{ (form_values.address if form_values) or user['address'] }}" required>
                 <div class="form-text">Current Residential Address</div>
               </div>
 
@@ -88,7 +88,7 @@
               <label for="phone_number" class="col-sm-3 col-form-label">Phone </label>
               <div class="col-sm-9">
                 <input id="phone_number" name="Phone_Number" class="form-control" type="tel"
-                       value="{{ (form_values.phone_number if form_values) or user['Phone_Number'] }}" required>
+                       value="{{ (form_values.phone_number if form_values) or user['phone_number'] }}" required>
                 <div class="form-text">Exactly 10 digits.</div>
               </div>
             </div>
@@ -97,7 +97,7 @@
               <label for="email" class="col-sm-3 col-form-label">Email </label>
               <div class="col-sm-9">
                 <input id="email_id" name="Email_ID" class="form-control" type="tel"
-                       value="{{ (form_values.email_id if form_values) or user['Email_ID'] }}" required>
+                       value="{{ (form_values.email_id if form_values) or user['email_id'] }}" required>
               </div>
             </div>
 

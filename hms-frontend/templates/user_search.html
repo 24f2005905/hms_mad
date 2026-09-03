@@ -75,20 +75,20 @@
                 <tr>
                   <td style="text-align:center;">{{ loop.index }}</td>
                   <td style="text-align:center;">
-                    {% if u.User_Type == 'DOCTOR' %}
-                    <a href="{{ url_for('Doctor_Profile', User_ID=u.User_ID) }}" class="text-decoration-none">
-                      {{ u.User_ID }}
+                    {% if u.user_type == 'DOCTOR' %}
+                    <a href="{{ url_for('Doctor_Profile', User_ID=u.user_id) }}" class="text-decoration-none">
+                      {{ u.user_id }}
                     </a>
                     {% else %}
-                    <a href="{{ url_for('Patient_Profile', User_ID=u.User_ID) }}" class="text-decoration-none">
-                      {{ u.User_ID }}</a>
+                    <a href="{{ url_for('Patient_Profile', User_ID=u.user_id) }}" class="text-decoration-none">
+                      {{ u.user_id }}</a>
                     {% endif %}
                   </td>
-                  <td style="text-align:center;">{{ u.First_Name }}</td>
-                  <td style="text-align:center;">{{ u.Last_Name }}</td>
-                  <td style="text-align:center;">{{ u.Sex }}</td>
-                  <td style="text-align:center;">{{ u.Date_Of_Birth }}</td>
-                  <td style="text-align:center;">{{ u.Phone_Number }}</td>
+                  <td style="text-align:center;">{{ u.first_name }}</td>
+                  <td style="text-align:center;">{{ u.last_name }}</td>
+                  <td style="text-align:center;">{{ u.sex }}</td>
+                  <td style="text-align:center;">{{ u.date_of_birth }}</td>
+                  <td style="text-align:center;">{{ u.phone_number }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
