@@ -25,12 +25,11 @@ Hospital Mangement System - IIT Online BS Degree - MAD I Project
 
 - Create the database and synthetic data
     cd hms-mad
-    bash py-env/gen_db.sh $PWD/runtime/hms.db $PWD/sql
+    bash py-env/gen_db.sh localhost 5432 postgres mysecretpassword hms_db $PWD/sql
 
 - Start the backend application. Runs flask in debug mode
     cd runtime
-    cp ../hms-backend/config.json . 
-    <change SQL Lite dir in config.json>
+    cp ../hms-backend/config.json 
     ../ext/py3/bin/python3 ../hms-backend/app.py
     
 - Start the front application in a separate shell. Runs flask in debug mode

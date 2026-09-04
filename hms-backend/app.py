@@ -20,9 +20,9 @@ Valid_User_Types = [
     "DOCTOR", "PATIENT", "ADMIN"
 ]
 Valid_User_Column = [
-    "User_ID", "Email_ID","Sex","First_Name", "Last_Name", 
-    "User_Type", "Phone_Number","User_Profile",
-    "Password","Date_Of_Birth","Address"
+    "user_id", "email_id","sex","first_name", "last_name", 
+    "user_type", "phone_number","user_profile",
+    "password","date_of_birth","address"
 ]
 Valid_Days_Of_Week = [
     "mon", "tue", "wed", "thu", "fri", "sat", "sun"
@@ -85,13 +85,13 @@ def auth_wrapper(f):
 def id_token_generate():
     req_json = request.get_json()
 
-    if "User_ID" not in req_json or "Password" not in req_json:
+    if "user_id" not in req_json or "password" not in req_json:
         return {"status":"error", "message":"Invalid request"}, 400
     
-    User_ID = req_json["User_ID"]
-    Password = req_json["Password"]
+    User_ID = req_json["user_id"]
+    Password = req_json["password"]
 
-    query = text("SELECT User_Type, Password, User_Status FROM Users WHERE User_ID = :user_id and User_Status = 'ACTIVE'")
+    query = text("SELECT user_type, password, user_status FROM users WHERE user_id = :user_id and user_status = 'ACTIVE'")
     with app.app_context():
         result = db.session.execute(query,{"user_id": User_ID})
         details = result.fetchone()
@@ -137,16 +137,16 @@ def Check_Password(auth_args):
     # Get the request body
     req_json = request.get_json()
 
-    if "User_ID" not in req_json or "Password" not in req_json:
+    if "user_id" not in req_json or "password" not in req_json:
         return {"status":"error", "message":"Invalid request"}, 400
     
-    User_ID = req_json["User_ID"]
-    Password = req_json["Password"]
+    User_ID = req_json["user_id"]
+    Password = req_json["password"]
 
     if auth_token['user'] != User_ID:
         return {"status":"error", "message":"Unauthorized request"}, 403
 
-    query = text("SELECT User_Type, Password, User_Status FROM Users WHERE User_ID = :user_id and User_Status = 'ACTIVE'")
+    query = text("SELECT user_type, password, user_status FROM users WHERE user_id = :user_id and user_status = 'ACTIVE'")
     with app.app_context():
         result = db.session.execute(query,{"user_id": User_ID})
         details = result.fetchone()
@@ -179,25 +179,25 @@ def User_Create(auth_args):
     req_json = request.get_json()
 
     # Check for Mandatory Fields
-    if "First_Name" not in req_json or \
-        "User_Type" not in req_json or \
-        "Sex" not in req_json or \
-        "Phone_Number" not in req_json or \
-        "Password" not in req_json :
+    if "first_name" not in req_json or \
+        "user_type" not in req_json or \
+        "sex" not in req_json or \
+        "phone_number" not in req_json or \
+        "password" not in req_json :
         ret["status"] = "error"
         ret["message"] = "Invalid request: Missing Mandatory Fields"
         return ret, 400
     
     # Check for valid User_Type
-    if req_json["User_Type"] not in Valid_User_Types:
+    if req_json["user_type"] not in Valid_User_Types:
         ret["status"] = "error"
-        ret["message"] = f"Invalid User Type: {req_json['User_Type']}"
+        ret["message"] = f"Invalid User Type: {req_json['user_type']}"
         return ret, 400
     
-    User_Type = req_json["User_Type"]
+    User_Type = req_json["user_type"]
     #Check for valid date of birth
     try:
-        DOB = datetime.strptime(req_json["Date_Of_Birth"],'%Y-%m-%d').date()
+        DOB = datetime.strptime(req_json["date_of_birth"],'%Y-%m-%d').date()
         if DOB > date.today():
             raise Exception("DOB in future")
     except:
@@ -208,7 +208,7 @@ def User_Create(auth_args):
 
     # Generate an ID: [P/A/D]-YYYY-MM-DD-[SNO]
     # Query for all User IDs for partial match
-    query_1 = text("SELECT User_ID FROM Users WHERE User_ID LIKE :partial_match ORDER BY id DESC")
+    query_1 = text("SELECT user_id FROM users WHERE user_id LIKE :partial_match ORDER BY id DESC")
     partial_match = f'{User_Type[0]}-{date.today().strftime("%Y-%m-%d")}-'
     serial_no = 1
     with app.app_context():
@@ -219,30 +219,30 @@ def User_Create(auth_args):
     User_ID = f"{partial_match}{serial_no:03d}"
 
     # Now insert the user
-    query_2 = text ('INSERT INTO Users '\
-        '(User_ID,Email_ID, Sex,Date_Of_Birth, Address, First_Name, Last_Name, ' \
-        'User_Type, Phone_Number, User_Profile, Password) ' \
+    query_2 = text ('INSERT INTO users '\
+        '(user_id,email_id, sex,date_of_birth, address, first_name, last_name, ' \
+        'user_type, phone_number, user_profile, password) ' \
         'VALUES (:User_ID,:Email_ID, :Sex ,:Date_Of_Birth,' \
         ':Address, :First_Name, :Last_Name, :User_Type,' \
         ':Phone_Number, :User_Profile, :Password)')
     query_2_dict = {
         "User_ID": User_ID,
-        "Email_ID": req_json.get("Email_ID", ""),
-        "Sex": req_json["Sex"],
-        "Date_Of_Birth": req_json.get("Date_Of_Birth",""),
-        "Address": req_json.get("Address",""),
-        "First_Name": req_json["First_Name"],
-        "Last_Name": req_json.get("Last_Name",""),
+        "Email_ID": req_json.get("email_id", ""),
+        "Sex": req_json["sex"],
+        "Date_Of_Birth": req_json.get("date_of_birth",""),
+        "Address": req_json.get("address",""),
+        "First_Name": req_json["first_name"],
+        "Last_Name": req_json.get("last_name",""),
         "User_Type": User_Type,
-        "Phone_Number": req_json["Phone_Number"],
-        "User_Profile": json.dumps(req_json.get("User_Profile",{})),
-        "Password": hash_password(req_json["Password"])
+        "Phone_Number": req_json["phone_number"],
+        "User_Profile": json.dumps(req_json.get("user_profile",{})),
+        "Password": hash_password(req_json["password"])
     }
     with app.app_context():
          result = db.session.execute(query_2,query_2_dict)
          db.session.commit()
         
-    ret["User_ID"] = User_ID
+    ret["user_id"] = User_ID
     return ret, 200
 
 @app.route("/hms/user/lookup", methods=["GET"])
@@ -259,16 +259,16 @@ def User_Lookup(auth_args):
     #Get parameters
     param_json = request.args.to_dict()
     match_clauses = []
-    for key in ['User_ID','Email_ID','Phone_Number','First_Name','Last_Name','User_Type']:
+    for key in ['user_id','email_id','phone_number','first_name','last_name','user_type']:
         if key in param_json:
             match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
-    query = "SELECT * FROM Users "
+    query = "SELECT * FROM users "
     if len(match_clauses):
         query += " WHERE "
         query += " AND ".join(match_clauses)
 
-    if 'User_Status' in param_json:
-        query += f" AND User_Status = '{param_json['User_Status']}' "
+    if 'user_status' in param_json:
+        query += f" AND user_status = '{param_json['user_status']}' "
         
     with app.app_context():
         result = db.session.execute(text(query))
@@ -281,8 +281,8 @@ def User_Lookup(auth_args):
         row_dict.pop('id')
         if auth_token['role'] == 'ADMIN' or \
             auth_token['role'] == 'DOCTOR' and row_dict['User_ID'][0] == 'P' and \
-                 row_dict['User_Status'] == 'ACTIVE' or \
-            auth_token['user'] == row_dict['User_ID']:
+                 row_dict['user_status'] == 'ACTIVE' or \
+            auth_token['user'] == row_dict['user_id']:
             row_dict['user_profile'] = json.loads(row_dict['user_profile'])
             user_details.append(row_dict)
 
@@ -304,7 +304,7 @@ def User_Update(auth_args):
     req_json = request.get_json()
 
     #Checking for User_ID 
-    if 'User_ID' not in req_json:
+    if 'user_id' not in req_json:
         ret["status"] = "error" 
         ret["message"] = "User_ID not found"
         return ret, 400
@@ -317,7 +317,7 @@ def User_Update(auth_args):
             return ret, 403
     
     # Check for User ID
-    query_check = f"SELECT User_ID from Users WHERE User_ID = '{req_json['User_ID']}';"
+    query_check = f"SELECT user_id from users WHERE user_id = '{req_json['user_id']}';"
     with app.app_context():
         result = db.session.execute(text(query_check))
         rows = result.fetchall()
@@ -327,7 +327,7 @@ def User_Update(auth_args):
         ret["message"] = "User Not Found"
         return ret, 400
 
-    query = "UPDATE Users SET "
+    query = "UPDATE users SET "
     updates = []
 
     for column_name in req_json:
@@ -336,12 +336,12 @@ def User_Update(auth_args):
             ret["message"] = "Invalid Attribute"
             return ret, 400
         
-        if column_name == 'User_ID':
+        if column_name == 'user_id':
             continue 
-        if column_name == 'Date_Of_Birth':
+        if column_name == 'date_of_birth':
             #Check for valid date of birth
             try:
-                DOB = datetime.strptime(req_json["Date_Of_Birth"],'%Y-%m-%d').date()
+                DOB = datetime.strptime(req_json["date_of_birth"],'%Y-%m-%d').date()
                 
                 if DOB > date.today():
                     raise Exception("DOB in future")
@@ -351,9 +351,9 @@ def User_Update(auth_args):
                 return ret, 400
             
         column_data = (req_json[column_name] \
-                if column_name != "Password" else \
+                if column_name != "password" else \
                     hash_password(req_json[column_name])) if \
-            column_name != "User_Profile" else \
+            column_name != "user_profile" else \
             json.dumps(req_json[column_name])
         updates.append(f"{column_name} = '{column_data}'")
         
@@ -364,7 +364,7 @@ def User_Update(auth_args):
         return ret, 400
 
     query += ",".join(updates)
-    query += f" WHERE User_ID = '{req_json['User_ID']}';"
+    query += f" WHERE user_id = '{req_json['user_id']}';"
 
     with app.app_context():
         result = db.session.execute(text(query))
@@ -375,7 +375,7 @@ def User_Update(auth_args):
         ret["message"] = "Failed to update"
         return ret, 500
     
-    ret["User_ID"] = req_json["User_ID"]
+    ret["user_id"] = req_json["user_id"]
     ret["query"] = query
    
     return ret, 200
@@ -393,12 +393,12 @@ def User_Delete(auth_args):
 
     #Get parameters
     param_json = request.args.to_dict()
-    if 'User_ID' not in param_json:
+    if 'user_id' not in param_json:
         ret["status"] = "error"
         ret["message"] = "User ID Not Provided"
         return ret, 400
     
-    User_ID = param_json["User_ID"]
+    User_ID = param_json["user_id"]
    
    #Enforce Role
     if auth_token['role'] != 'ADMIN':
@@ -412,7 +412,7 @@ def User_Delete(auth_args):
         return ret, 400 
     
     #Verifying User_ID existence
-    query_1 = f"SELECT User_ID FROM Users WHERE User_ID = '{User_ID}';"
+    query_1 = f"SELECT user_id FROM users WHERE user_id = '{User_ID}';"
     with app.app_context():
         result = db.session.execute(text(query_1))
         rows = result.fetchall() 
@@ -423,11 +423,11 @@ def User_Delete(auth_args):
         return ret, 400
     
     #Query for deletion
-    query =  f"UPDATE Users SET User_Status = 'INACTIVE' WHERE User_ID = '{User_ID}';"
+    query =  f"UPDATE users SET user_status = 'INACTIVE' WHERE user_id = '{User_ID}';"
     with app.app_context():
         result = db.session.execute(text(query))
         db.session.commit()
-    ret["User_ID"] = User_ID 
+    ret["user_id"] = User_ID 
     return ret, 200
     
 @app.route("/hms/departments/create", methods=["POST"])
@@ -451,7 +451,7 @@ def Dept_Create(auth_args):
     req_json = request.get_json()
 
     #Check for Mandatory Fields
-    if "Speciality" not in req_json:
+    if "speciality" not in req_json:
         ret["status"] = "error"
         ret["message"] = "Invalid request: Missing Mandatory Fields"
         return ret, 400 
@@ -460,7 +460,7 @@ def Dept_Create(auth_args):
     #Generate Dept_ID : Dept-001 
     partial_match = 'Dept-'
     serial_no = 1 
-    query = text("SELECT Dept_ID FROM Departments WHERE Dept_ID LIKE :partial_match ORDER BY id DESC")
+    query = text("SELECT dept_id FROM departments WHERE dept_id LIKE :partial_match ORDER BY id DESC")
     with app.app_context():
         result = db.session.execute(query,{"partial_match": partial_match+'%' })
         matches = result.fetchone()
@@ -469,11 +469,11 @@ def Dept_Create(auth_args):
     Dept_ID = f"{partial_match}{serial_no:03d}"
 
     # Updating Database 
-    query_1 = text("INSERT INTO Departments  " \
-    "(Dept_ID, Speciality, Details) VALUES "\
+    query_1 = text("INSERT INTO departments  " \
+    "(dept_ID, speciality, details) VALUES "\
     "(:Dept_ID, :Speciality, :Details)")
 
-    query_1_dict = {"Dept_ID": Dept_ID, "Speciality": req_json["Speciality"], "Details": req_json.get("Details","")}
+    query_1_dict = {"Dept_ID": Dept_ID, "Speciality": req_json["speciality"], "Details": req_json.get("details","")}
     
     with app.app_context():
         try:
@@ -481,10 +481,10 @@ def Dept_Create(auth_args):
             db.session.commit()
         except exc.IntegrityError:
             ret["status"] = "error"
-            ret["message"] = f"Department {req_json['Speciality']} already exists."
+            ret["message"] = f"Department {req_json['speciality']} already exists."
             return ret, 400
         
-    ret["Dept_ID"] = Dept_ID
+    ret["dept_id"] = Dept_ID
     return ret, 200
 
 @app.route("/hms/departments/lookup", methods=["GET"])
@@ -509,11 +509,11 @@ def Dept_Lookup(auth_args):
 
     #Query Database
     match_clauses = []
-    for key in ["Dept_ID","Speciality"]:
+    for key in ["dept_id","speciality"]:
         if key in param_json:
             match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
     
-    query = "SELECT * FROM Departments"
+    query = "SELECT * FROM departments"
     if len(match_clauses):
         query += " WHERE "
         query += " AND ".join(match_clauses)
@@ -546,12 +546,12 @@ def Dept_Delete(auth_args):
 
     #Get parameters
     param_json = request.args.to_dict()
-    if 'Dept_ID' not in param_json:
+    if 'dept_id' not in param_json:
         ret["status"] = "error"
-        ret["message"] = "User ID Not Provided"
+        ret["message"] = "Department ID Not Provided"
         return ret, 400
     
-    Dept_ID = param_json["Dept_ID"]
+    Dept_ID = param_json["dept_id"]
 
     #Enforcing Roles
     if auth_token['role'] != 'ADMIN':
@@ -560,7 +560,7 @@ def Dept_Delete(auth_args):
         return ret, 403 
 
     #Ensuring Department Exists
-    query_1 = f"SELECT Dept_ID FROM Departments WHERE Dept_ID = '{Dept_ID}';"
+    query_1 = f"SELECT dept_id FROM departments WHERE dept_id = '{Dept_ID}';"
     with app.app_context():
         result = db.session.execute(text(query_1))
         rows = result.fetchall()
@@ -570,11 +570,11 @@ def Dept_Delete(auth_args):
         ret["message"] = "Department Not Found"
         return ret, 400
 
-    query_2 = f"DELETE FROM Departments WHERE Dept_ID = '{Dept_ID}';"
+    query_2 = f"DELETE FROM departments WHERE dept_id = '{Dept_ID}';"
     with app.app_context():
         result = db.session.execute(text(query_2))
         db.session.commit()
-    ret["Dept_ID"] = Dept_ID 
+    ret["dept_id"] = Dept_ID 
     return ret, 200
 
 @app.route("/hms/slots/create", methods=["POST"])
@@ -591,25 +591,25 @@ def Slots_Create(auth_args):
     req_json = request.get_json()  
 
     #Checking for mandatory fields
-    if "Doctor_ID" not in req_json or \
-        "Days_Available" not in req_json or \
-        "Start_Date" not in req_json or \
-        "End_Date" not in req_json:
+    if "doctor_id" not in req_json or \
+        "days_available" not in req_json or \
+        "start_date" not in req_json or \
+        "end_date" not in req_json:
         ret["status"] = "error"
         ret["message"] = "Invalid request: Missing Mandatory Fields"
         return ret, 400 
     
     #Enforcing Role 
     if auth_token['role'] == 'PATIENT' or \
-        (auth_token['role'] == 'DOCTOR' and auth_token['user'] != req_json["Doctor_ID"]):
+        (auth_token['role'] == 'DOCTOR' and auth_token['user'] != req_json["doctor_id"]):
         ret["status"] = "error"
         ret["message"] = "Unauthorized"
         return ret, 400
     
     #Check Valid User 
-    query_1 = "SELECT User_ID FROM Users " \
-        f"WHERE User_ID = '{req_json['Doctor_ID']}' AND " \
-        "User_Status = 'ACTIVE'"
+    query_1 = "SELECT user_id FROM users " \
+        f"WHERE user_id = '{req_json['doctor_id']}' AND " \
+        "user_status = 'ACTIVE'"
     with app.app_context():
         result = db.session.execute(text(query_1))
         rows = result.fetchone()
@@ -621,8 +621,8 @@ def Slots_Create(auth_args):
     
     #Check valid date format
     try:
-        Start_Date = datetime.strptime(req_json["Start_Date"],'%Y-%m-%d').date()
-        End_Date = datetime.strptime(req_json["End_Date"],'%Y-%m-%d').date()
+        Start_Date = datetime.strptime(req_json["start_date"],'%Y-%m-%d').date()
+        End_Date = datetime.strptime(req_json["end_date"],'%Y-%m-%d').date()
         if End_Date < Start_Date:
              ret["status"] = "error"
              ret["message"] = "Invalid Date Range"
@@ -633,16 +633,16 @@ def Slots_Create(auth_args):
         return ret, 400
     
     #Define valid day of week 
-    for day in req_json["Days_Available"]:
+    for day in req_json["days_available"]:
         if day.lower() not in Valid_Days_Of_Week:
             ret["status"] = "error"
             ret["message"] = "Invalid Day Of Week"
             return ret, 400
 
    #Check existence of Doctor_ID
-    query_2 = text("SELECT Doctor_ID,Start_Date,End_Date FROM Slots WHERE Doctor_ID = :Doctor_ID")
+    query_2 = text("SELECT doctor_id,start_date,end_date FROM slots WHERE doctor_id = :Doctor_ID")
     with app.app_context():
-        result = db.session.execute(query_2,{"Doctor_ID": req_json["Doctor_ID"]})
+        result = db.session.execute(query_2,{"Doctor_ID": req_json["doctor_id"]})
         rows = result.fetchone()
    
    #If Doctor_ID exists, update row instead
@@ -650,10 +650,10 @@ def Slots_Create(auth_args):
         Old_Start_Date = rows[1]
         Old_End_Date = rows[2]
         
-        open_app_query = "SELECT Appointment_ID FROM Appointments  " \
-            "WHERE Appointment_Status = 'SCHEDULED' AND " \
-            f"Doctor_ID = '{req_json['Doctor_ID']}' AND " \
-            f"(Appointment_Date BETWEEN '{Old_Start_Date}' AND '{Old_End_Date}');"
+        open_app_query = "SELECT appointment_id FROM appointments  " \
+            "WHERE appointment_status = 'SCHEDULED' AND " \
+            f"doctor_id = '{req_json['doctor_id']}' AND " \
+            f"(appointment_date BETWEEN '{Old_Start_Date}' AND '{Old_End_Date}');"
         
         with app.app_context():
             open_appointments = db.session.execute(text(open_app_query))
@@ -665,7 +665,7 @@ def Slots_Create(auth_args):
             return ret, 400 
 
         # There are no existing appointments. Delete the old Slot
-        del_old_slot_q = text(f"DELETE from Slots WHERE Doctor_ID = '{req_json['Doctor_ID']}'")
+        del_old_slot_q = text(f"DELETE from slots WHERE doctor_id = '{req_json['doctor_id']}'")
         with app.app_context():
             del_old_slots = db.session.execute(del_old_slot_q)
             db.session.commit()
@@ -678,20 +678,20 @@ def Slots_Create(auth_args):
        
 
     #Creating new slot      
-    query_3 = text("INSERT INTO Slots  " \
-    "(Doctor_ID, Days_Available, Start_Date, End_Date) VALUES "\
+    query_3 = text("INSERT INTO slots  " \
+    "(doctor_id, days_available, start_date, end_date) VALUES "\
     "(:Doctor_ID, :Days_Available, :Start_Date, :End_Date)")
 
     query_3_dict = {
-        "Doctor_ID": req_json["Doctor_ID"], "Days_Available": json.dumps(req_json["Days_Available"]), 
-        "Start_Date": req_json["Start_Date"], "End_Date": req_json["End_Date"]
+        "Doctor_ID": req_json["doctor_id"], "Days_Available": json.dumps(req_json["days_available"]), 
+        "Start_Date": req_json["start_date"], "End_Date": req_json["end_date"]
         }
     
     with app.app_context():
         result = db.session.execute(query_3,query_3_dict)
         db.session.commit()
 
-    ret["Doctor_ID"] = req_json['Doctor_ID']
+    ret["doctor_id"] = req_json['doctor_id']
     return ret, 200
 
 @app.route("/hms/slots/lookup", methods=["GET"])
@@ -706,11 +706,11 @@ def Slots_Lookup(auth_args):
    
     #Get parameters
     param_json = request.args.to_dict()
-    Doctor_ID = param_json["Doctor_ID"]
+    Doctor_ID = param_json["doctor_id"]
 
     #Check Doctor_Status 
-    doctor_status_q = text("SELECT User_Status FROM Users " \
-                          f"WHERE User_ID = '{Doctor_ID}' AND User_Status = 'ACTIVE'")
+    doctor_status_q = text("SELECT user_status FROM users " \
+                          f"WHERE user_id = '{Doctor_ID}' AND user_status = 'ACTIVE'")
     with app.app_context():
         result = db.session.execute(doctor_status_q)
         doctor_status = result.fetchone()
@@ -721,7 +721,7 @@ def Slots_Lookup(auth_args):
         return ret, 400
      
 
-    doc_lookup_q = text(f"SELECT Start_Date, End_Date, Days_Available FROM Slots WHERE Doctor_ID = '{Doctor_ID}'")
+    doc_lookup_q = text(f"SELECT start_date, end_date, days_available FROM slots WHERE doctor_id = '{Doctor_ID}'")
     with app.app_context():
         result = db.session.execute(doc_lookup_q)
         slots = result.fetchone() 
@@ -731,9 +731,9 @@ def Slots_Lookup(auth_args):
         ret["message"] = "Doctor Currently Unavailable"
         return ret, 400
     ret["Slot"] = {
-        "Start_Date": slots[0],
-        "End_Date": slots[1],
-        "Days_Available": json.loads(slots[2])
+        "start_date": slots[0],
+        "end_date": slots[1],
+        "days_available": json.loads(slots[2])
     }
     
 
@@ -760,21 +760,21 @@ def Assign_Doctor(auth_args):
         return ret, 403 
 
     #Check Mandatory Fields
-    if "Doctor_ID" not in req_json or \
-        "Dept_ID" not in req_json or \
-        "Dept_Position" not in req_json :
+    if "doctor_id" not in req_json or \
+        "dept_id" not in req_json or \
+        "dept_position" not in req_json :
         ret["status"] = "error"
         ret["message"] = "Invalid request: Missing Mandatory Fields"
         return ret, 400
     
-    Doctor_ID = req_json["Doctor_ID"]
-    Dept_ID = req_json["Dept_ID"]
-    Dept_Position = req_json["Dept_Position"]
+    Doctor_ID = req_json["doctor_id"]
+    Dept_ID = req_json["dept_id"]
+    Dept_Position = req_json["dept_position"]
 
     #Check existence of user and whether the user is a doctor and active
-    user_search= "SELECT User_ID FROM Users " \
-        f"WHERE User_ID = '{req_json['Doctor_ID']}' AND " \
-        "User_Status = 'ACTIVE' and User_Type = 'DOCTOR'"
+    user_search= "SELECT user_id FROM users " \
+        f"WHERE user_id = '{req_json['doctor_id']}' AND " \
+        "user_status = 'ACTIVE' and user_type = 'DOCTOR'"
     with app.app_context():
         result = db.session.execute(text(user_search))
         rows = result.fetchone()
@@ -785,8 +785,8 @@ def Assign_Doctor(auth_args):
         return ret, 400
     
     #Check existence of department
-    dept_search= "SELECT Dept_ID FROM Departments " \
-        f"WHERE Dept_ID = '{Dept_ID}';"
+    dept_search= "SELECT dept_id FROM departments " \
+        f"WHERE dept_id = '{Dept_ID}';"
     with app.app_context():
         result = db.session.execute(text(dept_search))
         rows = result.fetchone()
@@ -798,8 +798,8 @@ def Assign_Doctor(auth_args):
 
     #Only one HOD in department
     if Dept_Position == 'HOD':
-        hod_search = text("SELECT Dept_Position FROM Doctor_Dept "\
-                        f"WHERE Dept_ID = '{Dept_ID}' AND Dept_Position = 'HOD';")
+        hod_search = text("SELECT dept_position FROM doctor_dept "\
+                        f"WHERE dept_id = '{Dept_ID}' AND dept_position = 'HOD';")
         with app.app_context():
             result = db.session.execute(hod_search)
             rows = result.fetchall()
@@ -810,8 +810,8 @@ def Assign_Doctor(auth_args):
              return ret, 400
         
     #Check if doctor already assigned
-    doctor_search = text("SELECT Doctor_ID, Dept_ID, Dept_Position from Doctor_Dept "\
-                         f"WHERE Doctor_ID = '{Doctor_ID}' AND Dept_ID = '{Dept_ID}'")
+    doctor_search = text("SELECT doctor_id, dept_id, dept_position from doctor_dept "\
+                         f"WHERE doctor_id = '{Doctor_ID}' AND dept_id = '{Dept_ID}'")
     with app.app_context():
         result = db.session.execute(doctor_search)
         rows = result.fetchone()
@@ -823,8 +823,8 @@ def Assign_Doctor(auth_args):
             ret["message"] = "Doctor already assigned to department"
             return ret, 400
         # Delete the Doctor-Dept entry and insert new one
-        doctor_del = text("DELETE FROM Doctor_Dept WHERE " \
-                        f"Doctor_ID = '{Doctor_ID}' and Dept_ID = '{Dept_ID}';")
+        doctor_del = text("DELETE FROM doctor_dept WHERE " \
+                        f"doctor_id = '{Doctor_ID}' and dept_id = '{Dept_ID}';")
         with app.app_context():
             result = db.session.execute(doctor_del)
             db.session.commit()
@@ -833,14 +833,14 @@ def Assign_Doctor(auth_args):
             ret["message"] = "DB Update error on delete"
             return ret, 500
         
-    doctor_assign = text("INSERT INTO Doctor_Dept(Doctor_ID,Dept_ID, Dept_Position) VALUES "\
+    doctor_assign = text("INSERT INTO doctor_dept(doctor_id,dept_id, dept_position) VALUES "\
                          f"('{Doctor_ID}', '{Dept_ID}', '{Dept_Position}');" )
     with app.app_context():
             result = db.session.execute(doctor_assign)
             db.session.commit()
     
-    ret["Doctor_ID"] = Doctor_ID
-    ret["Dept_ID"] = Dept_ID 
+    ret["doctor_id"] = Doctor_ID
+    ret["dept_id"] = Dept_ID 
     return ret, 200
     
 @app.route("/hms/departments/unassign", methods=["DELETE"])
@@ -858,13 +858,13 @@ def Unassign_Doctor(auth_args):
     param_json = request.args.to_dict()
     
     #Check for mandatory fields₹
-    if "Doctor_ID" not in param_json or "Dept_ID" not in param_json:
+    if "doctor_id" not in param_json or "dept_id" not in param_json:
         ret["status"] = "error"
         ret["message"] = "missing mandatory fields"
         return ret, 400
 
-    Doctor_ID = param_json["Doctor_ID"]
-    Dept_ID = param_json["Dept_ID"]
+    Doctor_ID = param_json["doctor_id"]
+    Dept_ID = param_json["dept_id"]
     
     #Enforce Roles 
     if auth_token['role'] != 'ADMIN':
@@ -873,9 +873,9 @@ def Unassign_Doctor(auth_args):
         return ret, 403 
     
     #Check existence of user and whether the user is a doctor 
-    user_search= "SELECT User_ID FROM Users " \
-        f"WHERE User_ID = '{param_json['Doctor_ID']}' AND " \
-        "User_Type = 'DOCTOR'"
+    user_search= "SELECT user_id FROM users " \
+        f"WHERE user_id = '{param_json['doctor_id']}' AND " \
+        "user_type = 'DOCTOR'"
     with app.app_context():
         result = db.session.execute(text(user_search))
         rows = result.fetchone()
@@ -886,8 +886,8 @@ def Unassign_Doctor(auth_args):
         return ret, 400
 
     #Check if doctor already assigned
-    doctor_search = text("SELECT Doctor_ID, Dept_ID, Dept_Position from Doctor_Dept "\
-                         f"WHERE Doctor_ID = '{Doctor_ID}' AND Dept_ID = '{Dept_ID}'")
+    doctor_search = text("SELECT doctor_id, dept_id, dept_position from doctor_dept "\
+                         f"WHERE doctor_id = '{Doctor_ID}' AND dept_id = '{Dept_ID}'")
     with app.app_context():
         result = db.session.execute(doctor_search)
         rows = result.fetchone()
@@ -898,8 +898,8 @@ def Unassign_Doctor(auth_args):
         return ret, 400
     
     #Unassign Doctor Query
-    doctor_del = text("DELETE FROM Doctor_Dept WHERE " \
-                        f"Doctor_ID = '{Doctor_ID}' and Dept_ID = '{Dept_ID}';")
+    doctor_del = text("DELETE FROM doctor_dept WHERE " \
+                        f"doctor_id = '{Doctor_ID}' and dept_id = '{Dept_ID}';")
     with app.app_context():
             result = db.session.execute(doctor_del)
             db.session.commit()
@@ -908,7 +908,7 @@ def Unassign_Doctor(auth_args):
             ret["message"] = "DB Update error on delete"
             return ret, 500
     
-    ret["Doctor_ID"] = Doctor_ID 
+    ret["doctor_id"] = Doctor_ID 
     return ret, 200 
 
 @app.route("/hms/departments/doctor-lookup", methods=["GET"])
@@ -926,11 +926,11 @@ def Doctor_Lookup(auth_args):
     
     #Generate lookup query
     match_clauses = []
-    for key in ['User_ID','Specialities','First_Name','Last_Name']:
+    for key in ['user_id','specialities','first_name','last_name']:
         if key in param_json:
             match_clauses.append(f"LOWER({key}) LIKE LOWER('%{param_json[key]}%')")
     
-    query = "SELECT * FROM Doctor_Lookup "
+    query = "SELECT * FROM doctor_lookup "
 
     if len(match_clauses):
         query += " WHERE "
@@ -962,19 +962,19 @@ def Appointment_Create(auth_args):
     req_json = request.get_json() 
     
     # Check for Mandatory Fields
-    if "Patient_ID" not in req_json or \
-        "Doctor_ID" not in req_json or \
-        "Appointment_Date" not in req_json or \
-        "Appointment_Time" not in req_json :
+    if "patient_id" not in req_json or \
+        "doctor_id" not in req_json or \
+        "appointment_date" not in req_json or \
+        "appointment_time" not in req_json :
         ret["status"] = "error"
         ret["message"] = "Invalid request: Missing Mandatory Fields"
         return ret, 400
     
     auth_token = auth_args['auth_token']
-    Doctor_ID = req_json["Doctor_ID"]
-    Patient_ID = req_json["Patient_ID"]
-    Appointment_Date = req_json["Appointment_Date"]
-    Appointment_Time = req_json["Appointment_Time"]
+    Doctor_ID = req_json["doctor_id"]
+    Patient_ID = req_json["patient_id"]
+    Appointment_Date = req_json["appointment_date"]
+    Appointment_Time = req_json["appointment_time"]
 
     
     #Check Role - ADMIN:Everyone, PATIENT: Himself, DOCTOR: None 
@@ -985,10 +985,10 @@ def Appointment_Create(auth_args):
         return ret, 403
 
     #Check Doctor Status and Patient Status
-    doctor_search = text("SELECT User_Status from Users " \
-            f"WHERE User_ID = '{Doctor_ID}' AND User_Status = 'ACTIVE';")
-    patient_search = text("SELECT User_Status from Users " \
-            f"WHERE User_ID = '{Patient_ID}' AND User_Status = 'ACTIVE';")
+    doctor_search = text("SELECT user_status from users " \
+            f"WHERE user_id = '{Doctor_ID}' AND user_status = 'ACTIVE';")
+    patient_search = text("SELECT user_status from users " \
+            f"WHERE user_id = '{Patient_ID}' AND user_status = 'ACTIVE';")
     
     with app.app_context():
         doc_result = db.session.execute(doctor_search)
@@ -1029,9 +1029,9 @@ def Appointment_Create(auth_args):
         return ret, 400
     
     #Lookup Slot to see if Appt_Date is in date range
-    slot_lookup = text("SELECT Days_Available FROM Slots "\
-        f"WHERE Doctor_ID = '{Doctor_ID}' AND "\
-        f"('{Appointment_Date}' BETWEEN Start_Date AND End_Date) ")
+    slot_lookup = text("SELECT days_available FROM slots "\
+        f"WHERE doctor_id = '{Doctor_ID}' AND "\
+        f"('{Appointment_Date}' BETWEEN start_date AND end_date) ")
     with app.app_context():
         slot_search = db.session.execute(slot_lookup)
         details = slot_search.fetchone()
@@ -1050,10 +1050,10 @@ def Appointment_Create(auth_args):
         return ret, 400
 
     #Check for existing appoinments in appointment table for Doctor
-    appt_search_q = text("SELECT Appointment_ID FROM Appointments " \
-        f"WHERE Appointment_Date = '{Appointment_Date}' AND " \
-        f"Appointment_Time = '{Appointment_Time}' AND Doctor_ID = '{Doctor_ID}' " \
-        "AND Appointment_Status = 'SCHEDULED'")
+    appt_search_q = text("SELECT appointment_id FROM appointments " \
+        f"WHERE appointment_date = '{Appointment_Date}' AND " \
+        f"appointment_time = '{Appointment_Time}' AND doctor_id = '{Doctor_ID}' " \
+        "AND appointment_status = 'SCHEDULED'")
     
     with app.app_context():
         appt_search = db.session.execute(appt_search_q)
@@ -1065,10 +1065,10 @@ def Appointment_Create(auth_args):
         return ret, 400
     
     #Check for existing appoinments in appointment table for Patient
-    appt_search_q = text("SELECT Appointment_ID FROM Appointments " \
-        f"WHERE Appointment_Date = '{Appointment_Date}' AND " \
-        f"Appointment_Time = '{Appointment_Time}' AND Patient_ID = '{Patient_ID}' " \
-        "AND Appointment_Status = 'SCHEDULED'")
+    appt_search_q = text("SELECT appointment_id FROM appointments " \
+        f"WHERE appointment_date = '{Appointment_Date}' AND " \
+        f"appointment_time = '{Appointment_Time}' AND patient_id = '{Patient_ID}' " \
+        "AND appointment_status = 'SCHEDULED'")
     
     with app.app_context():
         appt_search = db.session.execute(appt_search_q)
@@ -1081,7 +1081,7 @@ def Appointment_Create(auth_args):
     
     #Generate Appointment_ID 
     Appointment_ID = str(uuid.uuid4())
-    appt_create_q = text("INSERT INTO Appointments VALUES " \
+    appt_create_q = text("INSERT INTO appointments VALUES " \
         f"('{Appointment_ID}', '{Patient_ID}', " \
         f"'{Doctor_ID}', '{Appointment_Date}', '{Appointment_Time}', 'SCHEDULED')")
 
@@ -1094,7 +1094,7 @@ def Appointment_Create(auth_args):
         ret["message"] = "Unable to create appointment."
         return ret, 500
     
-    ret["Appointment_ID"] = Appointment_ID 
+    ret["appointment_id"] = Appointment_ID 
     return ret, 200
 
 @app.route("/hms/appointments/lookup", methods=["GET"])
@@ -1111,11 +1111,11 @@ def Appointment_Lookup(auth_args):
     #Get parameters
     param_json = request.args.to_dict()
     
-    if 'Appointment_Status' not in param_json:
-        param_json['Appointment_Status'] = 'SCHEDULED'
+    if 'appointment_status' not in param_json:
+        param_json['appointment_status'] = 'SCHEDULED'
         
-    elif param_json['Appointment_Status'] == 'ALL':
-        param_json.pop('Appointment_Status')
+    elif param_json['appointment_status'] == 'ALL':
+        param_json.pop('appointment_status')
     
 
     User_ID = auth_token['user']
@@ -1123,13 +1123,13 @@ def Appointment_Lookup(auth_args):
 
     match_clauses = []
 
-    for key in ['Appointment_ID','Patient_ID','Doctor_ID','Appointment_Date','Appointment_Status']:
+    for key in ['appointment_id','patient_id','doctor_id','appointment_date','appointment_status']:
         if key in param_json:
             # Enforce date format
             try:
-                if key == 'Appointment_Date':
+                if key == 'appointment_date':
                     _ = datetime.strptime(param_json[key],'%Y-%m-%d').date()
-                if key == 'Appointment_Status' and \
+                if key == 'appointment_status' and \
                     param_json[key] not in Valid_Appt_Status:
                     raise Exception("Invalid Appointment Status")
             except:
@@ -1139,25 +1139,25 @@ def Appointment_Lookup(auth_args):
             
             match_clauses.append(f"{key} = '{param_json[key]}'")
     
-    if User_Role == 'PATIENT' and 'Patient_ID' not in param_json:
-        match_clauses.append(f"Patient_ID = '{User_ID}'")
-    elif User_Role == 'DOCTOR' and 'Doctor_ID' not in param_json:
-        match_clauses.append(f"Doctor_ID = '{User_ID}'")
+    if User_Role == 'PATIENT' and 'patient_id' not in param_json:
+        match_clauses.append(f"patient_id = '{User_ID}'")
+    elif User_Role == 'DOCTOR' and 'doctor_id' not in param_json:
+        match_clauses.append(f"doctor_id = '{User_ID}'")
     else:
-        if "Patient_ID" not in param_json and \
-            "Doctor_ID" not in param_json and \
-            "Appointment_Date" not in param_json and \
-            "Appointment_ID" not in param_json and \
-            "Appointment_Status" not in param_json:
+        if "patient_id" not in param_json and \
+            "doctor_id" not in param_json and \
+            "appointment_date" not in param_json and \
+            "appointment_id" not in param_json and \
+            "appointment_status" not in param_json:
             ret["status"] = "error"
             ret["message"] = "ADMIN must use one of the filters"
             return ret, 400
         
-    query = "SELECT * FROM Appointment_Lookup "
+    query = "SELECT * FROM appointment_lookup "
     if len(match_clauses):
         query += " WHERE "
         query += " AND ".join(match_clauses)
-        query += " ORDER BY Appointment_Date"
+        query += " ORDER BY appointment_date"
  
     with app.app_context():
         result = db.session.execute(text(query))
@@ -1189,34 +1189,34 @@ def Appointment_Update(auth_args):
     param_json = request.args.to_dict()
 
     #Check mandatory fields
-    if ("Appointment_ID" not in param_json and \
-            "Patient_ID" not in param_json and \
-            "Doctor_ID" not in param_json) or \
-        "Appointment_Status" not in param_json or \
-        param_json["Appointment_Status"] not in ['COMPLETED','CANCELLED']:
+    if ("appointment_id" not in param_json and \
+            "patient_id" not in param_json and \
+            "doctor_id" not in param_json) or \
+        "appointment_status" not in param_json or \
+        param_json["appointment_status"] not in ['COMPLETED','CANCELLED']:
         ret["status"] = "error"
         ret["message"] = "Invalid Parameters"
         return ret, 400
     
-    Appointment_ID = param_json.get("Appointment_ID", None)
-    Appointment_Status = param_json["Appointment_Status"]
+    Appointment_ID = param_json.get("appointment_id", None)
+    Appointment_Status = param_json["appointment_status"]
 
     # Build match clauses
     match_clauses = []
-    for key in ["Appointment_ID", "Patient_ID", "Doctor_ID"]:
+    for key in ["appointment_id", "patient_id", "doctor_id"]:
         if key in param_json:
             match_clauses.append(f"{key} = '{param_json[key]}'")
 
     #Check Appointment Exists 
-    appt_query = "SELECT Patient_ID, Doctor_ID FROM Appointments WHERE " \
-        "Appointment_Status = 'SCHEDULED' " 
+    appt_query = "SELECT patient_id, doctor_id FROM appointments WHERE " \
+        "appointment_status = 'SCHEDULED' " 
     
     if len(match_clauses):
         appt_query += ' AND '.join(match_clauses) \
             if len(match_clauses) > 1 else f" AND {match_clauses[0]}"
 
     if Appointment_Status == 'COMPLETED':
-        appt_query += " AND Appointment_Date <= CURRENT_DATE"
+        appt_query += " AND appointment_date <= CURRENT_DATE"
     
     with app.app_context():
         result = db.session.execute(text(appt_query))
@@ -1240,8 +1240,8 @@ def Appointment_Update(auth_args):
         return ret, 403
     
     #Update the database 
-    update_query = "UPDATE Appointments SET " \
-        f"Appointment_Status = '{Appointment_Status}' WHERE "
+    update_query = "UPDATE appointments SET " \
+        f"appointment_status = '{Appointment_Status}' WHERE "
     
     if len(match_clauses):
         update_query += ' AND '.join(match_clauses) \
@@ -1256,7 +1256,7 @@ def Appointment_Update(auth_args):
         ret["message"] = "Appointment Update Failed"
         return ret, 500
 
-    ret["Appointment_ID"] = Appointment_ID
+    ret["appointment_id"] = Appointment_ID
 
     return ret, 200
 
@@ -1275,8 +1275,8 @@ def Treatment_Upload(auth_args):
     req_json = request.get_json()
 
     # Check for Mandatory Fields
-    if "Appointment_ID" not in req_json or \
-        "Notes" not in req_json:
+    if "appointment_id" not in req_json or \
+        "notes" not in req_json:
         ret["status"] = "error"
         ret["message"] = "Invalid request: Missing Mandatory Fields"
         return ret, 400
@@ -1287,13 +1287,13 @@ def Treatment_Upload(auth_args):
         ret["message"] = "Unauthorized Action"
         return ret, 403
     
-    Appointment_ID = req_json["Appointment_ID"]
+    Appointment_ID = req_json["appointment_id"]
     
 
     #Check if Doctor_ID matches Doctor_ID in appointments AND If appointment exists
-    appt_search_q = text ("SELECT Doctor_ID FROM Appointments " \
-            f"WHERE Appointment_ID = '{Appointment_ID}' AND Appointment_Status = 'SCHEDULED'" \
-            "AND Appointment_Date <= CURRENT_DATE;")
+    appt_search_q = text ("SELECT doctor_id FROM appointments " \
+            f"WHERE appointment_id = '{Appointment_ID}' AND appointment_status = 'SCHEDULED'" \
+            "AND appointment_date <= CURRENT_DATE;")
     
     with app.app_context():
          appt_search = db.session.execute(appt_search_q)
@@ -1310,8 +1310,8 @@ def Treatment_Upload(auth_args):
         return ret, 403   
     
     #Check if treatment already exists
-    treatment_search_q = text ("SELECT Appointment_ID FROM Treatments " \
-            f"WHERE Appointment_ID = '{Appointment_ID}';")
+    treatment_search_q = text ("SELECT appointment_id FROM treatments " \
+            f"WHERE appointment_id = '{Appointment_ID}';")
     
     with app.app_context():
          treat_search = db.session.execute(treatment_search_q)
@@ -1324,24 +1324,24 @@ def Treatment_Upload(auth_args):
     
 
     #Create Treatment query
-    upload_query = text ('INSERT INTO Treatments '\
-        '(Appointment_ID, Diagnosis, ' \
-        'Prescription, Notes) ' \
+    upload_query = text ('INSERT INTO treatments '\
+        '(appointment_id, diagnosis, ' \
+        'prescription, notes) ' \
         'VALUES (:Appointment_ID, ' \
         ':Diagnosis, :Prescription, ' \
         ':Notes);')
     upload_query_dict = {
         "Appointment_ID": Appointment_ID,
-        "Diagnosis": req_json.get("Diagnosis",""),
-        "Prescription": req_json.get("Prescription",""),
-        "Notes": req_json.get("Notes")
+        "Diagnosis": req_json.get("diagnosis",""),
+        "Prescription": req_json.get("prescription",""),
+        "Notes": req_json.get("notes")
     }
 
     with app.app_context():
          db.session.execute(upload_query,upload_query_dict)
          db.session.commit()
         
-    ret["Appointment_ID"] = Appointment_ID
+    ret["appointment_id"] = Appointment_ID
     return ret, 200
 
 @app.route("/hms/treatments/update", methods=["POST"])
@@ -1359,19 +1359,19 @@ def Treatment_Update(auth_args):
     req_json = request.get_json()
    
     #Checking for Mandatory Fields
-    if 'Appointment_ID' not in req_json:
+    if 'appointment_id' not in req_json:
         ret["status"] = "error" 
         ret["message"] = "Appointment_ID not found"
         return ret, 400
     
-    if 'Diagnosis' not in req_json and \
-        'Prescription' not in req_json and \
-            'Notes' not in req_json:
+    if 'diagnosis' not in req_json and \
+        'prescription' not in req_json and \
+            'notes' not in req_json:
         ret["status"] = "error" 
         ret["message"] = "No field to update"
         return ret, 400
     
-    Appointment_ID = req_json["Appointment_ID"]
+    Appointment_ID = req_json["appointment_id"]
     
     #Enforce Role
     if auth_token['role'] != 'DOCTOR':
@@ -1380,9 +1380,9 @@ def Treatment_Update(auth_args):
         return ret, 403
     
     #Check if Doctor_ID matches Doctor_ID in appointments AND If appointment exists
-    appt_search_q = text ("SELECT Doctor_ID FROM Appointments " \
-            f"WHERE Appointment_ID = '{Appointment_ID}' AND Appointment_Status = 'SCHEDULED'" \
-            "AND Appointment_Date <= CURRENT_DATE;")
+    appt_search_q = text ("SELECT doctor_id FROM appointments " \
+            f"WHERE appointment_id = '{Appointment_ID}' AND appointment_status = 'SCHEDULED'" \
+            "AND appointment_date <= CURRENT_DATE;")
     
     with app.app_context():
          appt_search = db.session.execute(appt_search_q)
@@ -1399,8 +1399,8 @@ def Treatment_Update(auth_args):
         return ret, 403  
     
     #Check if treatment already exists
-    treatment_search_q = text ("SELECT Appointment_ID FROM Treatments " \
-            f"WHERE Appointment_ID = '{Appointment_ID}';")
+    treatment_search_q = text ("SELECT appointment_id FROM treatments " \
+            f"WHERE appointment_id = '{Appointment_ID}';")
     
     with app.app_context():
          treat_search = db.session.execute(treatment_search_q)
@@ -1415,14 +1415,14 @@ def Treatment_Update(auth_args):
 
     update_fields = []
     for field in req_json:
-        if field == 'Appointment_ID':
+        if field == 'appointment_id':
             continue
         update_data = req_json[field]
         update_fields.append(f"{field} = '{update_data}'")
     
-    update_q = "UPDATE Treatments SET "
+    update_q = "UPDATE treatments SET "
     update_q += ','.join(update_fields)
-    update_q += f" WHERE Appointment_ID = '{Appointment_ID}';"
+    update_q += f" WHERE appointment_id = '{Appointment_ID}';"
     
     with app.app_context():
         update = db.session.execute(text(update_q))
@@ -1433,7 +1433,7 @@ def Treatment_Update(auth_args):
         ret["message"] = "Failed to update"
         return ret, 500
     
-    ret["Appointment_ID"] = Appointment_ID
+    ret["appointment_id"] = Appointment_ID
     return ret, 200
 
 @app.route("/hms/treatments/lookup", methods=["GET"])
@@ -1452,30 +1452,30 @@ def Treatment_Lookup(auth_args):
     param_json = request.args.to_dict()
 
     match_clauses = []
-    for key in ['Appointment_ID','Doctor_ID','Patient_ID','Appointment_Date']:
+    for key in ['appointment_id','doctor_id','patient_id','appointment_date']:
         if key in param_json:
             match_clauses.append(f"{key} = '{param_json[key]}'")
 
     if User_Role == 'PATIENT':
-        match_clauses.append(f"Patient_ID = '{User_ID}'")
+        match_clauses.append(f"patient_id = '{User_ID}'")
     elif User_Role == 'DOCTOR' and "Patient_ID" not in param_json:
         ret["status"] = "error"
         ret["message"] = "Doctor should provide Patient ID"
         return ret, 400
     
-    if "Patient_ID" not in param_json and \
-        "Doctor_ID" not in param_json and \
-        "Appointment_ID" not in param_json and \
-        "Appointment_Date" not in param_json:
+    if "patient_id" not in param_json and \
+        "doctor_id" not in param_json and \
+        "appointment_id" not in param_json and \
+        "appointment_date" not in param_json:
         ret["status"] = "error"
         ret["message"] = "Must use one of the filters"
         return ret, 400
   
-    query = "SELECT * FROM Treatment_Lookup "
+    query = "SELECT * FROM treatment_lookup "
     if len(match_clauses):
         query += " WHERE "
         query += " AND ".join(match_clauses)
-        query += " ORDER BY Appointment_Date"
+        query += " ORDER BY appointment_date"
     
     print(query)
     with app.app_context():
@@ -1504,14 +1504,14 @@ def Available_Slots(auth_args):
     param_json = request.args.to_dict()
 
      # Check for Mandatory Fields
-    if "Doctor_ID" not in param_json or \
-        "Appointment_Date" not in param_json:
+    if "doctor_id" not in param_json or \
+        "appointment_date" not in param_json:
         ret["status"] = "error"
         ret["message"] = "Invalid request: Missing Mandatory Fields"
         return ret, 400
     
-    Doctor_ID = param_json["Doctor_ID"]
-    Appointment_Date = param_json["Appointment_Date"]
+    Doctor_ID = param_json["doctor_id"]
+    Appointment_Date = param_json["appointment_date"]
 
     #Creating Slots 9:00 - 12:00, 14:00-17:00
     Free_Slots = ["09:00", "09:15", "09:30", "09:45",
@@ -1531,15 +1531,15 @@ def Available_Slots(auth_args):
         return ret, 400
     
     #Lookup Slot to see if Appt_Date is in date range
-    slot_lookup = text("SELECT Days_Available FROM Slots "\
-        f"WHERE Doctor_ID = '{Doctor_ID}' AND "\
-        f"('{Appointment_Date}' BETWEEN Start_Date AND End_Date) ")
+    slot_lookup = text("SELECT days_available FROM slots "\
+        f"WHERE doctor_id = '{Doctor_ID}' AND "\
+        f"('{Appointment_Date}' BETWEEN start_date AND end_date) ")
     with app.app_context():
         slot_search = db.session.execute(slot_lookup)
         details = slot_search.fetchone()
     
     if not details:
-        ret["Free_Slots"] = []
+        ret["free_slots"] = []
         return ret, 200
    
     Days_Available = json.loads(details[0])
@@ -1550,16 +1550,16 @@ def Available_Slots(auth_args):
         return ret, 200
     
     #Find Appointments already booked on Date
-    appt_search_q = text("SELECT Appointment_Time FROM Appointments "\
-        f"WHERE Appointment_Date = '{Appointment_Date}' AND " \
-        f"Doctor_ID = '{Doctor_ID}' AND Appointment_Status = 'SCHEDULED'")
+    appt_search_q = text("SELECT appointment_time FROM appointments "\
+        f"WHERE appointment_date = '{Appointment_Date}' AND " \
+        f"doctor_id = '{Doctor_ID}' AND appointment_status = 'SCHEDULED'")
  
     with app.app_context():
         appt_search = db.session.execute(appt_search_q)
         booked_slots = appt_search.fetchall()
     
     if not booked_slots:
-        ret['Free_Slots'] = Free_Slots
+        ret['free_slots'] = Free_Slots
         return ret, 200
     
     for i in range(0,len(booked_slots)):
@@ -1567,7 +1567,7 @@ def Available_Slots(auth_args):
         if slot in Free_Slots:
             Free_Slots.remove(slot)
     
-    ret['Free_Slots'] = Free_Slots
+    ret['free_slots'] = Free_Slots
     return ret, 200
 
     

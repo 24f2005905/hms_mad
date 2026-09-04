@@ -1,6 +1,6 @@
 {
 	"template_dir": "../hms-frontend/templates",
-	"app_url": "http://localhost:9000",
+	"app_url": "http://localhost:8001",
 	"jwt_public": "../ext/keys/public_key.pem",
     "account_id": "UI-FE",
     "account_pwd": "admin"

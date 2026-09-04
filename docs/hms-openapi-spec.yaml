@@ -72,7 +72,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    User_ID: 
+                    user_id: 
                       type: string
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -90,27 +90,27 @@ paths:
       security:
         - JWT: []
       parameters:
-        - name: User_ID
+        - name: user_id
           in: query
           schema:
             type: string
-        - name: Email_ID
+        - name: email_id
           in: query
           schema:
             type: string
-        - name: Phone_Number
+        - name: phone_number
           in: query
           schema:
             type: string
-        - name: First_Name
+        - name: first_name
           in: query
           schema:
             type: string
-        - name: Last_name
+        - name: last_name
           in: query
           schema:
             type: string
-        - name: User_Type
+        - name: user_type
           in: query
           schema:
             type: string
@@ -163,7 +163,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    User_ID:
+                    user_id:
                       type: string
   
         "400":
@@ -188,12 +188,12 @@ paths:
             schema:
               type: object
               required:
-                - User_ID
-                - Password
+                - user_id
+                - password
               properties:
-                User_ID:
+                user_id:
                   type: string
-                Password:
+                password:
                   type: string
       responses:
         "200":
@@ -206,7 +206,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    User_ID:
+                    user_id:
                       type: string
   
         "400":
@@ -226,7 +226,7 @@ paths:
         - JWT: []
       parameters:
         - in: query
-          name: User_ID
+          name: user_id
           description: Delete by User_ID
           required: false
           schema:
@@ -242,7 +242,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    User_ID :
+                    user_id :
                       type: string 
              
         "400":
@@ -277,7 +277,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    Appointment_ID:
+                    appointment_id:
                       type: string
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -295,23 +295,23 @@ paths:
       security:
         - JWT: []
       parameters:
-        - name: Appointment_ID
+        - name: appointment_id
           in: query
           schema:
             type: string
-        - name: Patient_ID
+        - name: patient_id
           in: query
           schema:
             type: string
-        - name: Doctor_ID
+        - name: doctor_id
           in: query
           schema:
             type: string
-        - name: Appointment_Date
+        - name: appointment_date
           in: query
           schema:
             type: string
-        - name: Appointment_Status
+        - name: appointment_status
           in: query
           schema:
             type: string
@@ -347,11 +347,11 @@ paths:
       security:
         - JWT: []
       parameters:
-        - name: Appointment_ID
+        - name: appointment_id
           in: query
           schema:
             type: string
-        - name: Appointment_Status
+        - name: appointment_status
           in: query
           schema:
             type: string
@@ -367,7 +367,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    Appointment_ID:
+                    appointment_id:
                       type: string
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -401,7 +401,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    Appointment_ID:
+                    appointment_id:
                       type: string
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -419,19 +419,19 @@ paths:
       security:
         - JWT: []
       parameters:
-        - name: Patient_ID
+        - name: patient_id
           in: query
           schema:
             type: string
-        - name: Doctor_ID
+        - name: doctor_id
           in: query
           schema:
             type: string
-        - name: Appointment_ID
+        - name: appointment_id
           in: query
           schema:
             type: string
-        - name : Appointment_Date
+        - name : appointment_date
           in: query
           schema:
             type: string
@@ -483,7 +483,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    Appointment_ID:
+                    appointment_id:
                       type: string
                     
         "400":
@@ -518,7 +518,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    Dept_ID:
+                    dept_id:
                       type: string
                 
         "400":
@@ -537,11 +537,11 @@ paths:
       security:
         - JWT: []
       parameters:
-        - name: Dept_ID
+        - name: dept_id
           in: query
           schema:
             type: string
-        - name: Speciality
+        - name: speciality
           in: query
           schema:
             type: string
@@ -578,7 +578,7 @@ paths:
         - JWT: []
       parameters:
         - in: query
-          name: Dept_ID
+          name: dept_id
           description: Delete by Dept_ID
           required: false
           schema:
@@ -595,7 +595,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    Dept_ID:
+                    dept_id:
                       type: string 
             
         "400":
@@ -630,9 +630,9 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    Doctor_ID:
+                    doctor_id:
                       type: string
-                    Dept_ID:
+                    dept_id:
                       type: string
                       
               
@@ -652,15 +652,15 @@ paths:
       security:
         - JWT: []
       parameters:
-        - name: First_Name
+        - name: first_name
           in: query
           schema:
             type: string
-        - name: Last_Name
+        - name: last_name
           in: query
           schema:
             type: string
-        - name: Specialities
+        - name: specialities
           in: query
           schema:
             type: string
@@ -697,13 +697,13 @@ paths:
         - JWT: []
       parameters:
         - in: query
-          name: Dept_ID
+          name: dept_id
           description: Delete by Dept_ID
           required: false
           schema:
             type: string
         - in: query
-          name: Doctor_ID
+          name: doctor_id
           description: Delete by Doctor_ID
           required: false
           schema:
@@ -720,7 +720,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'  
-                    Doctor_ID:
+                    doctor_id:
                       type: string
                   
                
@@ -756,7 +756,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'
-                    Doctor_ID:
+                    doctor_id:
                       type: string
         "400":
           $ref: '#/components/responses/BadRequest'
@@ -774,7 +774,7 @@ paths:
       security:
         - JWT: []
       parameters:
-        - name: Doctor_ID
+        - name: doctor_id
           in: query
           schema:
             type: string
@@ -807,11 +807,11 @@ paths:
       security:
         - JWT: []
       parameters:
-        - name: Doctor_ID
+        - name: doctor_id
           in: query
           schema:
             type: string
-        - name: Appointment_Date 
+        - name: appointment_date 
           in: query
           schema:
             type: string
@@ -826,7 +826,7 @@ paths:
                 properties:
                     status: 
                       $ref: '#/components/schemas/API-Status'   
-                    Free_Slots:
+                    free_slots:
                       type: array
                       items: 
                         type: string
@@ -852,12 +852,12 @@ components:
     LoginCred:
       type: object
       required:
-        - User_ID 
-        - Password
+        - user_id
+        - password
       properties:
-        User_ID:
+        user_id:
           type: string
-        Password:
+        password:
           type: string
 
     API-Status:
@@ -869,63 +869,63 @@ components:
     UserCreate:
       type: object
       required:
-        - Sex
-        - First_Name
-        - User_Type
-        - Phone_Number
-        - Password
-        - Date_Of_Birth
-        - Address
+        - sex
+        - first_name
+        - user_type
+        - phone_number
+        - password
+        - date_of_birth
+        - address
       properties:
-        First_Name:
+        first_name:
           type: string
-        Email_ID:
+        email_id:
           type: string
-        Sex:
+        sex:
           type: string
           enum: [M, F, O]
-        Date_Of_Birth:
+        date_of_birth:
           type: string
           format: date
-        Address:
+        address:
           type: string
-        Last_Name:
+        last_name:
           type: string
-        User_Type:
+        user_type:
           type: string
           enum: [ADMIN, PATIENT, DOCTOR]
-        Phone_Number:
+        phone_number:
           type: string
-        User_Profile:
+        user_profile:
           type: object
-        Password:
+        password:
           type: string
         
     UserUpdate:
       type: object
-      required: [User_ID]
+      required: [user_id]
       properties:
-        User_ID:
+        user_id:
           type: string
-        Email_ID:
+        email_id:
           type: string
-        Sex:
+        sex:
           type: string
           enum: [M, F, O]
-        Date_Of_Birth:
+        date_of_birth:
           type: string
           format: date
-        Address:
+        address:
           type: string
-        First_Name:
+        first_name:
           type: string
-        Last_Name:
+        last_name:
           type: string
-        Phone_Number:
+        phone_number:
           type: string
-        User_Profile:
+        user_profile:
           type: object
-        Password: 
+        password: 
           type: string
     
     UserResponse:
@@ -957,54 +957,54 @@ components:
     AppointmentCreate:
       type: object
       required:
-        - Patient_ID
-        - Doctor_ID
-        - Appointment_Date
-        - Appointment_Time
+        - patient_id
+        - doctor_id
+        - appointment_date
+        - appointment_time
       properties:
-        Patient_ID:
+        patient_id:
           type: string
-        Doctor_ID:
+        doctor_id:
           type: string
-        Appointment_Date:
+        appointment_date:
           type: string
           description: "Date in DD/MM/YY or ISO format"
-        Appointment_Time:
+        appointment_time:
           type: string
           description: "Time in HH:MM"
-        Appointment_Status:
+        appointment_status:
           type: string
           enum: [SCHEDULED, COMPLETED, CANCELLED]
     
     AppointmentLookup:
       type: object
       required:
-        - Patient_ID
-        - Doctor_ID
-        - Appointment_Date
-        - Appointment_Time
+        - patient_id
+        - doctor_id
+        - appointment_date
+        - appointment_tme
       properties:
-        Patient_ID:
+        patient_id:
           type: string
-        patient_First_Name:
+        patient_first_name:
           type: string
-        patient_Last_Name:
+        patient_last_name:
           type: string
-        Doctor_ID:
+        doctor_id:
           type: string
-        doctor_First_Name:
+        doctor_first_name:
           type: string
-        doctor_Last_Name:
+        doctor_last_name:
           type: string
-        Specialities:
+        specialities:
           type: string
-        Appointment_Date:
+        appointment_date:
           type: string
           description: "Date in DD/MM/YY or ISO format"
-        Appointment_Time:
+        appointment_time:
           type: string
           description: "Time in HH:MM"
-        Appointment_Status:
+        appointment_status:
           type: string
           enum: [SCHEDULED, COMPLETED, CANCELLED]
 
@@ -1013,102 +1013,102 @@ components:
     TreatmentCreate:
       type: object
       required:
-        - Appointment_ID
-        - Notes
+        - appointment_id
+        - notes
       properties:
-        Appointment_ID:
+        appointment_id:
           type: string
-        Diagnosis:
+        diagnosis:
           type: string
-        Prescription:
+        prescription:
           type: string
-        Notes:
+        notes:
           type: string
 
     TreatmentUpdate:
       type: object
       required:
-        - Appointment_ID
+        - appointment_id
       properties:
-        Appointment_ID:
+        appointment_id:
           type: string
-        Diagnosis:
+        diagnosis:
           type: string
-        Prescription:
+        prescription:
           type: string
-        Notes:
+        notes:
           type: string
   
     TreatmentLookup:
       type: object
       required:
-        - Appointment_ID
-        - Notes
+        - appointment_id
+        - notes
       properties:
-        Appointment_ID:
+        appointment_id:
           type: string
-        Appointment_Date:
+        appointment_date:
           type: string
-        Diagnosis:
+        diagnosis:
           type: string
-        Prescription:
+        prescription:
           type: string
-        Notes:
+        notes:
           type: string
-        Doctor_ID:
+        doctor_id:
           type: string
-        doctor_First_Name:
+        doctor_first_name:
           type: string
-        doctor_Last_Name:
+        doctor_last_name:
           type: string
-        Patient_ID:
+        patient_id:
           type: string
-        patient_First_Name:
+        patient_first_name:
           type: string
-        patient_Last_Name:
+        patient_last_name:
           type: string
-        Specialities:
+        specialities:
           type: string
 
     # Departments & Doctor_Dept
     DepartmentCreate:
       type: object
-      required: [Speciality]
+      required: [speciality]
       properties:
-        Speciality:
+        speciality:
           type: string
-        Details:
+        details:
           type: string
    
     DoctorDeptAdd:
       type: object
-      required: [Doctor_ID, Dept_ID,Dept_Position]
+      required: [doctor_id, dept_id, dept_position]
       properties:
-        Doctor_ID:
+        doctor_id:
           type: string
-        Dept_ID:
+        dept_id:
           type: string
-        Dept_Position: 
+        dept_position: 
           type: string 
           enum: ['HOD','CONSULTANT','RESIDENT']
   
     # Slots
     SlotsObj:
       type: object
-      required: [Doctor_ID, Days_Available,Start_Date, End_Date]
+      required: [doctor_id, days_available,start_date, end_date]
       properties:
-        Doctor_ID:
+        doctor_id:
           type: string
-        Days_Available:
+        days_available:
           type: array
           description: "E.g. Mon-Fri, or comma-separated days"
           items:
             type: string
-        Start_Date:
+        start_date:
           type: string
           description: "Start date for the slots"
           format: YYYY-MM-DD
-        End_Date:
+        end_date:
           type: string
           description: "End date for the slots"
           format: YYYY-MM-DD
@@ -1117,8 +1117,8 @@ components:
     SlotsResponse:
       type: object
       properties:
-        Doctor_ID: { type: string }
-        Days_Available: { type: string }
+        doctor_id: { type: string }
+        days_available: { type: string }
 
     Error:
       type: object
