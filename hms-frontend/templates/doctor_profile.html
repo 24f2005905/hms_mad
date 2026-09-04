@@ -1,7 +1,7 @@
 {# templates/doctor_profile.html #}
 {% extends "base.html" %}
 
-{% block title %}Doctor Profile — {{ doctor.First_Name }} {{ doctor.Last_Name }}{% endblock %}
+{% block title %}Doctor Profile — {{ doctor.first_name }} {{ doctor.last_name }}{% endblock %}
 
 {% block head_extra %}
   {{ super() }}
@@ -51,7 +51,7 @@
 <div class="profile-card">
   <div class="profile-header">
     <div>
-      <h4>{{ doctor.First_Name }} {{ doctor.Last_Name }}</h4>
+      <h4>{{ doctor.first_name }} {{ doctor.last_name }}</h4>
       <div class="small text-muted">Profile</div>
     </div>
     <div>
@@ -59,17 +59,17 @@
     </div>
   </div>
 
-  {% if doctor.Specialities %}
+  {% if doctor.specialities %}
     <div class="profile-section">
       <span class="profile-label">Specialities:</span>
-      <span class="profile-value">{{ doctor.Specialities }}</span>
+      <span class="profile-value">{{ doctor.specialities }}</span>
     </div>
   {% endif %}
 
-  {% if doctor.Dept_Position %}
+  {% if doctor.dept_position %}
     <div class="profile-section">
       <span class="profile-label">Position:</span>
-      <span class="profile-value">{{ doctor.Dept_Position }}</span>
+      <span class="profile-value">{{ doctor.dept_position }}</span>
     </div>
   {% endif %}
 

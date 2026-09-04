@@ -34,7 +34,7 @@
           <!-- Start date -->
           <div class="mb-3">
             <label class="form-label">Start Date</label>
-            <input type="date" name="Start_Date" class="form-control" id="start_date" required value="{{ avail.Start_Date }}">
+            <input type="date" name="Start_Date" class="form-control" id="start_date" required value="{{ avail.start_date }}">
             <div class="text-danger small mt-1" id="startDateError" style="display:none;">
               Start date must be today or a future date.
             </div>
@@ -43,7 +43,7 @@
           <!-- End date -->
           <div class="mb-3">
             <label class="form-label">End Date</label>
-            <input type="date" name="End_Date" class="form-control" id="end_date" required value = "{{ avail.End_Date }}">
+            <input type="date" name="End_Date" class="form-control" id="end_date" required value = "{{ avail.end_date }}">
             <div class="text-danger small mt-1" id="endDateError" style="display:none;">
               End date cannot be before start date.
             </div>

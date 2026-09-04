@@ -1,7 +1,7 @@
 {# templates/patient_profile.html #}
 {% extends "base.html" %}
 
-{% block title %}Patient Profile — {{ patient.First_Name }} {{ patient.Last_Name }}{% endblock %}
+{% block title %}Patient Profile — {{ patient.first_name }} {{ patient.last_name }}{% endblock %}
 
 {% block head_extra %}
   {{ super() }}
@@ -40,37 +40,37 @@
 {% block content %}
   <div class="profile-card">
     <div class="profile-header">
-      <h4>{{ patient.First_Name }} {{ patient.Last_Name }}</h4>
+      <h4>{{ patient.first_name }} {{ patient.last_name }}</h4>
       <div class="small text-muted">Patient Profile</div>
     </div>
 
     <div class="profile-section">
       <span class="profile-label">First Name:</span>
-      <span class="profile-value">{{ patient.First_Name }}</span>
+      <span class="profile-value">{{ patient.first_name }}</span>
     </div>
     <div class="profile-section">
       <span class="profile-label">Last Name:</span>
-      <span class="profile-value">{{ patient.Last_Name }}</span>
+      <span class="profile-value">{{ patient.last_name }}</span>
     </div>
     <div class="profile-section">
       <span class="profile-label">Age:</span>
-      <span class="profile-value">{{ patient.Age }}</span>
+      <span class="profile-value">{{ patient.age }}</span>
     </div>
     <div class="profile-section">
       <span class="profile-label">Sex:</span>
-      <span class="profile-value">{{ patient.Sex }}</span>
+      <span class="profile-value">{{ patient.sex }}</span>
     </div>
     <div class="profile-section">
       <span class="profile-label">Address:</span>
-      <span class="profile-value">{{ patient.Address }}</span>
+      <span class="profile-value">{{ patient.address }}</span>
     </div>
     <div class="profile-section">
       <span class="profile-label">Phone Number:</span>
-      <span class="profile-value">{{ patient.Phone_Number }}</span>
+      <span class="profile-value">{{ patient.phone_number }}</span>
     </div>
     <div class="profile-section">
       <span class="profile-label">Email:</span>
-      <span class="profile-value">{{ patient.Email_ID }}</span>
+      <span class="profile-value">{{ patient.email_id }}</span>
     </div>
 
     <div class="mt-4 text-center">

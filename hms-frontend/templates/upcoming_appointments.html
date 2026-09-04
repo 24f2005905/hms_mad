@@ -48,14 +48,14 @@
           {% for appt in appointments %}
             <tr>
               <td style="text-align:center;">{{ loop.index }}</td>
-              <td style="text-align:center;">{{ appt.Appointment_Date }}</td>
-              <td style="text-align:center;">{{ appt.Appointment_Time }}</td>
+              <td style="text-align:center;">{{ appt.appointment_date }}</td>
+              <td style="text-align:center;">{{ appt.appointment_time }}</td>
               <td style="text-align:center;">
-                <a href="{{ url_for('Doctor_Profile',User_ID = appt.Doctor_ID) }}" class="text-decoration-none">
-                {{ appt.doctor_First_Name }} {{ appt.doctor_Last_Name }}</a></td>
-              <td style="text-align:center;">{{ appt.Specialities }}</td>
+                <a href="{{ url_for('Doctor_Profile',User_ID = appt.doctor_id) }}" class="text-decoration-none">
+                {{ appt.doctor_First_Name }} {{ appt.doctor_last_name }}</a></td>
+              <td style="text-align:center;">{{ appt.specialities }}</td>
               <td class="text-center">
-                <form method="POST" action="{{ url_for('Cancel_Appointment', Appointment_ID=appt.Appointment_ID) }}" style="display:inline;">
+                <form method="POST" action="{{ url_for('Cancel_Appointment', Appointment_ID=appt.appointment_id) }}" style="display:inline;">
                 
                   <button type="submit" class="btn btn-sm btn-outline-danger">
                     Cancel

@@ -32,8 +32,8 @@ role_to_dash = {
 def gen_backend_token(user, password):
     # Generate auth token from backend
     login_dict = {
-        "User_ID": user,
-        "Password": password
+        "user_id": user,
+        "password": password
     }
     http_resp = requests.post(app_url + '/hms/id/generate/token', json=login_dict, timeout=60)
     if http_resp.status_code != 200:
@@ -97,15 +97,15 @@ def register(sid):
     }
 
     create_dict = {
-    "First_Name": request.form.get('First_Name'),
-    "Last_Name" : request.form.get('Last_Name',None),
-    "Phone_Number" :request.form.get('Phone_Number'),
-    "User_Type": "PATIENT",
-    "Email_ID" : request.form.get('Email_ID'),
-    "Sex" : request.form.get('Sex')[0].upper(),
-    "Address" : request.form.get('Address',None),
-    "Date_Of_Birth" :request.form.get('Date_Of_Birth'),
-    "Password" : request.form.get('password'),
+    "first_name": request.form.get('First_Name'),
+    "last_name" : request.form.get('Last_Name',None),
+    "phone_number" :request.form.get('Phone_Number'),
+    "user_type": "PATIENT",
+    "email_id" : request.form.get('Email_ID'),
+    "sex" : request.form.get('Sex')[0].upper(),
+    "address" : request.form.get('Address',None),
+    "date_of_birth" :request.form.get('Date_Of_Birth'),
+    "password" : request.form.get('password'),
     "New_Password" : request.form.get('cnf_password')
     }
 
@@ -114,8 +114,8 @@ def register(sid):
         flash(f"Registration Failed{user_create.json().get('message')}","error")
         return redirect("/login")
 
-    User_ID = user_create.json().get('User_ID')
-    return render_template("register_success.html", User_ID = User_ID, User_Type=create_dict['User_Type'])
+    User_ID = user_create.json().get('user_id')
+    return render_template("register_success.html", User_ID = User_ID, User_Type=create_dict['user_type'])
 
 @app.route('/doctor_register', methods=['GET', 'POST'])
 @session_wrapper
@@ -134,7 +134,7 @@ def Doctor_Register(sid):
         departments = spec_lookup.json().get('department_details')
         specialisations = []
         for spec in departments:
-            specialisations.append(spec["Speciality"])
+            specialisations.append(spec["speciality"])
         return render_template("doctor_register.html", user_token = sid, specialisations_list = specialisations)
 
     # Updating Database with User details
@@ -146,17 +146,17 @@ def Doctor_Register(sid):
 
     }
     create_user_dict = {
-    "First_Name": request.form.get('First_Name'),
-    "Last_Name" : request.form.get('Last_Name',None),
-    "Phone_Number" :request.form.get('Phone_Number'),
-    "User_Type": "DOCTOR",
-    "Email_ID" : request.form.get('Email_ID'),
-    "Sex" : request.form.get('Sex')[0].upper(),
-    "Address" : request.form.get('Address',None),
-    "Date_Of_Birth" :request.form.get('Date_Of_Birth'),
-    "Password" : request.form.get('password'),
+    "first_name": request.form.get('First_Name'),
+    "last_name" : request.form.get('Last_Name',None),
+    "phone_number" :request.form.get('Phone_Number'),
+    "user_type": "DOCTOR",
+    "email_id" : request.form.get('Email_ID'),
+    "sex" : request.form.get('Sex')[0].upper(),
+    "address" : request.form.get('Address',None),
+    "date_of_birth" :request.form.get('Date_Of_Birth'),
+    "password" : request.form.get('password'),
     "New_Password" : request.form.get('cnf_password'),
-    "User_Profile": User_Profile
+    "user_profile": User_Profile
     }
 
     user_create = requests.post(app_url + '/hms/user/create',json= create_user_dict, headers= headers, timeout=60)
@@ -164,22 +164,22 @@ def Doctor_Register(sid):
         flash(f"Registration Failed{user_create.json().get('message')}","error")
         return redirect("/login")
 
-    Doctor_ID = user_create.json().get('User_ID')
+    Doctor_ID = user_create.json().get('user_id')
 
     #Adding doctor to department
     #Specialisation Lookup
     spec = {
-        "Speciality": request.form.get("Speciality")
+        "speciality": request.form.get("Speciality")
     }
     spec_lookup = requests.get(app_url + '/hms/departments/lookup',params = spec,headers=headers, timeout =60)
     departments = spec_lookup.json().get('department_details')[0]
 
-    Dept_ID = departments["Dept_ID"]
+    Dept_ID = departments["dept_id"]
 
     spec_dict = {
-        "Doctor_ID": Doctor_ID,
-        "Dept_ID" : Dept_ID,
-        "Dept_Position": request.form.get("Dept_Position")
+        "doctor_id": Doctor_ID,
+        "dept_id" : Dept_ID,
+        "dept_position": request.form.get("Dept_Position")
 
     }
 
@@ -203,8 +203,8 @@ def Create_Department(sid):
     #Creating new department
 
     dept_dict = {
-        "Speciality" :request.form.get("Department_Name"),
-        "Details": request.form.get("Department_Details",None)
+        "speciality" :request.form.get("Department_Name"),
+        "details": request.form.get("Department_Details",None)
     }
 
     dept_create = requests.post(app_url + '/hms/departments/create', json = dept_dict,
@@ -224,8 +224,8 @@ def login(sid):
         password = request.form.get('password')
         # Verify Creds With Backend
         login_dict = {
-            "User_ID": username,
-            "Password": password
+            "user_id": username,
+            "password": password
         }
 
         # Generate auth token from backend
@@ -248,7 +248,7 @@ def login(sid):
 
         # Call backend to fetch user details
         lookup_dict = {
-            "User_ID": username
+            "user_id": username
         }
         user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
         if user_lookup.status_code != 200:
@@ -256,8 +256,8 @@ def login(sid):
             return redirect("/login")
 
         user_details = (user_lookup.json().get('user_details'))[0]
-        First_Name = user_details['First_Name']
-        Last_Name = user_details['Last_Name']
+        First_Name = user_details['first_name']
+        Last_Name = user_details['last_name']
 
         # Create a session id
         session_id = str(uuid.uuid4())
@@ -295,8 +295,8 @@ def treatment_detail(sid):
         "Appointment_ID": param_json["Appointment_ID"]
     }
 
-    if "Patient_ID" in param_json:
-        lookup_dict["Patient_ID"] = param_json["Patient_ID"]
+    if "patient_id" in param_json:
+        lookup_dict["patient_id"] = param_json["patient_id"]
 
     headers = {
         "Authorization" : sid['token']
@@ -311,7 +311,7 @@ def treatment_detail(sid):
     treatment_details = treatments_lookup.json().get('treatment_details')
 
     return render_template('treatment_detail.html',treatment = treatment_details[0],
-       user_token = sid, Patient_ID=param_json["Patient_ID"])
+       user_token = sid, Patient_ID=param_json["patient_id"])
 
 @app.route('/doctor_search', methods=['GET'])
 @session_wrapper
@@ -334,14 +334,14 @@ def Doctor_Search(sid):
     speciality = request.args.get("speciality", None)
 
     # Build Specialities list
-    specialities = sorted({d["Specialities"] for d in doctors_list})
+    specialities = sorted({d["specialities"] for d in doctors_list})
 
     doctors = []
     Details = None
     if speciality:
         doctors = [d for d in doctors_list
-                   if d["Specialities"].lower() == speciality.lower()]
-        Details = doctors[0]['Details']
+                   if d["specialities"].lower() == speciality.lower()]
+        Details = doctors[0]['details']
 
 
     return render_template("doctor_search.html", \
@@ -376,7 +376,7 @@ def Book_Appointment(sid):
         not Slot:
 
         lookup_dict = {
-            "User_ID" : Doctor_ID
+            "user_id" : Doctor_ID
         }
 
         dept_doctor_lookup = requests.get(app_url + "/hms/departments/doctor-lookup",params = lookup_dict,timeout = 60, headers = headers)
@@ -392,8 +392,8 @@ def Book_Appointment(sid):
             Appointment_Date = date_list[0]
         slot_date = datetime.strptime(Appointment_Date, '%d %B %Y').strftime('%Y-%m-%d')
         slot_args = {
-            "Doctor_ID" : Doctor_ID,
-            "Appointment_Date" : slot_date
+            "doctor_id" : Doctor_ID,
+            "appointment_date" : slot_date
         }
         slots_lookup = requests.get(app_url + "/hms/slots/availability",params = slot_args,timeout = 60, headers = headers)
         if slots_lookup.status_code != 200:
@@ -401,7 +401,7 @@ def Book_Appointment(sid):
                 flash(f"Slots Lookup Failed {slot_reply['message']}","error")
                 return redirect("/dashboard")
 
-        Available_Slots = slots_lookup.json().get('Free_Slots')
+        Available_Slots = slots_lookup.json().get('free_slots')
         slot_list = []
         for f_slot in Free_Slots:
             slot_list.append({
@@ -415,10 +415,10 @@ def Book_Appointment(sid):
     #Confirm Booking
     Patient_ID = request.form.get('patient_id', sid['auth_token']['user'])
     appt_details =  {
-        "Appointment_Time": Slot,
-        "Patient_ID": Patient_ID ,
-        "Appointment_Date": datetime.strptime(Appointment_Date, '%d %B %Y').strftime('%Y-%m-%d'),
-        "Doctor_ID": Doctor_ID
+        "appointment_time": Slot,
+        "patient_id": Patient_ID ,
+        "appointment_date": datetime.strptime(Appointment_Date, '%d %B %Y').strftime('%Y-%m-%d'),
+        "doctor_id": Doctor_ID
     }
 
 
@@ -446,10 +446,10 @@ def Close_Appointment(sid):
     #Upload to database if Save is Y
     if Save:
         treatment = {
-            "Appointment_ID": Appointment_ID,
-            "Diagnosis": request.form.get('Diagnosis',None),
-            "Prescription": request.form.get('Prescription',None),
-            "Notes": request.form.get('Notes')
+            "appointment_id": Appointment_ID,
+            "diagnosis": request.form.get('Diagnosis',None),
+            "prescription": request.form.get('Prescription',None),
+            "notes": request.form.get('Notes')
         }
 
         treatment_upload = requests.post(app_url + '/hms/treatments/upload',json = treatment,headers=headers, timeout = 60)
@@ -458,8 +458,8 @@ def Close_Appointment(sid):
             return redirect("/dashboard")
 
         appt_complete_dict = {
-            "Appointment_ID": Appointment_ID,
-            "Appointment_Status":'COMPLETED'
+            "appointment_id": Appointment_ID,
+            "appointment_status":'COMPLETED'
         }
 
         appointment = requests.put(app_url + '/hms/appointment/update',params=appt_complete_dict,headers=headers,timeout=60)
@@ -472,7 +472,7 @@ def Close_Appointment(sid):
 
     #Lookup Appointments
     lookup_dict = {
-        "Appointment_ID": Appointment_ID
+        "appointment_id": Appointment_ID
      }
 
     appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
@@ -481,11 +481,11 @@ def Close_Appointment(sid):
         return redirect("/dashboard")
 
     appointment = appointments_lookup.json().get('appointment_details')[0]
-    Patient_ID = appointment['Patient_ID']
+    Patient_ID = appointment['patient_id']
 
     #Patient Lookup
     lookup_dict = {
-                "User_ID": Patient_ID
+                "user_id": Patient_ID
             }
 
     user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
@@ -494,15 +494,15 @@ def Close_Appointment(sid):
         return redirect("/dashboard")
 
     user_details = (user_lookup.json().get('user_details'))[0]
-    Age = calculate_age(user_details['Date_Of_Birth'])
+    Age = calculate_age(user_details['date_of_birth'])
 
 
     return render_template("treatment_upload.html",user_token=sid,
         Appointment_ID=Appointment_ID,
-        Appointment_Date = appointment['Appointment_Date'],
-        Appointment_Time = appointment['Appointment_Time'], Age = Age,
-        Sex = user_details['Sex'],First_Name = user_details['First_Name'],
-        Last_Name = user_details['Last_Name'])
+        Appointment_Date = appointment['appointment_date'],
+        Appointment_Time = appointment['appointment_time'], Age = Age,
+        Sex = user_details['sex'],First_Name = user_details['first_name'],
+        Last_Name = user_details['last_name'])
 
 @app.route('/cancel_appointment', methods=['POST'])
 @session_wrapper
@@ -523,11 +523,11 @@ def Cancel_Appointment(sid):
         return redirect("/dashboard")
 
     lookup_dict = {
-        "Appointment_ID": Appointment_ID
+        "appointment_id": Appointment_ID
     }
 
     if sid['auth_token']['role'] == 'DOCTOR':
-        lookup_dict['Patient_ID'] = Patient_ID
+        lookup_dict['patient_id'] = Patient_ID
 
     appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
     if appointments_lookup.status_code != 200:
@@ -541,8 +541,8 @@ def Cancel_Appointment(sid):
 
     #Delete in backend
     appt_cancel_dict = {
-        "Appointment_ID": Appointment_ID ,
-        "Appointment_Status": 'CANCELLED'
+        "appointment_id": Appointment_ID ,
+        "appointment_status": 'CANCELLED'
     }
 
     appt_cancel = requests.put(app_url + '/hms/appointment/update', params = appt_cancel_dict, headers = headers, timeout = 60)
@@ -565,7 +565,7 @@ def Delete_User(sid):
 
     User_ID = request.args.get("User_ID")
     user_dict = {
-        "User_ID": User_ID
+        "user_id": User_ID
     }
     user_lookup = requests.get(app_url + '/hms/user/lookup', params = user_dict, headers = headers,
     timeout = 60)
@@ -574,9 +574,9 @@ def Delete_User(sid):
         flash(f"User lookup: {message}","error")
         return redirect("/dashboard")
     user_details = user_lookup.json().get("user_details")[0]
-    First_Name = user_details["First_Name"]
-    Last_Name = user_details["Last_Name"]
-    User_Type = user_details["User_Type"]
+    First_Name = user_details["first_name"]
+    Last_Name = user_details["last_name"]
+    User_Type = user_details["user_type"]
 
     if request.method == 'GET':
         return render_template("user_delete.html",user_token = sid, First_Name = First_Name,
@@ -585,13 +585,13 @@ def Delete_User(sid):
     cancel_appt = request.form.get("cancel_appointments")
     if User_Type == 'DOCTOR':
         lookup_dict = {
-            "Doctor_ID": User_ID,
-            "Appointment_Status": 'SCHEDULED'
+            "doctor_id": User_ID,
+            "appointment_status": 'SCHEDULED'
         }
     if User_Type == 'PATIENT':
         lookup_dict = {
-            "Patient_ID": User_ID,
-            "Appointment_Status": 'SCHEDULED'
+            "patient_id": User_ID,
+            "appointment_status": 'SCHEDULED'
         }
 
     appt_lookup = requests.get(app_url + '/hms/appointments/lookup',params = lookup_dict,
@@ -611,8 +611,8 @@ def Delete_User(sid):
     else:
         # Now call Backend to cancel all the appointments for this User.
         appt_cancel_dict = {
-            "Appointment_Status":'CANCELLED',
-            f"{'Patient_ID' if User_Type == 'PATIENT' else 'Doctor_ID'}": User_ID
+            "appointment_status":'CANCELLED',
+            f"{'patient_id' if User_Type == 'PATIENT' else 'doctor_id'}": User_ID
         }
 
         appointment = requests.put(app_url + '/hms/appointment/update',params=appt_cancel_dict,headers=headers,timeout=60)
@@ -622,7 +622,7 @@ def Delete_User(sid):
 
     #User Delete
     delete_dict = {
-        "User_ID": User_ID
+        "user_id": User_ID
     }
     user_del = requests.delete(app_url + '/hms/user/delete', params = delete_dict,
         headers = headers, timeout = 60 )
@@ -632,7 +632,7 @@ def Delete_User(sid):
         flash(f"{message}","error")
         return redirect("/dashboard")
 
-    user = user_del.json().get("User_ID")
+    user = user_del.json().get("user_id")
     flash(f"User {user} deleted","success")
     return redirect("/dashboard")
 
@@ -649,7 +649,7 @@ def dashboard(sid):
     if sid['auth_token']['role'] == 'PATIENT':
         #Upcoming Appointments
         lookup_dict = {
-            "Patient_ID": sid['auth_token']['user']
+            "patient_id": sid['auth_token']['user']
         }
 
         appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
@@ -674,8 +674,8 @@ def dashboard(sid):
 
         #Query all Appointments
         lookup_dict = {
-            "Doctor_ID": sid['auth_token']['user'],
-            "Appointment_Status": "ALL"
+            "doctor_id": sid['auth_token']['user'],
+            "appointment_status": "ALL"
         }
 
         appointments_lookup = requests.get(app_url + '/hms/appointments/lookup', params = lookup_dict, timeout = 60, headers = headers)
@@ -688,14 +688,14 @@ def dashboard(sid):
         # Filter only upcoming appointments
         upcoming_appointments = [ u_appt \
             for u_appt in all_appointments \
-                if u_appt['Appointment_Status'] == "SCHEDULED"]
+                if u_appt['appointment_status'] == "SCHEDULED"]
 
         # Lookup Unique Patients for this Doc
-        pid_list = sorted({p["Patient_ID"] for p in all_appointments})
+        pid_list = sorted({p["patient_id"] for p in all_appointments})
         patients = []
         for pid in pid_list:
             lookup_dict = {
-                "User_ID": pid
+                "user_id": pid
             }
             user_lookup = requests.get(app_url + '/hms/user/lookup', params= lookup_dict, timeout = 60,headers = headers)
             if user_lookup.status_code != 200:
@@ -706,22 +706,22 @@ def dashboard(sid):
                 continue
 
             user_details = user_lookup.json().get('user_details')[0]
-            user_details['Age'] = calculate_age(user_details['Date_Of_Birth'])
+            user_details['age'] = calculate_age(user_details['date_of_birth'])
             patients.append(user_details)
         #Get Doctor's Available Slots
         slot_dict = {
-            "Doctor_ID": sid["auth_token"]['user']
+            "doctor_id": sid["auth_token"]['user']
         }
         slot_lookup = requests.get(app_url + '/hms/slots/lookup', params = slot_dict, headers= headers,timeout =60)
         if slot_lookup.status_code != 200:
             available_slots = {
-                "Start_Date": date.today().strftime("%Y-%m-%d"),
-                "End_Date": date.today().strftime("%Y-%m-%d"),
-                "Days_Available":[]
+                "start_date": date.today().strftime("%Y-%m-%d"),
+                "end_date": date.today().strftime("%Y-%m-%d"),
+                "days_available":[]
             }
         else:
-            available_slots = slot_lookup.json().get('Slot')
-            available_slots["Days_Available"] = sorted({d.lower() for d in available_slots['Days_Available']})
+            available_slots = slot_lookup.json().get('slot')
+            available_slots["days_available"] = sorted({d.lower() for d in available_slots['days_available']})
 
         # Get all Appointment Slots for the doctor
         return render_template('doctor_dashboard.html', user_token = sid,
@@ -755,8 +755,8 @@ def dashboard(sid):
 
         #Lookup to display ALL registered Patients
         user_dict = {
-            "User_Type": 'PATIENT',
-            "User_Status": 'ACTIVE'
+            "user_type": 'PATIENT',
+            "user_status": 'ACTIVE'
         }
         user_lookup = requests.get(app_url + '/hms/user/lookup', params = user_dict, headers=headers,timeout=60)
         if user_lookup.status_code != 200:
@@ -766,7 +766,7 @@ def dashboard(sid):
         patients = user_lookup.json().get('user_details')
 
         for patient in patients:
-            patient['Age'] = calculate_age(patient['Date_Of_Birth'])
+            patient['age'] = calculate_age(patient['date_of_birth'])
 
         registered_patients = len(patients)
 
@@ -787,7 +787,7 @@ def edit_profile(sid):
 
     # Call backend to fetch user details
     lookup_dict = {
-        "User_ID": User_ID
+        "user_id": User_ID
     }
 
     headers = {
@@ -800,15 +800,15 @@ def edit_profile(sid):
         return redirect("/dashboard")
 
     user_details = (user_lookup.json().get('user_details'))[0]
-    User_Type = user_details['User_Type']
+    User_Type = user_details['user_type']
     if request.method == 'GET':
-        user_details['Sex'] = valid_gender_str[user_details['Sex']]
+        user_details['sex'] = valid_gender_str[user_details['sex']]
         return render_template('edit_profile.html', user=user_details,
             user_token = sid, User_Type = User_Type)
 
     #Handling Update
     user_update_dict = {
-        "User_ID": user_details["User_ID"]
+        "user_id": user_details["user_id"]
     }
     if sid['auth_token']['role'] == 'DOCTOR':
         User_Profile = {
@@ -817,38 +817,38 @@ def edit_profile(sid):
             "Expertise": request.form.get("Expertise"),
             "Bio": request.form.get("Bio")
         }
-        user_update_dict["User_Profile"] = User_Profile
+        user_update_dict["user_profile"] = User_Profile
 
-    First_Name = request.form.get('First_Name')
-    Last_Name = request.form.get('Last_Name')
-    Phone_Number = request.form.get('Phone_Number')
-    Email_ID = request.form.get('Email_ID')
-    Sex = request.form.get('Sex')[0].upper()
-    Address = request.form.get('Address')
-    Date_Of_Birth = request.form.get('Date_Of_Birth')
+    first_name = request.form.get('First_Name')
+    last_name = request.form.get('Last_Name')
+    phone_number = request.form.get('Phone_Number')
+    email_id = request.form.get('Email_ID')
+    sex = request.form.get('Sex')[0].upper()
+    address = request.form.get('Address')
+    date_of_birth = request.form.get('Date_Of_Birth')
     Current_Password = request.form.get('cur_password')
     New_Password = request.form.get('new_password')
 
-    if First_Name.lower() != user_details['First_Name']:
-        user_update_dict["First_Name"] = First_Name
+    if First_Name.lower() != user_details['first_name']:
+        user_update_dict["first_name"] = First_Name
 
-    if Last_Name.lower() != user_details['Last_Name']:
-        user_update_dict["Last_Name"] = Last_Name
+    if Last_Name.lower() != user_details['last_name']:
+        user_update_dict["last_name"] = Last_Name
 
-    if Address != user_details['Address']:
-        user_update_dict["Address"] = Address
+    if Address != user_details['address']:
+        user_update_dict["address"] = Address
 
-    if Phone_Number != user_details['Phone_Number']:
-        user_update_dict["Phone_Number"] = Phone_Number
+    if Phone_Number != user_details['phone_number']:
+        user_update_dict["phone_number"] = Phone_Number
 
-    if Email_ID != user_details['Email_ID']:
-        user_update_dict["Email_ID"] = Email_ID
+    if Email_ID != user_details['email_id']:
+        user_update_dict["email_id"] = Email_ID
 
-    if Sex != user_details['Sex']:
-        user_update_dict["Sex"] = Sex
+    if Sex != user_details['sex']:
+        user_update_dict["sex"] = Sex
 
-    if Date_Of_Birth != user_details['Date_Of_Birth']:
-        user_update_dict["Date_Of_Birth"] = Date_Of_Birth
+    if Date_Of_Birth != user_details['date_of_birth']:
+        user_update_dict["date_of_birth"] = Date_Of_Birth
 
     headers = {
         'Authorization': sid['token']
@@ -856,15 +856,15 @@ def edit_profile(sid):
     if New_Password:
         #Verifying Current_Password with backend
         req_json = {
-            "User_ID": user_details["User_ID"],
-            "Password": Current_Password
+            "user_id": user_details["user_id"],
+            "password": Current_Password
         }
         http_resp = requests.post(app_url + '/hms/user/check-password', json = req_json, headers = headers, timeout = 60)
         if http_resp.status_code != 200:
             flash("Invalid Password","error")
             return redirect("/dashboard")
 
-        user_update_dict["Password"] = New_Password
+        user_update_dict["password"] = New_Password
 
     if len(user_update_dict.keys()) > 1:
         # Update the user record
@@ -880,8 +880,8 @@ def edit_profile(sid):
         return render_template("edit_profile.html", user_token = sid ,user=user_details, User_Type=sid['auth_token']['role'])
 
     if User_ID == sid['auth_token']['user']:
-        sid['First_Name'] = user_update_dict.get('First_Name', user_details['First_Name'])
-        sid['Last_Name'] = user_update_dict.get('Last_Name', user_details['Last_Name'])
+        sid['First_Name'] = user_update_dict.get('first_name', user_details['first_name'])
+        sid['Last_Name'] = user_update_dict.get('last_name', user_details['last_name'])
 
     return redirect("/dashboard")
 
@@ -898,7 +898,7 @@ def Patient_History(sid):
     Patient_ID = request.args.get('Patient_ID')
 
     lookup_dict = {
-        "Patient_ID": Patient_ID
+        "patient_id": Patient_ID
     }
 
     #Treatment Info
@@ -932,7 +932,7 @@ def Doctor_Profile(sid):
     Doctor_ID = request.args.get('User_ID')
 
     lookup_dict = {
-            "User_ID" : Doctor_ID
+            "user_id" : Doctor_ID
     }
 
     # Do DoctorLookup
@@ -942,7 +942,7 @@ def Doctor_Profile(sid):
         return redirect("/dashboard")
 
     doctor = dept_doctor_lookup.json().get("doctordept_details")[0]
-    User_Profile = json.loads(doctor["User_Profile"])
+    User_Profile = json.loads(doctor["user_profile"])
 
     return render_template("doctor_profile.html", user_token = sid,doctor=doctor,User_Profile = User_Profile)
 
@@ -959,7 +959,7 @@ def Patient_Profile(sid):
     Patient_ID = request.args.get('User_ID')
 
     lookup_dict = {
-            "User_ID" : Patient_ID
+            "user_id" : Patient_ID
     }
 
     # Do DoctorLookup
@@ -969,8 +969,8 @@ def Patient_Profile(sid):
         return redirect("/dashboard")
 
     patient = user_lookup.json().get("user_details")[0]
-    Age = calculate_age(patient['Date_Of_Birth'])
-    patient["Age"] = Age
+    Age = calculate_age(patient['date_of_birth'])
+    patient["age"] = Age
 
 
     return render_template("patient_profile.html", user_token = sid,patient=patient)
@@ -989,10 +989,10 @@ def Update_Availability(sid):
     Days_Available = request.form.getlist("Days_Available")
     Days_Available = sorted({d.upper() for d in Days_Available})
     slot_dict = {
-    "Doctor_ID" : sid['auth_token']['user'],
-    "Start_Date": request.form.get('Start_Date'),
-    "End_Date": request.form.get('End_Date'),
-    "Days_Available": Days_Available
+    "doctor_id" : sid['auth_token']['user'],
+    "start_date": request.form.get('Start_Date'),
+    "end_date": request.form.get('End_Date'),
+    "days_available": Days_Available
     }
 
     updated_slots = requests.post(app_url + '/hms/slots/create', json = slot_dict,headers=headers,timeout = 60)
@@ -1015,8 +1015,8 @@ def Cancel_All_Appointments(sid):
     User_Type = sid['auth_token']['role']
     User_ID = sid['auth_token']['user']
     appt_cancel_dict = {
-         "Appointment_Status":'CANCELLED',
-        f"{'Patient_ID' if User_Type == 'PATIENT' else 'Doctor_ID'}": User_ID
+         "appointment_status":'CANCELLED',
+        f"{'patient_id' if User_Type == 'PATIENT' else 'doctor_id'}": User_ID
     }
 
     appointment = requests.put(app_url + '/hms/appointment/update',params=appt_cancel_dict,headers=headers,timeout=60)
@@ -1041,7 +1041,7 @@ def User_Search(sid):
 
     lookup_dict = {}
     parameters = request.form.to_dict()
-    for key in ["First_Name","Last_Name","Phone_Number","User_Type"]:
+    for key in ["first_name","last_name","phone_number","user_type"]:
         if key in parameters:
             lookup_dict[key] = parameters[key]
 

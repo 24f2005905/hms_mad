@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Book Appointment - {{ doctor.First_Name }} {{ doctor.Last_Name }}{% endblock %}
+{% block title %}Book Appointment - {{ doctor.first_name }} {{ doctor.last_name }}{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -63,8 +63,8 @@
 <div class="panel-card p-3">
   <div class="d-flex align-items-start mb-3">
     <div>
-      <h4 class="mb-1">Dr. {{ doctor.First_Name }} {{ doctor.Last_Name }}</h4>
-      <div class="small text-muted">Speciality: {{ doctor.Specialities }}</div>
+      <h4 class="mb-1">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h4>
+      <div class="small text-muted">Speciality: {{ doctor.specialities }}</div>
     </div>
   </div>
 
@@ -73,7 +73,7 @@
 
   {# ---------- Date selection (GET) ---------- #}
   <form method="GET" class="row g-3 mb-3">
-    <input type="hidden" name="Doctor_ID" value="{{ doctor.User_ID }}">
+    <input type="hidden" name="Doctor_ID" value="{{ doctor.user_id }}">
     <div class="col-12 col-md-6">
       <label for="dateSelect" class="form-label">Select Date</label>
       <select id="dateSelect" name="date" class="form-select" required>
@@ -90,7 +90,7 @@
   </form>
 
   {# ---------- Booking form (POST) ---------- #}
-  <form method="POST" action="{{ url_for('Book_Appointment', Doctor_ID=doctor.User_ID) }}">
+  <form method="POST" action="{{ url_for('Book_Appointment', Doctor_ID=doctor.user_id) }}">
     {% if csrf_token is defined %}
       {{ csrf_token() }}
     {% endif %}

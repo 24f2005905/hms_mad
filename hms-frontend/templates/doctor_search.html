@@ -61,14 +61,14 @@
                   <tr>
                     <td style="text-align:center;">{{ loop.index }}</td>
                     <td style="text-align:center;">
-                      <a href="{{ url_for('Doctor_Profile', User_ID=d.User_ID) }}" class="text-decoration-none">
-                        {{ d.First_Name }} {{ d.Last_Name }}
+                      <a href="{{ url_for('Doctor_Profile', User_ID=d.user_id) }}" class="text-decoration-none">
+                        {{ d.first_name }} {{ d.last_name }}
                       </a></td>
-                    <td style="text-align:center;">{{ d.Dept_Position }}</td>
+                    <td style="text-align:center;">{{ d.dept_position }}</td>
                     <td class="text-center">
                       <a class="btn btn-sm btn-primary"
                          href="{{ url_for('Book_Appointment',
-                                           Doctor_ID=d.User_ID) }}">
+                                           Doctor_ID=d.user_id) }}">
                         Book
                       </a>
                     </td>

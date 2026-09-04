@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Treatment Details - {{ treatment.Appointment_ID }}{% endblock %}
+{% block title %}Treatment Details - {{ treatment.appointment_id }}{% endblock %}
 
 {% block content %}
   <div class="row justify-content-center">
@@ -14,33 +14,33 @@
           </div>
         </div>
         <div class="mb-3">
-          <strong>Appointment Date:</strong> {{ treatment.Appointment_Date }}
+          <strong>Appointment Date:</strong> {{ treatment.appointment_date }}
         </div>
         <div class="mb-3">
           <strong>Doctor:</strong> 
-          <a href="{{ url_for('Doctor_Profile',User_ID = treatment.Doctor_ID) }}" class="text-decoration-none">
-          {{ treatment.doctor_First_Name }} {{ treatment.doctor_Last_Name }}
+          <a href="{{ url_for('Doctor_Profile',User_ID = treatment.doctor_id) }}" class="text-decoration-none">
+          {{ treatment.doctor_first_name }} {{ treatment.doctor_last_name }}
           </a>
         </div>
         <div class="mb-3">
-          <strong>Speciality:</strong> {{ treatment.Specialities }}
+          <strong>Speciality:</strong> {{ treatment.specialities }}
         </div>
 
         <hr>
 
         <div class="mb-3">
           <h6>Diagnosis</h6>
-          <p class="small text-break">{{ treatment.Diagnosis or '—' }}</p>
+          <p class="small text-break">{{ treatment.diagnosis or '—' }}</p>
         </div>
 
         <div class="mb-3">
           <h6>Prescription</h6>
-          <p class="small text-break">{{ treatment.Prescription or '—' }}</p>
+          <p class="small text-break">{{ treatment.prescription or '—' }}</p>
         </div>
 
         <div class="mb-3">
           <h6>Notes</h6>
-          <p class="small text-break">{{ treatment.Notes }}</p>
+          <p class="small text-break">{{ treatment.notes }}</p>
         </div>
 
       </div>
